@@ -47,6 +47,22 @@ int parseNumber(int i){
 }
 
 
+int parseString(int i){
+    string resValue = "";
+    token * res = new token();
+    ++i;
+    while (s[i] != '"'){
+        resValue += s[i];
+        ++i;
+    }
+    ++i;
+    res->type = 3;
+    res->value = resValue;
+    v.push_back(res);
+    return i;
+}
+
+
 
 
 int main(){

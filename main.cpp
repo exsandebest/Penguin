@@ -1,5 +1,7 @@
 #include <string>
 #include <vector>
+#include <fstream>
+#include <iostream>
 using namespace std;
 
 struct token{
@@ -62,10 +64,23 @@ int parseString(int i){
     return i;
 }
 
+int parse(int i){
 
-
+}
 
 int main(){
+    ifstream fin;
+    fin.open("input.peng");
+    ofstream fout;
+    fout.open("output.txt");
 
+    parse(0);
+
+    for (int i = 0; i < v.size(); ++i){
+        cout << "Number: " << i+1 << "\nType: " << v[i]->type << "\nValue: " << v[i]->value << "\n\n";
+    }
+    for (int i = 0; i < v.size(); ++i){
+        fout << "Number: " << i+1 << "\nType: " << v[i]->type << "\nValue: " << v[i]->value << "\n\n";
+    }
     return 0;
 }

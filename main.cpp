@@ -69,6 +69,11 @@ int parse(int i){
         ++i;
         return parse(i);
     }
+    if (s[i] == '+' || s[i] == '-' || s[i] == '/' || s[i] == '*' || s[i] == '%' || s[i] == '^'){
+        addToken(13, s[i]);
+        ++i;
+        return parse(i);
+    }
 }
 
 int main(){

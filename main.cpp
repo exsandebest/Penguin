@@ -134,7 +134,7 @@ int parse(int i){
         return parse(i);
     }
     if (s[i] == '+' || s[i] == '-' || s[i] == '/' || s[i] == '*' || s[i] == '%' || s[i] == '^'){
-        addToken(13, s[i]);
+        addToken(13, string(1,s[i]));
         ++i;
         return parse(i);
     }

@@ -20,6 +20,20 @@ vector <string> reservedVariableTypes = {"bool", "string", "int", "double"};
 vector <string> reservedFunctionTypes = {"null"};
 vector <string> reservedOperators = {"and", "or", "xor"};
 
+void addToken(int type, string value);
+bool ld (char c);
+bool detectReserved(string str, int i);
+int parseWord(int i);
+int parseNumber(int i);
+int parseString(int i);
+
+void addToken(int type, string value){
+    token * res = new token();
+    res->type = type;
+    res->value = value;
+    v.push_back(res);
+}
+
 
 bool ld (char c){
     return (isdigit(c) || isalpha(c));
@@ -72,14 +86,6 @@ int parseWord(int i){
     return i;
 }
 
-
-
-void addToken(int type, string value){
-    token * res = new token();
-    res->type = type;
-    res->value = value;
-    v.push_back(res);
-}
 
 
 int parseNumber(int i){

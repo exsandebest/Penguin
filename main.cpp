@@ -19,6 +19,7 @@ vector <string> reservedWords = {"break", "continue", "if", "else", "return", "w
 vector <string> reservedVariableTypes = {"bool", "string", "int", "double"};
 vector <string> reservedFunctionTypes = {"null"};
 vector <string> reservedOperators = {"and", "or", "xor"};
+vector <string> reservedFunctions = {"read", "write"};
 
 void addToken(int type, string value);
 bool ld (char c);
@@ -75,6 +76,12 @@ int parseWord(int i){
     for (string word : reservedOperators) {
         if (detectReserved(word, i)) {
             addToken(8, word);
+            return (i + word.length());
+        }
+    }
+    for (string word : reservedFunctions) {
+        if (detectReserved(word, i)) {
+            addToken(19, word);
             return (i + word.length());
         }
     }

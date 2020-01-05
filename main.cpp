@@ -193,6 +193,10 @@ int parse(int i){
         addToken(17, "}");
         return parse(i+1);
     }
+    if (s[i] == ','){
+        addToken(18, ",");
+        return parse(i+1);
+    }
     if (s[i] == ' ') return parse(i+1);
 }
 
@@ -221,10 +225,6 @@ string deleteComments(string & str){
 }
 
 int main(){
-    /*ifstream fin;
-    fin.open("input.peng");
-    ofstream fout;
-    fout.open("output.txt");*/
     getline(cin, s);
     s = deleteComments(s);
     parse(0);
@@ -232,8 +232,5 @@ int main(){
     for (int i = 0; i < v.size(); ++i){
         cout << "Number: " << i+1 << "\nType: " << v[i]->type << "\nValue: " << v[i]->value << "\n\n";
     }
-    /*for (int i = 0; i < v.size(); ++i){
-        fout << "Number: " << i+1 << "\nType: " << v[i]->type << "\nValue: " << v[i]->value << "\n\n";
-    }*/
     return 0;
 }

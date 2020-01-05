@@ -26,6 +26,7 @@ bool detectReserved(string str, int i);
 int parseWord(int i);
 int parseNumber(int i);
 int parseString(int i);
+string deleteComments(string & str);
 
 void addToken(int type, string value){
     token * res = new token();
@@ -128,7 +129,7 @@ int parseString(int i){
 }
 
 int parse(int i){
-    if(s[i] == ';'){
+    if (s[i] == ';'){
         addToken(8,";");
         ++i;
         return parse(i);
@@ -138,6 +139,43 @@ int parse(int i){
         ++i;
         return parse(i);
     }
+    if (isdigit(s[i])){
+        i = parseNumber(i);
+        return parse(i);
+    }
+    if (s[i] == '"'){
+        i = parseString(i);
+        return parse(i);
+    }
+    if (isalpha(s[i])){
+        i = parseWord(i);
+        return parse(i);
+    }
+    if (s[i] == ' ') return parse(i+1);
+}
+
+string deleteComments(string & str){
+    string res = "", ts = "";
+    int i = 0;
+    bool flag = 1;
+    while (i < str.length()){
+        if (ts + str[i] + str[i+1] == "/*" && flag){
+            flag = 0;
+            i+=2;
+            continue;
+        }
+        if (ts + str[i] + str[i+1] == "*/" && !flag){
+            flag = 1;
+            i+=2;
+            continue;
+        }
+        if (flag){
+            res += str[i];
+        }
+        ++i;
+    }
+    if (!flag) throw "Incorrect comments";
+    return res;
 }
 
 int main(){
@@ -145,7 +183,7 @@ int main(){
     fin.open("input.peng");
     ofstream fout;
     fout.open("output.txt");
-
+    s = deleteComments(s);
     parse(0);
 
     for (int i = 0; i < v.size(); ++i){

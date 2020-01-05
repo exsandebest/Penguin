@@ -15,6 +15,64 @@ struct token{
 
 string s;
 vector <token*> v;
+vector <string> reservedWords = {"break", "continue", "if", "else", "return", "while", "for"};
+vector <string> reservedVariableTypes = {"bool", "string", "int", "double"};
+vector <string> reservedFunctionTypes = {"null"};
+vector <string> reservedOperators = {"and", "or", "xor"};
+
+
+bool ld (char c){
+    return (isdigit(c) || isalpha(c));
+}
+
+
+bool detectReserved(string str, int i){
+    string ts = "";
+    for (int j = i; j < i + str.length(); ++j){
+        ts += s[j];
+    }
+    if (ts == str && !ld(s[i+str.length()])) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+int parseWord(int i){
+    for (string word : reservedWords) {
+        if (detectReserved(word, i)) {
+            addToken(6, word);
+            return (i + word.length());
+        }
+    }
+    for (string word : reservedVariableTypes) {
+        if (detectReserved(word, i)) {
+            addToken(5, word);
+            return (i + word.length());
+        }
+    }
+    for (string word : reservedFunctionTypes) {
+        if (detectReserved(word, i)) {
+            addToken(14, word);
+            return (i + word.length());
+        }
+    }
+    for (string word : reservedOperators) {
+        if (detectReserved(word, i)) {
+            addToken(7, word);
+            return (i + word.length());
+        }
+    }
+    string ts = "";
+    while (ld(s[i])){
+        ts += s[i];
+        ++i;
+    }
+    addToken(4, ts);
+    return i;
+}
+
+
 
 void addToken(int type, string value){
     token * res = new token();

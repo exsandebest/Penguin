@@ -212,6 +212,9 @@ string deleteComments(string & str){
     int i = 0;
     bool flag = 1;
     while (i < str.length()){
+        if (ts + str[i] + str[i+1] == "*/" && flag){
+            throw string("Incorrect comments");
+        }
         if (ts + str[i] + str[i+1] == "/*" && flag){
             flag = 0;
             i+=2;
@@ -227,15 +230,19 @@ string deleteComments(string & str){
         }
         ++i;
     }
-    if (!flag) throw "Incorrect comments";
+    if (!flag) throw string("Incorrect comments");
     return res;
 }
 
 int main(){
     getline(cin, s);
-    s = deleteComments(s);
-    parse(0);
-
+    try{
+        s = deleteComments(s);
+        parse(0);
+    } catch (string str){
+        cout << str;
+        return 0;
+    }
     for (int i = 0; i < v.size(); ++i){
         cout << "Number: " << i+1 << "\nType: " << v[i]->type << "\nValue: " << v[i]->value << "\n\n";
     }

@@ -56,7 +56,7 @@ bool detectReserved(string str, int i){
 int parseWord(int i){
     for (string word : reservedWords) {
         if (detectReserved(word, i)) {
-            addToken(6, word);
+            addToken(7, word);
             return (i + word.length());
         }
     }
@@ -68,13 +68,13 @@ int parseWord(int i){
     }
     for (string word : reservedFunctionTypes) {
         if (detectReserved(word, i)) {
-            addToken(14, word);
+            addToken(6, word);
             return (i + word.length());
         }
     }
     for (string word : reservedOperators) {
         if (detectReserved(word, i)) {
-            addToken(7, word);
+            addToken(8, word);
             return (i + word.length());
         }
     }
@@ -129,15 +129,41 @@ int parseString(int i){
 }
 
 int parse(int i){
+    if(i > s.length()-1) return -1;
+    string ts = "";
+
     if (s[i] == ';'){
-        addToken(8,";");
+        addToken(13,";");
         ++i;
         return parse(i);
     }
-    if (s[i] == '+' || s[i] == '-' || s[i] == '/' || s[i] == '*' || s[i] == '%' || s[i] == '^'){
-        addToken(13, string(1,s[i]));
-        ++i;
-        return parse(i);
+    if (ts + s[i]+ s[i+1] == "==" || ts + s[i] + s[i+1] == "<=" || ts + s[i] + s[i+1] == ">=" || ts + s[i] + s[i+1] == "!="){
+        addToken(10, ts + s[i] + s[i+1]);
+        return parse(i+2);
+    }
+    if (s[i] == '='){
+        addToken(9, string(1, s[i]));
+        return parse(i+1);
+    }
+    if (s[i] == '~'){
+        addToken(12, string(1, s[i]));
+        return parse(i+1);
+    }
+    if (ts + s[i] + s[i+1] == ">>" || ts + s[i] + s[i+1] == "<<" || ts + s[i] + s[i+1] == "**"){
+        addToken(11, ts + s[i] + s[i+1]);
+        return parse(i+2);
+    }
+    if (s[i] == '<' || s[i] == '>'){
+        addToken(10, string(1, s[i]));
+        return parse(i+1);
+    }
+    if (ts + s[i] + s[i+1] == "++" || ts + s[i] + s[i+1] == "--"){
+        addToken(12, ts + s[i] + s[i+1]);
+        return parse(i+2);
+    }
+    if (s[i] == '+' || s[i] == '-' || s[i] == '/' || s[i] == '*' || s[i] == '%' || s[i] == '^' || s[i] == '|' || s[i] == '&'){
+        addToken(11, string(1,s[i]));
+        return parse(i+1);
     }
     if (isdigit(s[i])){
         i = parseNumber(i);
@@ -150,6 +176,22 @@ int parse(int i){
     if (isalpha(s[i])){
         i = parseWord(i);
         return parse(i);
+    }
+    if (s[i] == '('){
+        addToken(14, "(");
+        return parse(i+1);
+    }
+    if (s[i] == ')'){
+        addToken(15, ")");
+        return parse(i+1);
+    }
+    if (s[i] == '{'){
+        addToken(16, "{");
+        return parse(i+1);
+    }
+    if (s[i] == '}'){
+        addToken(17, "}");
+        return parse(i+1);
     }
     if (s[i] == ' ') return parse(i+1);
 }
@@ -179,18 +221,19 @@ string deleteComments(string & str){
 }
 
 int main(){
-    ifstream fin;
+    /*ifstream fin;
     fin.open("input.peng");
     ofstream fout;
-    fout.open("output.txt");
+    fout.open("output.txt");*/
+    getline(cin, s);
     s = deleteComments(s);
     parse(0);
 
     for (int i = 0; i < v.size(); ++i){
         cout << "Number: " << i+1 << "\nType: " << v[i]->type << "\nValue: " << v[i]->value << "\n\n";
     }
-    for (int i = 0; i < v.size(); ++i){
+    /*for (int i = 0; i < v.size(); ++i){
         fout << "Number: " << i+1 << "\nType: " << v[i]->type << "\nValue: " << v[i]->value << "\n\n";
-    }
+    }*/
     return 0;
 }

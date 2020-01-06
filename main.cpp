@@ -206,7 +206,7 @@ int parse(int i){
         addToken(18, ",");
         return parse(i+1);
     }
-    if (s[i] == ' ' || s[i] == '\n') return parse(i+1);
+    if (s[i] == ' ' || s[i] == '\n' || s[i] == '\r') return parse(i+1);
 }
 
 string deleteComments(string & str){

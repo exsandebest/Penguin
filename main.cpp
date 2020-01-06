@@ -206,7 +206,9 @@ int parse(int i){
         addToken(18, ",");
         return parse(i+1);
     }
-    if (s[i] == ' ' || s[i] == '\n' || s[i] == '\r') return parse(i+1);
+    if (s[i] == ' ' || s[i] == '\n' || s[i] == '\r' || s[i] == '\t') return parse(i+1);
+
+    throw string("Incorrect symbol :'" + string(1,s[i]) + "'\n");
 }
 
 string deleteComments(string & str){

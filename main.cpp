@@ -1,6 +1,8 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <cstdio>
+#include <cstring>
 #include <iostream>
 using namespace std;
 
@@ -204,7 +206,7 @@ int parse(int i){
         addToken(18, ",");
         return parse(i+1);
     }
-    if (s[i] == ' ') return parse(i+1);
+    if (s[i] == ' ' || s[i] == '\n') return parse(i+1);
 }
 
 string deleteComments(string & str){
@@ -234,8 +236,31 @@ string deleteComments(string & str){
     return res;
 }
 
-int main(){
-    getline(cin, s);
+int main(int argc, char const *argv[]){
+
+    bool fromFile = false;
+
+    if (argc % 2 == 0)
+        throw string("Incorrect arguments");
+
+    for (int i = 1; i < argc; i += 2) {
+        if (strcmp(argv[i], "-i") == 0) {
+            fromFile = true;
+            std :: ifstream inputFile(argv[i+1]);
+            if (!inputFile)
+                throw string("Incorrect input file name");
+            else
+                s.assign((std::istreambuf_iterator<char>(inputFile)),
+                (std::istreambuf_iterator<char>()));
+        } else if (strcmp(argv[i], "-o") == 0) {
+            if (!freopen(argv[i+1], "w", stdout))
+                throw string("Something wrong with the output file");
+        } else
+              throw string("Incorrect arguments");
+    }
+    if (!fromFile)
+        getline(cin, s);
+
     try{
         s = deleteComments(s);
         parse(0);

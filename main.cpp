@@ -202,6 +202,14 @@ int parse(int i){
         addToken(17, "}");
         return parse(i+1);
     }
+    if (s[i] == '['){
+        addToken(20, "[");
+        return parse(i+1);
+    }
+    if (s[i] == ']'){
+        addToken((21, "]"));
+        return parse(i+1);
+    }
     if (s[i] == ','){
         addToken(18, ",");
         return parse(i+1);

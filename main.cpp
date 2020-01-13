@@ -21,7 +21,8 @@ vector <string> reservedWords = {"break", "continue", "if", "else", "return", "w
 vector <string> reservedVariableTypes = {"bool", "string", "int", "double"};
 vector <string> reservedFunctionTypes = {"null"};
 vector <string> reservedOperators = {"and", "or", "xor"};
-vector <string> reservedFunctions = {"read", "write", "require"};
+vector <string> reservedFunctions = {"read", "write"};
+vector <string> reservedSpecialWords = {"import"};
 
 void addToken(int type, string value);
 bool ld (char c);

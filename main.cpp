@@ -9,10 +9,8 @@ using namespace std;
 struct token{
     int type;
     string value;
-    token(){
-        type = 0;
-        value = "";
-    }
+    int size;
+    token(int type, string value): type(type), value(value), size(value.size()){}
 };
 
 string s;
@@ -33,9 +31,7 @@ int parseString(int i);
 string deleteComments(string & str);
 
 void addToken(int type, string value){
-    token * res = new token();
-    res->type = type;
-    res->value = value;
+    token * res = new token(type, value);
     v.push_back(res);
 }
 
@@ -101,7 +97,6 @@ int parseWord(int i){
 
 int parseNumber(int i){
     string resValue = "";
-    token * res = new token();
     while (isdigit(s[i])){
         resValue += s[i];
         ++i;
@@ -208,7 +203,7 @@ int parse(int i){
         return parse(i+1);
     }
     if (s[i] == ']'){
-        addToken((21, "]"));
+        addToken(21, "]");
         return parse(i+1);
     }
     if (s[i] == ','){
@@ -269,18 +264,18 @@ int main(int argc, char const *argv[]){
             } else
                   throw string("Incorrect arguments");
         }
-        if (!fromFile)
-            getline(cin, s);
-
-
+        if (!fromFile) getline(cin, s);
         s = deleteComments(s);
         parse(0);
+        for (token* item: v){
+
+        }
     } catch (string str){
         cout << str;
         return 0;
     }
     for (int i = 0; i < v.size(); ++i){
-        cout << "Number: " << i+1 << "\nType: " << v[i]->type << "\nValue: " << v[i]->value << "\n\n";
+        cout << "Number: " << i+1 << "\nType: " << v[i]->type << "\nSize: " << v[i]->size << "\nValue: " << v[i]->value << "\n\n";
     }
     return 0;
 }

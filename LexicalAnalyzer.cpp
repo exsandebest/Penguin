@@ -10,10 +10,12 @@ struct token{
     int type;
     string value;
     int size;
-    token(int type, string value): type(type), value(value), size(value.size()){}
+    int line;
+    token(int type, string value, int line): type(type), value(value), size(value.size()), line(line){}
 };
 
 string s;
+int line = 1;
 vector <token*> v;
 vector <string> reservedWords = {"break", "continue", "if", "else", "return", "while", "for"};
 vector <string> reservedVariableTypes = {"bool", "string", "int", "double"};
@@ -31,7 +33,7 @@ int parseString(int i);
 string deleteComments(string & str);
 
 void addToken(int type, string value){
-    token * res = new token(type, value);
+    token * res = new token(type, value, line);
     v.push_back(res);
 }
 
@@ -210,9 +212,14 @@ int parse(int i){
         addToken(18, ",");
         return parse(i+1);
     }
-    if (s[i] == ' ' || s[i] == '\n' || s[i] == '\r' || s[i] == '\t') return parse(i+1);
+    if (s[i] == '\n') {
+        ++line;
+        return parse(i+1);
+    }
+    if (s[i] == ' ' || s[i] == '\r' || s[i] == '\t') return parse(i+1);
 
-    throw string("Incorrect symbol :'" + string(1,s[i]) + "'\n");
+
+    throw string("Incorrect symbol : '" + string(1,s[i]) + "'\n");
 }
 
 string deleteComments(string & str){
@@ -277,7 +284,7 @@ int main(int argc, char const *argv[]){
         return 0;
     }
     for (int i = 0; i < v.size(); ++i){
-        cout << "Number: " << i+1 << "\nType: " << v[i]->type << "\nSize: " << v[i]->size << "\nValue: " << v[i]->value << "\n\n";
+        cout << "Number: " << i+1 << "\nType: " << v[i]->type << "\nLine: " << v[i]->line << "\nSize: " << v[i]->size << "\nValue: " << v[i]->value << "\n\n";
     }
     return 0;
 }

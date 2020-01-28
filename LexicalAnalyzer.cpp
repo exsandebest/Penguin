@@ -4,19 +4,13 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
-using namespace std;
+#include "Tokens.h"
 
-struct token{
-    int type;
-    string value;
-    int size;
-    int line;
-    token(int type, string value, int line): type(type), value(value), size(value.size()), line(line){}
-};
+using namespace std;
 
 string s;
 int line = 1;
-vector <token*> v;
+vector <Token*> v;
 vector <string> reservedWords = {"break", "continue", "if", "else", "return", "while", "for"};
 vector <string> reservedVariableTypes = {"bool", "string", "int", "double"};
 vector <string> reservedFunctionTypes = {"null"};
@@ -33,7 +27,7 @@ int parseString(int i);
 string deleteComments(string & str);
 
 void addToken(int type, string value){
-    token * res = new token(type, value, line);
+    Token * res = new Token(type, value, line);
     v.push_back(res);
 }
 
@@ -279,12 +273,13 @@ int main(int argc, char const *argv[]){
         }
         s = deleteComments(s);
         parse(0);
-    } catch (string str){
-        cout << str;
+    } catch (string err){
+        cout << err;
         return 0;
     }
+    cout << v.size() << "\n";
     for (int i = 0; i < v.size(); ++i){
-        cout << "Number: " << i+1 << "\nType: " << v[i]->type << "\nLine: " << v[i]->line << "\nSize: " << v[i]->size << "\nValue: " << v[i]->value << "\n\n";
+        cout << v[i]->line << "\n" << v[i]->type << "\n" << v[i]->size << "\n" << v[i]->value << "\n";
     }
     return 0;
 }

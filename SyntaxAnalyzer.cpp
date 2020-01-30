@@ -7,6 +7,17 @@
 using namespace std;
 
 vector <Token*> v;
+Token * cur;
+
+string err (Token * t);
+void program();
+void function();
+
+string err (Token * t){
+    string s = "";
+    s += "Unexpected token: (" + to_string(t->type) + ") " + t->value + "\n";
+    return s;
+}
 
 int main (int argc, char const *argv[]){
     try {
@@ -30,9 +41,20 @@ int main (int argc, char const *argv[]){
             value = value.substr(0,size);
             v.push_back(new Token(type, value, line));
         }
-        //process
+        fin.close();
+        if (!remove(argv[1])) throw string ("Unable to delete file: " + string(argv[1]));
+        cur = v[0];
+        program();
     } catch (string err){
         cout << err;
         return 0;
     }
+}
+
+void program(){
+
+}
+
+void function(){
+
 }

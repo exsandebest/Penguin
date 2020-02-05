@@ -18,6 +18,8 @@ void function();
 void globals();
 void arguments();
 void block();
+void operation();
+void _operator();
 
 string err (Token * t){
     string s = "";
@@ -61,7 +63,7 @@ void globals(){
 
 }
 
-void nextToken(){
+int nextToken(){
     ++curPos;
     if (curPos >= v.size()) return 0;
     cur = v[curPos];
@@ -74,9 +76,9 @@ void program(){
 }
 
 void functions(){
-    while (nextToken()){
+    do {
         function();
-    }
+    } while (nextToken());
 }
 
 void function(){
@@ -108,4 +110,22 @@ void arguments(){
         if (cur->type != 18) err(cur);
         nextToken();
     }
+}
+
+
+void block(){
+    do {
+        operation();
+    } while (nextToken());
+}
+
+void operation(){
+    if (cur->type == 5 || cur->type == 19 || cur->type == 7){
+        _operator();
+    }
+}
+
+
+void _operator() {
+
 }

@@ -10,7 +10,7 @@ std::string s;
 int line = 1;
 vector <Token*> v;
 vector <std::string> reservedWords = {"break", "continue", "if", "else", "return", "while", "for"};
-vector <std::string> reservedVariableTypes = {"bool", "std::string", "int", "double"};
+vector <std::string> reservedVariableTypes = {"bool", "string", "int", "double"};
 vector <std::string> reservedFunctionTypes = {"null"};
 vector <std::string> reservedOperators = {"and", "or", "xor"};
 vector <std::string> reservedFunctions = {"read", "write"};
@@ -241,6 +241,48 @@ std::string deleteComments(std::string & str) {
     return res;
 }
 
+void lexicalanalyze(int argc, char const *argv[]) {
+
+    bool fromFile = false;
+    try{
+        if (argc % 2 == 0) {
+            throw std::string("Incorrect arguments");
+        }
+        for (int i = 1; i < argc; i += 2) {
+            if (strcmp(argv[i], "-i") == 0) {
+                fromFile = true;
+                std :: ifstream inputFile(argv[i+1]);
+                if (!inputFile){
+                    throw std::string("Incorrect input file name");
+                } else {
+                    s.assign((std::istreambuf_iterator<char>(inputFile)),
+                             (std::istreambuf_iterator<char>()));
+                }
+            } else if (strcmp(argv[i], "-o") == 0) {
+                if (!std::freopen(argv[i+1], "w", stdout)) {
+                    throw std::string("Something wrong with the output file");
+                }
+            } else {
+                throw std::string("Incorrect arguments");
+            }
+        }
+        if (!fromFile) {
+            getline(cin, s);
+        }
+        s = deleteComments(s);
+        parse(0);
+    } catch (std::string err) {
+        cout << err;
+        exit(1);
+    }
+    cout << v.size() << "\n";
+    for (int i = 0; i < v.size(); ++i) {
+        cout << v[i]->line << "\n" << v[i]->type << "\n" << v[i]->size << "\n" << v[i]->value << "\n";
+    }
+    return;
+}
+
+
 int main(int argc, char const *argv[]){
 
     bool fromFile = false;
@@ -259,7 +301,7 @@ int main(int argc, char const *argv[]){
                              (std::istreambuf_iterator<char>()));
                 }
             } else if (strcmp(argv[i], "-o") == 0) {
-                if (!freopen(argv[i+1], "w", stdout)) {
+                if (!std::freopen(argv[i+1], "w", stdout)) {
                     throw std::string("Something wrong with the output file");
                 }
             } else {

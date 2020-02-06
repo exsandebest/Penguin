@@ -1,3 +1,4 @@
+//this is a prototype
 #include <string>
 #include <iostream>
 #include <vector>
@@ -8,9 +9,21 @@ using namespace std;
 
 vector <Token*> v;
 Token * cur;
+int automatState = 0;
+
+enum {integerNumber = 1, doubleNumber = 2, stringConstant = 3,
+      name = 4, variableType = 5, functionType = 6, sOperator = 7, 
+      logicalOperator = 8, readwriteOperator = 19, importOperator = 22, 
+      assignmentOperator = 9, comparsionOperator = 10, binaryMathOperator = 11,
+      unaryMathOperator = 12, semicolon = 13, openingBracket = 14, 
+      closingBracket = 15, openingBrace = 16, closingBrace = 17,
+      openingSquareBracket = 20, closingSquareBracket = 21,
+      comma = 18};
+
 
 string err (Token * t);
 int curPos = -1;
+
 int nextToken();
 void program();
 void functions();
@@ -20,6 +33,20 @@ void arguments();
 void block();
 void operation();
 void _operator();
+void operator_assignment();
+void operator_input_output();
+void operator_main();
+void operator_while();
+void operator_for();
+void operator_return();
+void expression();
+void operator_if();
+void operator_continue();
+void operator_break();
+void operand();
+void operator_io_read();
+void operator_io_write();
+
 
 string err (Token * t){
     string s = "";
@@ -82,32 +109,33 @@ void functions(){
 }
 
 void function(){
-    if (!(cur->type == 5 || cur->type == 6)) err(cur);
+    if (!(cur->type == variableType || cur->type == 6)) throw err(cur);
     nextToken();
-    if (cur->type != 4) err(cur);
+    if (cur->type != name) throw err(cur);
+
     nextToken();
-    if (cur->type != 14) err(cur);
+    if (cur->type != openingBracket) throw err(cur);
     nextToken();
     arguments();
-    if (cur->type != 15) err(cur);
+    if (cur->type != closingBracket) throw err(cur);
     nextToken();
-    if (cur->type != 16) err(cur);
+    if (cur->type != openingBrace) throw err(cur);
     nextToken();
     block();
-    if (cur->type != 17) err(cur);
+    if (cur->type != closingBrace) throw err(cur);
 }
 
 void arguments(){
-    while (cur->type != 15){
-        if (cur->type != 5) err(cur);
+    while (cur->type != closingBracket){
+        if (cur->type != variableType) throw err(cur);
         nextToken();
-        if (cur->type != 4) err(cur);
+        if (cur->type != name) throw err(cur);
         nextToken();
-        if (cur->type == 15) {
+        if (cur->type == closingBracket) {
             nextToken();
             return;
         }
-        if (cur->type != 18) err(cur);
+        if (cur->type != comma) throw err(cur);
         nextToken();
     }
 }
@@ -120,12 +148,149 @@ void block(){
 }
 
 void operation(){
-    if (cur->type == 5 || cur->type == 19 || cur->type == 7){
+    if (cur->type == variableType || cur->type == 19 || cur->type == 7 || cur->type == 4){
         _operator();
     }
 }
 
 
 void _operator() {
+    if (cur->type == name) {
+        operator_assignment();
+    } else if (cur->type == readwriteOperator) {
+        operator_input_output();
+    } else if (cur->type == sOperator){
+        operator_main();
+    } else if (cur->type == variableType){
+
+    }
+}
+
+void operator_main(){
+    if (cur->value == "while"){
+        nextToken();
+        operator_while();
+    } else if (cur->value == "for"){
+        nextToken();
+        operator_for();
+    } else if (cur->value == "if"){
+        nextToken();
+        operator_if();
+    } else if (cur->value == "return"){
+        nextToken();
+        operator_return();
+    } else if (cur->value == "continue"){
+        nextToken();
+        operator_continue();
+    } else if (cur->value == "break"){
+        nextToken();
+        operator_break();
+    }
+}
+
+void operator_continue(){
+    if (cur->type != semicolon) throw err(cur);
+    nextToken();
+}
+
+void operator_break() {
+    if (cur->type != semicolon) throw err(cur);
+    nextToken();
+}
+
+
+void operator_while() {
+    if (cur->type != openingBracket) throw err(cur);
+    nextToken();
+    expression();
+    if (cur->type != closingBracket) throw err(cur);
+    nextToken();
+    if (cur->type != openingBrace) throw err(cur);
+    nextToken();
+    block();
+    if (cur->type != closingBrace) throw err(cur);
+    nextToken();
+}
+
+void operator_for(){
+    if (cur->type != openingBracket) throw err(cur);
+    nextToken();
+    // Parse something
+    if (cur->type != semicolon) throw err(cur);
+    nextToken();
+    expression();
+    if (cur->type != semicolon) throw err(cur);
+    nextToken();
+    // Parse something
+    if (cur->type != closingBracket) throw err(cur);
+    nextToken();
+    if (cur->type != openingBrace) throw err(cur);
+    nextToken();
+    block();
+    if (cur->type != closingBrace) throw err(cur);
+    nextToken();
+}
+
+void operator_if () {
+    if (cur->type != openingBracket) throw err(cur);
+    nextToken();
+    expression();
+    if (cur->type != closingBracket) throw err(cur);
+    nextToken(); 
+    if (cur->type != openingBrace) throw err(cur);
+    nextToken();
+    block();
+    if (cur->type != closingBrace) throw err(cur);
+    nextToken();
+    if (cur->value != "else") return;
+    nextToken();
+    if (cur->value == "if"){
+        operator_if();
+        nextToken();
+    } else if (cur->value == "{"){
+        nextToken();
+        block();
+        if (cur->type != closingBrace) throw err(cur);
+        nextToken();
+    }
+}
+
+
+void operator_return(){
+    operand();
+    if (cur->type != semicolon) throw err(cur);
+    nextToken();
+}
+
+
+void operator_input_output(){
+    if (cur->value == "read"){
+        operator_io_read();   
+    } else if (cur->value == "write") {
+        operator_io_write();
+    }
+}
+
+
+
+void operator_assignment(){
 
 }
+
+
+void expression() {
+   
+}
+
+void operand() {
+
+}
+
+void operator_io_read() {
+
+}
+
+void operator_io_write() {
+
+}
+

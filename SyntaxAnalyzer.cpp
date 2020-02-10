@@ -88,7 +88,11 @@ int main (int argc, char const *argv[]){
 }
 
 void globals(){
-
+    while (cur->value == "import"){
+        nextToken();
+        if (cur-type != stringConstant) throw err();
+        nextToken();
+    }
 }
 
 int nextToken(){
@@ -145,7 +149,8 @@ void arguments(){
 void block(){
     do {
         operation();
-    } while (nextToken());
+        nextToken();
+    } while (cur->type != closingBrace);
 }
 
 void operation(){
@@ -163,7 +168,7 @@ void _operator() {
     } else if (cur->type == sOperator){
         operator_main();
     } else if (cur->type == variableType){
-
+        operator_variable_declaration();
     }
 }
 
@@ -275,7 +280,13 @@ void operator_input_output(){
 
 
 void operator_assignment(){
-
+    if (cur->type != name) throw err();
+    nextToken();
+    if (cur->type != assignmentOperator) throw err();
+    nextToken();
+    operand();
+    if (cur->value != semicolon) throw err();
+    nextToken();
 }
 
 
@@ -284,7 +295,13 @@ void expression() {
 }
 
 void operand() {
-    
+    if (cur->type == integerNumber || cur->type == doubleNumber || cur->type == stringConstant){
+        nextToken();
+        if (cur->type != semicolon) throw err();
+    } else {
+        expression();
+        if (cur->type != semicolon) throw err();
+    }
 }
 
 void arguments_to_call() {

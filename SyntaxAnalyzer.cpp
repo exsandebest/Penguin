@@ -4,22 +4,13 @@
 #include <vector>
 #include <fstream>
 #include "Tokens.h"
+#include "Settings.h"
 
 using namespace std;
 
 vector <Token*> v;
 Token * cur;
 int automatState = 0;
-
-enum {integerNumber = 1, doubleNumber = 2, stringConstant = 3,
-      name = 4, variableType = 5, functionType = 6, sOperator = 7, 
-      logicalOperator = 8, readwriteOperator = 19, importOperator = 22, 
-      assignmentOperator = 9, comparsionOperator = 10, binaryMathOperator = 11,
-      unaryMathOperator = 12, semicolon = 13, openingBracket = 14, 
-      closingBracket = 15, openingBrace = 16, closingBrace = 17,
-      openingSquareBracket = 20, closingSquareBracket = 21,
-      comma = 18};
-
 
 string err (Token * t);
 int curPos = -1;
@@ -242,7 +233,7 @@ void operator_if () {
     nextToken();
     expression();
     if (cur->type != closingBracket) throw err();
-    nextToken(); 
+    nextToken();
     if (cur->type != openingBrace) throw err();
     nextToken();
     block();
@@ -271,7 +262,7 @@ void operator_return(){
 
 void operator_input_output(){
     if (cur->value == "read"){
-        operator_io_read();   
+        operator_io_read();
     } else if (cur->value == "write") {
         operator_io_write();
     }

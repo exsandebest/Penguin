@@ -5,6 +5,7 @@
 #include <cstring>
 #include <iostream>
 #include "Tokens.h"
+#include "Settings.h"
 
 std::string s;
 int line = 1;
@@ -50,31 +51,31 @@ bool detectReserved(std::string str, int i) {
 int parseWord(int i){
     for (std::string word : reservedWords) {
         if (detectReserved(word, i)) {
-            addToken(7, word);
+            addToken(sOperator, word);
             return (i + word.length());
         }
     }
     for (std::string word : reservedVariableTypes) {
         if (detectReserved(word, i)) {
-            addToken(5, word);
+            addToken(variableType, word);
             return (i + word.length());
         }
     }
     for (std::string word : reservedFunctionTypes) {
         if (detectReserved(word, i)) {
-            addToken(6, word);
+            addToken(functionType, word);
             return (i + word.length());
         }
     }
     for (std::string word : reservedOperators) {
         if (detectReserved(word, i)) {
-            addToken(8, word);
+            addToken(logicalOperator, word);
             return (i + word.length());
         }
     }
     for (std::string word : reservedFunctions) {
         if (detectReserved(word, i)) {
-            addToken(19, word);
+            addToken(readwriteOperator, word);
             return (i + word.length());
         }
     }
@@ -83,7 +84,7 @@ int parseWord(int i){
         ts += s[i];
         ++i;
     }
-    addToken(4, ts);
+    addToken(name, ts);
     return i;
 }
 
@@ -103,13 +104,13 @@ int parseNumber(int i) {
                 resValue += s[i];
                 ++i;
             }
-            addToken(2,resValue);
+            addToken(doubleNumber,resValue);
             return i;
         } else {
             throw "Incorrect number constant";
         }
     } else {
-        addToken(1,resValue);
+        addToken(integerNumber,resValue);
         return i;
     }
 }
@@ -123,7 +124,7 @@ int parseString(int i) {
         ++i;
     }
     ++i;
-    addToken(3,resValue);
+    addToken(stringConstant,resValue);
     return i;
 }
 
@@ -132,36 +133,36 @@ int parse(int i) {
     std::string ts = "";
 
     if (s[i] == ';') {
-        addToken(13,";");
+        addToken(semicolon,";");
         ++i;
         return parse(i);
     }
     if (ts + s[i]+ s[i+1] == "==" || ts + s[i] + s[i+1] == "<=" || ts + s[i] + s[i+1] == ">=" || ts + s[i] + s[i+1] == "!=") {
-        addToken(10, ts + s[i] + s[i+1]);
+        addToken(comparsionOperator, ts + s[i] + s[i+1]);
         return parse(i+2);
     }
     if (s[i] == '=') {
-        addToken(9, std::string(1, s[i]));
+        addToken(assignmentOperator, std::string(1, s[i]));
         return parse(i+1);
     }
     if (s[i] == '~') {
-        addToken(12, std::string(1, s[i]));
+        addToken(unaryMathOperator, std::string(1, s[i]));
         return parse(i+1);
     }
     if (ts + s[i] + s[i+1] == ">>" || ts + s[i] + s[i+1] == "<<" || ts + s[i] + s[i+1] == "**") {
-        addToken(11, ts + s[i] + s[i+1]);
+        addToken(binaryMathOperator, ts + s[i] + s[i+1]);
         return parse(i+2);
     }
     if (s[i] == '<' || s[i] == '>') {
-        addToken(10, std::string(1, s[i]));
+        addToken(comparsionOperator, std::string(1, s[i]));
         return parse(i+1);
     }
     if (ts + s[i] + s[i+1] == "++" || ts + s[i] + s[i+1] == "--") {
-        addToken(12, ts + s[i] + s[i+1]);
+        addToken(unaryMathOperator, ts + s[i] + s[i+1]);
         return parse(i+2);
     }
     if (s[i] == '+' || s[i] == '-' || s[i] == '/' || s[i] == '*' || s[i] == '%' || s[i] == '^' || s[i] == '|' || s[i] == '&') {
-        addToken(11, std::string(1,s[i]));
+        addToken(binaryMathOperator, std::string(1,s[i]));
         return parse(i+1);
     }
     if (isdigit(s[i])) {
@@ -177,31 +178,35 @@ int parse(int i) {
         return parse(i);
     }
     if (s[i] == '(') {
-        addToken(14, "(");
+        addToken(openingBracket, "(");
         return parse(i+1);
     }
     if (s[i] == ')') {
-        addToken(15, ")");
+        addToken(closingBracket, ")");
         return parse(i+1);
     }
     if (s[i] == '{') {
-        addToken(16, "{");
+        addToken(openingBrace, "{");
         return parse(i+1);
     }
     if (s[i] == '}') {
-        addToken(17, "}");
+        addToken(closingBrace, "}");
         return parse(i+1);
     }
     if (s[i] == '[') {
-        addToken(20, "[");
+        addToken(openingSquareBracket, "[");
         return parse(i+1);
     }
     if (s[i] == ']') {
-        addToken(21, "]");
+        addToken(closingSquareBracket, "]");
         return parse(i+1);
     }
     if (s[i] == ',') {
         addToken(18, ",");
+        return parse(i+1);
+    }
+    if (s[i] == '!') {
+        addToken(logicalOperator, "!");
         return parse(i+1);
     }
     if (s[i] == '\n') {

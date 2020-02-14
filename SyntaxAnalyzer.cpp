@@ -42,7 +42,13 @@ void operator_variable_declaration();
 
 string err (){
     string s = "";
-    s += "Unexpected token: (" + to_string(cur->type) + ") " + cur->value + " on line " + to_string(cur->line) + "\n";
+    s += "Unexpected token: (" + to_string(cur->type) + ") '" + cur->value + "' on line " + to_string(cur->line) + "\n";
+    return s;
+}
+
+string ttos (Token *) { //Token TO String
+    string s = "";
+    s += "Debug: (" + to_string(cur->type) + ") '" + cur->value + "' on line " + to_string(cur->line) + "\n";
     return s;
 }
 
@@ -69,9 +75,10 @@ int main (int argc, char const *argv[]){
             v.push_back(new Token(type, value, line));
         }
         fin.close();
-        if (!remove(argv[1])) throw string ("Unable to delete file: " + string(argv[1]));
+        remove(argv[1]);
         nextToken();
         program();
+        cout << "STATUS : OK";
     } catch (string err){
         cout << err;
         return 0;
@@ -79,6 +86,7 @@ int main (int argc, char const *argv[]){
 }
 
 void globals(){
+    cout << "F: globals\n";
     while (cur->value == "import"){
         nextToken();
         if (cur -> type != stringConstant) throw err();
@@ -90,25 +98,28 @@ int nextToken(){
     ++curPos;
     if (curPos >= v.size()) return 0;
     cur = v[curPos];
+    cout << ttos(cur);
     return 1;
 }
 
 void program(){
+    cout << "F: program\n";
     globals();
     functions();
 }
 
 void functions(){
+    cout << "F: functions\n";
     do {
         function();
     } while (nextToken());
 }
 
 void function(){
+    cout << "F: function\n";
     if (!(cur->type == variableType || cur->type == 6)) throw err();
     nextToken();
     if (cur->type != name) throw err();
-
     nextToken();
     if (cur->type != openingBracket) throw err();
     nextToken();
@@ -122,13 +133,13 @@ void function(){
 }
 
 void arguments(){
+    cout << "F: arguments\n";
     while (cur->type != closingBracket){
         if (cur->type != variableType) throw err();
         nextToken();
         if (cur->type != name) throw err();
         nextToken();
         if (cur->type == closingBracket) {
-            nextToken();
             return;
         }
         if (cur->type != comma) throw err();
@@ -138,32 +149,37 @@ void arguments(){
 
 
 void block(){
+    cout << "F: block\n";
     do {
         operation();
-        nextToken();
     } while (cur->type != closingBrace);
 }
 
 void operation(){
-    if (cur->type == variableType || cur->type == 19 || cur->type == 7 || cur->type == 4){
+    cout << "F: operation\n";
+    if (cur->type == variableType || cur->type == readwriteOperator || cur->type == sOperator || cur->type == name){
         _operator();
     }
 }
 
 
 void _operator() {
+    cout << "F: _operator\n";
     if (cur->type == name) {
         operator_assignment();
     } else if (cur->type == readwriteOperator) {
+        cout << "Jopa";
         operator_input_output();
     } else if (cur->type == sOperator){
         operator_main();
     } else if (cur->type == variableType){
+        nextToken();
         operator_variable_declaration();
     }
 }
 
 void operator_main(){
+    cout << "F: operator_main\n";
     if (cur->value == "while"){
         nextToken();
         operator_while();
@@ -186,17 +202,20 @@ void operator_main(){
 }
 
 void operator_continue(){
+    cout << "F: operator_continue\n";
     if (cur->type != semicolon) throw err();
     nextToken();
 }
 
 void operator_break() {
+    cout << "F: operator_break\n";
     if (cur->type != semicolon) throw err();
     nextToken();
 }
 
 
 void operator_while() {
+    cout << "F: operator_while\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
     expression();
@@ -210,6 +229,7 @@ void operator_while() {
 }
 
 void operator_for(){
+    cout << "F: operator_for\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
     // Parse something
@@ -229,6 +249,7 @@ void operator_for(){
 }
 
 void operator_if () {
+    cout << "F: operator_if\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
     expression();
@@ -254,6 +275,7 @@ void operator_if () {
 
 
 void operator_return(){
+    cout << "F: operator_return\n";
     operand();
     if (cur->type != semicolon) throw err();
     nextToken();
@@ -261,9 +283,12 @@ void operator_return(){
 
 
 void operator_input_output(){
+    cout << "F: operator_input_output\n";
     if (cur->value == "read"){
+        nextToken();
         operator_io_read();
     } else if (cur->value == "write") {
+        nextToken();
         operator_io_write();
     }
 }
@@ -271,8 +296,7 @@ void operator_input_output(){
 
 
 void operator_assignment(){
-    if (cur->type != name) throw err();
-    nextToken();
+    cout << "F: operator_assignment\n";
     if (cur->type != assignmentOperator) throw err();
     nextToken();
     operand();
@@ -282,6 +306,7 @@ void operator_assignment(){
 
 //max
 void expression() {
+    cout << "F: expression\n";
    int expressionState = 0;
 
    while (cur -> type != closingBrace || cur -> type != semicolon) {
@@ -301,6 +326,7 @@ void expression() {
 //max
 
 void operand() {
+    cout << "F: operand\n";
     if (cur->type == integerNumber || cur->type == doubleNumber || cur->type == stringConstant){
         nextToken();
         if (cur->type != semicolon) throw err();
@@ -311,16 +337,18 @@ void operand() {
 }
 
 void arguments_to_call() {
+    cout << "F: arguments_to_call\n";
     while (cur->type != closingBracket){
         if (cur->type != name) throw err();
         nextToken();
         if (cur->type == closingBracket) break;
         if (cur->type != comma) throw err();
+        nextToken();
     }
-    nextToken();
 }
 
 void operator_io_read() {
+    cout << "F: operator_io_read\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
     arguments_to_call();
@@ -331,6 +359,7 @@ void operator_io_read() {
 }
 
 void operator_io_write() {
+    cout << "F: operator_io_write\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
     operand();
@@ -341,5 +370,14 @@ void operator_io_write() {
 }
 
 void operator_variable_declaration() {
-
+    cout << "F: operator_variable_declaration\n";
+    if (cur->type != name) throw err();
+    nextToken();
+    if (cur->type == assignmentOperator){
+        operator_assignment();
+    } else if (cur->type == semicolon){
+        nextToken();
+    } else {
+        throw err();
+    }
 }

@@ -168,7 +168,6 @@ void _operator() {
     if (cur->type == name) {
         operator_assignment();
     } else if (cur->type == readwriteOperator) {
-        cout << "Jopa";
         operator_input_output();
     } else if (cur->type == sOperator){
         operator_main();

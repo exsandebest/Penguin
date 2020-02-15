@@ -323,22 +323,71 @@ void operator_assignment(){
 
 //max
 int expression() {
-    cout << "F: expression\n";
    int expressionState = 0;
+   // std::queue<int> exp;
 
    while (cur -> type != closingBrace || cur -> type != semicolon) {
-       if (cur -> type == openingBracket) {
-            nextToken();
-            expression();
-            if (cur -> type != closingBracket)
+       if (expressionState == 0) {
+           if (cur -> type == openingBracket) {
+                nextToken();
+                expression();
+                if (cur -> type != closingBracket)
+                    throw err();
+                nextToken();
+                expressionState = 1;
+           } else if (cur -> type == name) {
+                 //check stack
+                nextToken();
+                expressionState = 1;
+           } else if (cur -> type == stringConstant) {
+                nextToken();
+                expressionState = 1;
+           } else if (cur -> type == integerNumber || cur -> type == doubleNumber) {
+                nextToken();
+                expressionState = 1;
+           } else if (cur -> type == unaryMathOperator) {
+                nextToken();
+                expressionState = 2;
+               // if (expressionState == )
+           } else if ((cur -> type == logicalOperator && cur -> value == "!")) {
+                nextToken();
+                expressionState = 2;
+           } else
                 throw err();
-            nextToken();
-       }
-       if (cur -> type == name) {
-
+       } else if (expressionState == 1) {
+            if (cur -> type == binaryMathOperator) {
+                nextToken();
+                expressionState = 0;
+            } else if (cur -> type == comparsionOperator) {
+                nextToken();
+                expressionState = 0;
+            } else
+                 throw err();
+       } else if (expressionState == 2) {
+            if (cur -> type == openingBracket) {
+                nextToken();
+                expression();
+                if (cur -> type != closingBracket)
+                    throw err();
+                nextToken();
+                expressionState = 1;
+            } else if (cur -> type == name) {
+                 //check stack
+                nextToken();
+                expressionState = 1;
+            } else if (cur -> type == stringConstant) {
+                nextToken();
+                expressionState = 1;
+            } else if (cur -> type == integerNumber || cur -> type == doubleNumber) {
+                nextToken();
+                expressionState = 1;
+            } else
+                throw err();
        }
 
     }
+    if (expressionState != 1)
+        throw err();
     return 0;
 }
 //max

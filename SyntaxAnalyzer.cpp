@@ -1,4 +1,3 @@
-//this is a prototype
 #include <string>
 #include <iostream>
 #include <vector>
@@ -10,10 +9,12 @@ using namespace std;
 
 vector <Token*> v;
 Token * cur;
-int automatState = 0;
-
-string err (Token * t);
+vector<int> state;
 int curPos = -1;
+
+string err();
+string ttos (Token * t);
+string errET();
 
 int nextToken();
 void program();
@@ -50,6 +51,10 @@ string ttos (Token *) { //Token TO String
     string s = "";
     s += "Debug: (" + to_string(cur->type) + ") '" + cur->value + "' on line " + to_string(cur->line) + "\n";
     return s;
+}
+
+string errET(int currentType, int exprectedType) {
+    return string("Incorrect Expression Type: (" + to_string(currentType) + "), exprected (" + to_string(exprectedType) + ")");
 }
 
 int main (int argc, char const *argv[]){
@@ -128,7 +133,9 @@ void function(){
     nextToken();
     if (cur->type != openingBrace) throw err();
     nextToken();
+    state.push_back(inFunction);
     block();
+    state.pop_back();
     if (cur->type != closingBrace) throw err();
 }
 
@@ -217,12 +224,15 @@ void operator_while() {
     cout << "F: operator_while\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
-    expression();
+    int curET = expression();
+    if (curET != ETBool) throw err(curET, ETBool);
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != openingBrace) throw err();
     nextToken();
+    state.push_back(inCycle);
     block();
+    state.pop_back();
     if (cur->type != closingBrace) throw err();
     nextToken();
 }
@@ -234,7 +244,8 @@ void operator_for(){
     // Parse something
     if (cur->type != semicolon) throw err();
     nextToken();
-    expression();
+    int curET = expression();
+    if (curET != ETBool) throw err(curET, ETBool);
     if (cur->type != semicolon) throw err();
     nextToken();
     // Parse something
@@ -242,7 +253,9 @@ void operator_for(){
     nextToken();
     if (cur->type != openingBrace) throw err();
     nextToken();
+    state.push_back(inCycle);
     block();
+    state.pop_back();
     if (cur->type != closingBrace) throw err();
     nextToken();
 }
@@ -251,12 +264,15 @@ void operator_if () {
     cout << "F: operator_if\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
-    expression();
+    int curET = expression();
+    if (curET != ETBool) throw err(curET, ETBool);
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != openingBrace) throw err();
     nextToken();
+    state.push_back(inIf);
     block();
+    state.pop_back();
     if (cur->type != closingBrace) throw err();
     nextToken();
     if (cur->value != "else") return;
@@ -266,7 +282,9 @@ void operator_if () {
         nextToken();
     } else if (cur->value == "{"){
         nextToken();
+        state.push_back(inElse);
         block();
+        state.pop_back();
         if (cur->type != closingBrace) throw err();
         nextToken();
     }

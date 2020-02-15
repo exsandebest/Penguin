@@ -31,7 +31,7 @@ void operator_main();
 void operator_while();
 void operator_for();
 void operator_return();
-void expression();
+int expression();
 void operator_if();
 void operator_continue();
 void operator_break();
@@ -225,7 +225,7 @@ void operator_while() {
     if (cur->type != openingBracket) throw err();
     nextToken();
     int curET = expression();
-    if (curET != ETBool) throw err(curET, ETBool);
+    if (curET != ETBool) throw errET(curET, ETBool);
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != openingBrace) throw err();
@@ -245,7 +245,7 @@ void operator_for(){
     if (cur->type != semicolon) throw err();
     nextToken();
     int curET = expression();
-    if (curET != ETBool) throw err(curET, ETBool);
+    if (curET != ETBool) throw errET(curET, ETBool);
     if (cur->type != semicolon) throw err();
     nextToken();
     // Parse something
@@ -265,7 +265,7 @@ void operator_if () {
     if (cur->type != openingBracket) throw err();
     nextToken();
     int curET = expression();
-    if (curET != ETBool) throw err(curET, ETBool);
+    if (curET != ETBool) throw errET(curET, ETBool);
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != openingBrace) throw err();
@@ -322,7 +322,7 @@ void operator_assignment(){
 }
 
 //max
-void expression() {
+int expression() {
     cout << "F: expression\n";
    int expressionState = 0;
 
@@ -339,6 +339,7 @@ void expression() {
        }
 
     }
+    return 0;
 }
 //max
 

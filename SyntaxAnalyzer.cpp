@@ -35,7 +35,6 @@ int expression();
 void operator_if();
 void operator_continue();
 void operator_break();
-void operand();
 void operator_io_read();
 void operator_io_write();
 void arguments_to_call();
@@ -293,7 +292,7 @@ void operator_if () {
 
 void operator_return(){
     cout << "F: operator_return\n";
-    operand();
+    expression();
     if (cur->type != semicolon) throw err();
     nextToken();
 }
@@ -316,13 +315,14 @@ void operator_assignment(){
     cout << "F: operator_assignment\n";
     if (cur->type != assignmentOperator) throw err();
     nextToken();
-    operand();
+    expression();
     if (cur->type != semicolon) throw err();
     nextToken();
 }
 
 //max
 int expression() {
+    cout << "F: expression\n";
    int expressionState = 0;
    // std::queue<int> exp;
 
@@ -392,16 +392,6 @@ int expression() {
 }
 //max
 
-void operand() {
-    cout << "F: operand\n";
-    if (cur->type == integerNumber || cur->type == doubleNumber || cur->type == stringConstant){
-        nextToken();
-        if (cur->type != semicolon) throw err();
-    } else {
-        expression();
-        if (cur->type != semicolon) throw err();
-    }
-}
 
 void arguments_to_call() {
     cout << "F: arguments_to_call\n";
@@ -429,7 +419,7 @@ void operator_io_write() {
     cout << "F: operator_io_write\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
-    operand();
+    expression();
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != semicolon) throw err();

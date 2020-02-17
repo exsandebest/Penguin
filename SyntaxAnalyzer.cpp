@@ -182,7 +182,6 @@ void _operator() {
     } else if (cur->type == sOperator){
         operator_main();
     } else if (cur->type == variableType){
-        nextToken();
         operator_variable_declaration();
     }
 }
@@ -244,14 +243,18 @@ void operator_for(){
     cout << "F: operator_for\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
-    // Parse something
+    if (cur->type == variableType) {
+        operator_variable_declaration();
+    } else {
+        expression();
+    }
     if (cur->type != semicolon) throw err();
     nextToken();
     int curET = expression();
     //if (curET != ETBool) throw errET(curET, ETBool);
     if (cur->type != semicolon) throw err();
     nextToken();
-    // Parse something
+    expression();
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != openingBrace) throw err();
@@ -432,6 +435,8 @@ void operator_io_write() {
 
 void operator_variable_declaration() {
     cout << "F: operator_variable_declaration\n";
+    if (cur->type != variableType) throw err();
+    nextToken();
     if (cur->type != name) throw err();
     nextToken();
     if (cur->type == assignmentOperator){

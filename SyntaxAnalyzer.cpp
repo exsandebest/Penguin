@@ -163,16 +163,20 @@ void block(){
 
 void operation(){
     cout << "F: operation\n";
-    if (cur->type == variableType || cur->type == readwriteOperator || cur->type == sOperator || cur->type == name){
+    if (cur->type == variableType || cur->type == readwriteOperator || cur->type == sOperator || cur->type == name || cur->type == unaryMathOperator){
         _operator();
+    } else {
+        throw err();
     }
 }
 
 
 void _operator() {
     cout << "F: _operator\n";
-    if (cur->type == name) {
-        operator_assignment();
+    if (cur->type == name || cur->type == unaryMathOperator) {
+        expression();
+        if (cur->type != semicolon) throw err();
+        nextToken();
     } else if (cur->type == readwriteOperator) {
         operator_input_output();
     } else if (cur->type == sOperator){
@@ -224,7 +228,7 @@ void operator_while() {
     if (cur->type != openingBracket) throw err();
     nextToken();
     int curET = expression();
-    if (curET != ETBool) throw errET(curET, ETBool);
+    //if (curET != ETBool) throw errET(curET, ETBool);
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != openingBrace) throw err();
@@ -244,7 +248,7 @@ void operator_for(){
     if (cur->type != semicolon) throw err();
     nextToken();
     int curET = expression();
-    if (curET != ETBool) throw errET(curET, ETBool);
+    //if (curET != ETBool) throw errET(curET, ETBool);
     if (cur->type != semicolon) throw err();
     nextToken();
     // Parse something
@@ -264,7 +268,7 @@ void operator_if () {
     if (cur->type != openingBracket) throw err();
     nextToken();
     int curET = expression();
-    if (curET != ETBool) throw errET(curET, ETBool);
+    //if (curET != ETBool) throw errET(curET, ETBool);
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != openingBrace) throw err();
@@ -326,7 +330,7 @@ int expression() {
    int expressionState = 0;
    // std::queue<int> exp;
 
-   while (cur -> type != closingBrace || cur -> type != semicolon) {
+   while (cur -> type != closingBracket && cur -> type != semicolon) {
        if (expressionState == 0) {
            if (cur -> type == openingBracket) {
                 nextToken();

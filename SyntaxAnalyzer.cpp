@@ -330,48 +330,90 @@ void operator_assignment(){
 //max
 int expression() {
     cout << "F: expression\n";
-   int expressionState = 0;
+
+    enum {signExpect = 1, startExpect = 0, numExpect = 2,
+          };
+    bool canBeBeforeassign = true;
+
+    int expressionState = startExpect;
    // std::queue<int> exp;
 
-   while (cur -> type != closingBracket && cur -> type != semicolon) {
+   while (cur -> type != closingBracket && cur -> type != semicolon && cur -> type != comma) {
        if (expressionState == 0) {
            if (cur -> type == openingBracket) {
+                canBeBeforeassign = false;
+
                 nextToken();
                 expression();
                 if (cur -> type != closingBracket)
                     throw err();
                 nextToken();
-                expressionState = 1;
+                expressionState = 1; 
            } else if (cur -> type == name) {
                  //check stack
                 nextToken();
+
+                if (cur -> type == openingBracket) {
+                    nextToken();
+
+                    while(cur -> type != closingBracket) {
+                        expression();
+                        if (cur -> type != comma &&
+                            cur -> type != closingBracket)
+                            throw err();
+                        if (cur -> type != closingBracket)
+                            nextToken();
+                    }
+                    nextToken();
+                    canBeBeforeassign = false;
+                }
+
                 expressionState = 1;
            } else if (cur -> type == stringConstant) {
+                canBeBeforeassign = false;
+
                 nextToken();
                 expressionState = 1;
            } else if (cur -> type == integerNumber || cur -> type == doubleNumber) {
+                canBeBeforeassign = false;
+
                 nextToken();
                 expressionState = 1;
            } else if (cur -> type == unaryMathOperator) {
+                canBeBeforeassign = false;
+
                 nextToken();
                 expressionState = 2;
                // if (expressionState == )
            } else if ((cur -> type == logicalOperator && cur -> value == "!")) {
+                canBeBeforeassign = false;
+
                 nextToken();
                 expressionState = 2;
            } else
                 throw err();
        } else if (expressionState == 1) {
-            if (cur -> type == binaryMathOperator) {
+            if (cur -> type == binaryMathOperator) {//math
+                canBeBeforeassign = false;
+
                 nextToken();
                 expressionState = 0;
-            } else if (cur -> type == comparsionOperator) {
+            } else if (cur -> type == comparsionOperator) {//logic
+                canBeBeforeassign = false;
+
                 nextToken();
                 expressionState = 0;
-            } else
-                 throw err();
+            } else if (cur -> type == assignmentOperator && 
+                canBeBeforeassign) {
+                nextToken();
+                expressionState = 0;
+            }
+            else
+                throw err();
        } else if (expressionState == 2) {
             if (cur -> type == openingBracket) {
+                canBeBeforeassign = false;
+
                 nextToken();
                 expression();
                 if (cur -> type != closingBracket)
@@ -380,12 +422,31 @@ int expression() {
                 expressionState = 1;
             } else if (cur -> type == name) {
                  //check stack
+
                 nextToken();
+                if (cur -> type == openingBracket) {
+                    nextToken();
+
+                    while(cur -> type != closingBracket) {
+                        expression();
+                        if (cur -> type != comma &&
+                            cur -> type != closingBracket)
+                            throw err();
+                        if (cur -> type != closingBracket)
+                            nextToken();
+                    }
+                    nextToken();
+                    canBeBeforeassign = false;
+                }
                 expressionState = 1;
             } else if (cur -> type == stringConstant) {
+                canBeBeforeassign = false;
+
                 nextToken();
                 expressionState = 1;
             } else if (cur -> type == integerNumber || cur -> type == doubleNumber) {
+                canBeBeforeassign = false;
+
                 nextToken();
                 expressionState = 1;
             } else

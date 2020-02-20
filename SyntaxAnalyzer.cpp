@@ -284,6 +284,7 @@ void operator_if () {
     if (cur->value != "else") return;
     nextToken();
     if (cur->value == "if"){
+        nextToken();
         operator_if();
         nextToken();
     } else if (cur->value == "{"){
@@ -348,7 +349,7 @@ int expression() {
                 if (cur -> type != closingBracket)
                     throw err();
                 nextToken();
-                expressionState = 1; 
+                expressionState = 1;
            } else if (cur -> type == name) {
                  //check stack
                 nextToken();
@@ -403,7 +404,7 @@ int expression() {
 
                 nextToken();
                 expressionState = 0;
-            } else if (cur -> type == assignmentOperator && 
+            } else if (cur -> type == assignmentOperator &&
                 canBeBeforeassign) {
                 nextToken();
                 expressionState = 0;

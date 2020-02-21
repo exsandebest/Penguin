@@ -183,6 +183,7 @@ void _operator() {
         operator_main();
     } else if (cur->type == variableType){
         operator_variable_declaration();
+        nextToken();
     }
 }
 
@@ -325,7 +326,6 @@ void operator_assignment(){
     nextToken();
     expression();
     if (cur->type != semicolon) throw err();
-    nextToken();
 }
 
 //max
@@ -465,8 +465,7 @@ int expression() {
 void arguments_to_call() {
     cout << "F: arguments_to_call\n";
     while (cur->type != closingBracket){
-        if (cur->type != name) throw err();
-        nextToken();
+        expression();
         if (cur->type == closingBracket) break;
         if (cur->type != comma) throw err();
         nextToken();

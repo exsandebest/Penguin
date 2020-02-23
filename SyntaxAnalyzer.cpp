@@ -2,18 +2,24 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
+#include <stack>
+#include <set>
 #include "Main.h"
 
 using namespace std;
 
 vector <Token*> v;
 Token * cur;
-vector<int> state;
+stack<int> stateStack;
+multiset<int> stateSet;
 int curPos = -1;
 
 string err();
 string ttos (Token * t);
 string errET();
+
+void addState(int state);
+void delState(int state);
 
 int nextToken();
 void program();
@@ -54,6 +60,17 @@ string ttos (Token *) { //Token TO String
 string errET(int currentType, int exprectedType) {
     return string("Incorrect Expression Type: (" + to_string(currentType) + "), exprected (" + to_string(exprectedType) + ")");
 }
+
+
+void addState(int state){
+    stateStack.push(state);
+    stateSet.insert(state);
+}
+void delState(int state){
+    stateStack.pop();
+    stateSet.erase(state);
+}
+
 
 int main (int argc, char const *argv[]){
     try {
@@ -131,9 +148,9 @@ void function(){
     nextToken();
     if (cur->type != openingBrace) throw err();
     nextToken();
-    state.push_back(inFunction);
+    addState(inFunction);
     block();
-    state.pop_back();
+    delState(inFunction);
     if (cur->type != closingBrace) throw err();
 }
 
@@ -231,9 +248,9 @@ void operator_while() {
     nextToken();
     if (cur->type != openingBrace) throw err();
     nextToken();
-    state.push_back(inCycle);
+    addState(inCycle);
     block();
-    state.pop_back();
+    delState(inCycle);
     if (cur->type != closingBrace) throw err();
     nextToken();
 }
@@ -242,11 +259,13 @@ void operator_for(){
     cout << "F: operator_for\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
+    addState(inFor1);
     if (cur->type == variableType) {
         operator_variable_declaration();
     } else {
         expression();
     }
+    delState(inFor1);
     if (cur->type != semicolon) throw err();
     nextToken();
     int curET = expression();
@@ -258,9 +277,9 @@ void operator_for(){
     nextToken();
     if (cur->type != openingBrace) throw err();
     nextToken();
-    state.push_back(inCycle);
+    addState(inCycle);
     block();
-    state.pop_back();
+    delState(inCycle);
     if (cur->type != closingBrace) throw err();
     nextToken();
 }
@@ -275,9 +294,9 @@ void operator_if () {
     nextToken();
     if (cur->type != openingBrace) throw err();
     nextToken();
-    state.push_back(inIf);
+    addState(inIf);
     block();
-    state.pop_back();
+    delState(inIf);
     if (cur->type != closingBrace) throw err();
     nextToken();
     if (cur->value != "else") return;
@@ -288,9 +307,9 @@ void operator_if () {
         nextToken();
     } else if (cur->value == "{"){
         nextToken();
-        state.push_back(inElse);
+        addState(inElse);
         block();
-        state.pop_back();
+        delState(inElse);
         if (cur->type != closingBrace) throw err();
         nextToken();
     }
@@ -324,7 +343,7 @@ void operator_assignment(){
     nextToken();
     expression();
     if (cur->type != semicolon) throw err();
-    nextToken();
+    if (stateSet.count(inFor1) == 0) nextToken();
 }
 
 //max
@@ -502,7 +521,7 @@ void operator_variable_declaration() {
     if (cur->type == assignmentOperator){
         operator_assignment();
     } else if (cur->type == semicolon){
-        nextToken();
+        if (stateSet.count(inFor1) == 0) nextToken();
     } else {
         throw err();
     }

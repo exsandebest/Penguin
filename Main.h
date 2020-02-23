@@ -31,7 +31,8 @@ enum { //Token's types
     readwriteOperator = 19,
     openingSquareBracket = 20,
     closingSquareBracket = 21,
-    importOperator = 22
+    importOperator = 22,
+    logicalConstant = 23
 };
 
 enum { //States

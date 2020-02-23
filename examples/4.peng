@@ -1,0 +1,13 @@
+null main() {
+    int n;
+    read(n);
+    bool g = true;
+    g = check2(n);
+    g = !g;
+    write(g == false);
+
+}
+
+bool check2 (int k) {
+    return k%2==0;
+}

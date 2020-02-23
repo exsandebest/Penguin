@@ -15,6 +15,7 @@ std::vector <std::string> reservedFunctionTypes = {"null"};
 std::vector <std::string> reservedOperators = {"and", "or", "xor"};
 std::vector <std::string> reservedFunctions = {"read", "write"};
 std::vector <std::string> reservedSpecialWords = {"import"};
+std::vector <std::string> reservedLogicalWords = {"true", "false"};
 
 void addToken(int type, std::string value);
 bool ld (char c);
@@ -75,6 +76,12 @@ int parseWord(int i){
     for (std::string word : reservedFunctions) {
         if (detectReserved(word, i)) {
             addToken(readwriteOperator, word);
+            return (i + word.length());
+        }
+    }
+    for (std::string word : reservedLogicalWords) {
+        if (detectReserved(word, i)) {
+            addToken(logicalConstant, word);
             return (i + word.length());
         }
     }

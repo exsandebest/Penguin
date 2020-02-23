@@ -1,0 +1,30 @@
+int sum2 (int a, int b){
+    return 2*(a+b);
+}
+
+int sumK (int a, int b, int k){
+    return (a+b)*k;
+}
+
+int sum3 (int a, int b){
+    return (a+b) * 3;
+}
+
+null main () {
+    int n;
+    int k;
+    int m;
+    read(n,k,m);
+    int i = 0;
+    while (i<n){
+        if (i%2 == 0){
+            write(sum2(i, m));
+        } else if (i%3 == 0) {
+            write(sum3(i, m));
+        } else {
+            write(sumK(i, m, k));
+        }
+        ++i;
+    }
+    write("The END!");
+}

@@ -2,8 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
-#include "Tokens.h"
-#include "Settings.h"
+#include "Main.h"
 
 using namespace std;
 
@@ -183,7 +182,6 @@ void _operator() {
         operator_main();
     } else if (cur->type == variableType){
         operator_variable_declaration();
-        nextToken();
     }
 }
 
@@ -326,6 +324,7 @@ void operator_assignment(){
     nextToken();
     expression();
     if (cur->type != semicolon) throw err();
+    nextToken();
 }
 
 //max

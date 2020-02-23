@@ -1,0 +1,37 @@
+import "Maksim"
+import "Daniil"
+import "Shit"
+
+null main (){
+    int n;
+    int k;
+    int t;
+    int p = 0;
+    string s;
+    string tmp;
+    read(n,k,s);
+    for (int i = 0; i < n; ++i){
+        read(t);
+        bool b = ckeck(t*k);
+    }
+    while ("YOUR JOPA NOT IN FIRE" != s){
+        read(tmp);
+        s = s + tmp;
+        ++p;
+    }
+    if (i == 0){
+        write(check("KAPETS") * 24 + (-1));
+    }
+}
+
+
+
+bool check(int t) {
+    if (t%3 == 0 and t%2 == 0 or t%10 == 0){
+        return !0;
+    } else if (t%5 == 0){
+        return !1;
+    } else {
+        return 0;
+    }
+}

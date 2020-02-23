@@ -1,0 +1,14 @@
+null main (){
+    int a;
+    int b;
+    int k;
+    k = 0;
+    read(a,b);
+    while (a<b){
+        ++k;
+        ++a;
+        int g = a + b;
+    }
+    write(k+a+b);
+    return 0;
+}

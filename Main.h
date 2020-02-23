@@ -1,4 +1,15 @@
-enum {
+#include <string>
+
+class Token {
+public:
+    int type;
+    std :: string value;
+    int size;
+    int line;
+    Token(int type, std :: string value, int line): type(type), value(value), size(value.size()), line(line) {}
+};
+
+enum { //Token's types
     integerNumber = 1,
     doubleNumber = 2,
     stringConstant = 3,
@@ -23,7 +34,7 @@ enum {
     importOperator = 22
 };
 
-enum {
+enum { //States
     inCycle = 1,
     inIf = 2,
     inFor1 = 3, //for (_________; i < n; ++i){}

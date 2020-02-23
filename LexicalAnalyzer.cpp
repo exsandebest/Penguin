@@ -4,18 +4,17 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
-#include "Tokens.h"
-#include "Settings.h"
+#include "Main.h"
 
 std::string s;
 int line = 1;
-vector <Token*> v;
-vector <std::string> reservedWords = {"break", "continue", "if", "else", "return", "while", "for"};
-vector <std::string> reservedVariableTypes = {"bool", "string", "int", "double"};
-vector <std::string> reservedFunctionTypes = {"null"};
-vector <std::string> reservedOperators = {"and", "or", "xor"};
-vector <std::string> reservedFunctions = {"read", "write"};
-vector <std::string> reservedSpecialWords = {"import"};
+std::vector <Token*> v;
+std::vector <std::string> reservedWords = {"break", "continue", "if", "else", "return", "while", "for"};
+std::vector <std::string> reservedVariableTypes = {"bool", "string", "int", "double"};
+std::vector <std::string> reservedFunctionTypes = {"null"};
+std::vector <std::string> reservedOperators = {"and", "or", "xor"};
+std::vector <std::string> reservedFunctions = {"read", "write"};
+std::vector <std::string> reservedSpecialWords = {"import"};
 
 void addToken(int type, std::string value);
 bool ld (char c);
@@ -272,17 +271,17 @@ void lexicalanalyze(int argc, char const *argv[]) {
             }
         }
         if (!fromFile) {
-            getline(cin, s);
+            getline(std::cin, s);
         }
         s = deleteComments(s);
         parse(0);
     } catch (std::string err) {
-        cout << err;
+        std::cout << err;
         exit(1);
     }
-    cout << v.size() << "\n";
+    std::cout << v.size() << "\n";
     for (int i = 0; i < v.size(); ++i) {
-        cout << v[i]->line << "\n" << v[i]->type << "\n" << v[i]->size << "\n" << v[i]->value << "\n";
+        std::cout << v[i]->line << "\n" << v[i]->type << "\n" << v[i]->size << "\n" << v[i]->value << "\n";
     }
     return;
 }
@@ -314,17 +313,17 @@ int main(int argc, char const *argv[]){
             }
         }
         if (!fromFile) {
-            getline(cin, s);
+            getline(std::cin, s);
         }
         s = deleteComments(s);
         parse(0);
     } catch (std::string err) {
-        cout << err;
+        std::cout << err;
         return 0;
     }
-    cout << v.size() << "\n";
+    std::cout << v.size() << "\n";
     for (int i = 0; i < v.size(); ++i) {
-        cout << v[i]->line << "\n" << v[i]->type << "\n" << v[i]->size << "\n" << v[i]->value << "\n";
+        std::cout << v[i]->line << "\n" << v[i]->type << "\n" << v[i]->size << "\n" << v[i]->value << "\n";
     }
     return 0;
 }

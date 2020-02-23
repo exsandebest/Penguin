@@ -167,8 +167,22 @@ int parse(int i) {
         addToken(unaryMathOperator, ts + s[i] + s[i+1]);
         return parse(i+2);
     }
-    if (s[i] == '+' || s[i] == '-' || s[i] == '/' || s[i] == '*' || s[i] == '%' || s[i] == '^' || s[i] == '|' || s[i] == '&') {
+    if (s[i] == '+' || s[i] == '/' || s[i] == '*' || s[i] == '%' || s[i] == '^' || s[i] == '|' || s[i] == '&') {
         addToken(binaryMathOperator, std::string(1,s[i]));
+        return parse(i+1);
+    }
+    if (s[i] == '-') {
+        if (v.size() == 0){
+            addToken(unaryMathOperator, "-");
+        } else {
+            Token * t = v.back();
+            if (t->type == name || t->type == stringConstant || t->type == doubleNumber
+                || t->type == integerNumber || t->type == logicalConstant) {
+                addToken(binaryMathOperator, "-");
+            } else {
+                addToken(unaryMathOperator, "-");
+            }
+        }
         return parse(i+1);
     }
     if (isdigit(s[i])) {

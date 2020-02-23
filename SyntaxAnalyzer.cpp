@@ -4,14 +4,28 @@
 #include <fstream>
 #include <stack>
 #include <set>
+#include <map>
 #include "Main.h"
 
 using namespace std;
+
+class tokenType {
+    int nameType;
+    std::vector<int> args;
+    tokenType() {
+        nameType = 0;
+    }
+
+};
+
+std::map<std::string, std::stack<tokenType > > names;
+std::stack<int> lastNames;
 
 vector <Token*> v;
 Token * cur;
 stack<int> stateStack;
 multiset<int> stateSet;
+
 int curPos = -1;
 
 string err();
@@ -360,6 +374,7 @@ int expression() {
    // std::queue<int> exp;
 
    while (cur -> type != closingBracket && cur -> type != semicolon && cur -> type != comma) {
+       cout << expressionState << " pip\n";
        if (expressionState == 0) {
            if (cur -> type == openingBracket) {
                 canBeBeforeassign = false;
@@ -426,6 +441,11 @@ int expression() {
                 expressionState = 0;
             } else if (cur -> type == assignmentOperator &&
                 canBeBeforeassign) {
+                nextToken();
+                expressionState = 0;
+            } else if (cur -> type == logicalOperator) {//logic
+                canBeBeforeassign = false;
+
                 nextToken();
                 expressionState = 0;
             }

@@ -245,6 +245,10 @@ std::string deleteComments(std::string & str) {
         }
         if (flag){
             res += str[i];
+        } else {
+            if (str[i] == '\n'){
+                res += str[i];
+            }
         }
         ++i;
     }

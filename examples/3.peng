@@ -1,6 +1,6 @@
-import "Maksim"
-import "Daniil"
-import "Shit"
+import "Maksim";
+import "Daniil";
+import "Shit";
 
 null main (){
     int n;

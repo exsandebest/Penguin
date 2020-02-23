@@ -111,6 +111,8 @@ void globals(){
         nextToken();
         if (cur -> type != stringConstant) throw err();
         nextToken();
+        if (cur->type != semicolon) throw err();
+        nextToken();
     }
 }
 

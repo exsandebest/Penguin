@@ -374,7 +374,6 @@ int expression() {
    // std::queue<int> exp;
 
    while (cur -> type != closingBracket && cur -> type != semicolon && cur -> type != comma) {
-       cout << expressionState << " pip\n";
        if (expressionState == 0) {
            if (cur -> type == openingBracket) {
                 canBeBeforeassign = false;

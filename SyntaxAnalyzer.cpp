@@ -238,17 +238,21 @@ void operator_main(){
     } else if (cur->value == "break"){
         nextToken();
         operator_break();
+    } else {
+        throw err();
     }
 }
 
 void operator_continue(){
     cout << "F: operator_continue\n";
+    if (stateSet.count(inCycle) == 0) throw err();
     if (cur->type != semicolon) throw err();
     nextToken();
 }
 
 void operator_break() {
     cout << "F: operator_break\n";
+    if (stateSet.count(inCycle) == 0) throw err();
     if (cur->type != semicolon) throw err();
     nextToken();
 }
@@ -334,6 +338,7 @@ void operator_if () {
 
 void operator_return(){
     cout << "F: operator_return\n";
+    if (stateSet.count(inFunction) == 0) throw err();
     expression();
     if (cur->type != semicolon) throw err();
     nextToken();

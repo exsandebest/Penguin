@@ -414,6 +414,11 @@ int expression() {
 
                 nextToken();
                 expressionState = 1;
+           } else if (cur -> type == logicalConstant) {
+                canBeBeforeassign = false;
+
+                nextToken();
+                expressionState = 1;
            } else if (cur -> type == unaryMathOperator) {
                 canBeBeforeassign = false;
 
@@ -485,6 +490,11 @@ int expression() {
                 nextToken();
                 expressionState = 1;
             } else if (cur -> type == integerNumber || cur -> type == doubleNumber) {
+                canBeBeforeassign = false;
+
+                nextToken();
+                expressionState = 1;
+            }  else if (cur -> type == logicalConstant) {
                 canBeBeforeassign = false;
 
                 nextToken();

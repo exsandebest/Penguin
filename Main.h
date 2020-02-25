@@ -1,21 +1,15 @@
 #include <string>
 
 //class for semanthic analyse
-class tokenType {
+class TokenType {
 public:
-    int returningType,
-        nameCategory,
+    int type,
         level;
+    bool isFunction;
     std::vector<int> args;
+    TokenType(int type,bool isFunction): type(type), isFunction(isFunction) {
 
-    inline bool isFunction() {
-        return nameCategory == 1;
     }
-    tokenType() {
-        returningType = 0;
-        nameCategory = 0;
-    }
-
 };//endif
 
 class Token {

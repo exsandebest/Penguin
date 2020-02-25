@@ -38,7 +38,7 @@ void arguments();
 void block();
 void operation();
 void _operator();
-void operator_assignment();
+void operator_assignment(int varType);
 void operator_input_output();
 void operator_main();
 void operator_while();
@@ -190,10 +190,12 @@ void arguments(){
 
 
 void block(){
+    ++nestingLevel;
     cout << "F: block\n";
     do {
         operation();
     } while (cur->type != closingBrace);
+    --nestingLevel;
 }
 
 void operation(){
@@ -218,6 +220,8 @@ void _operator() {
         operator_main();
     } else if (cur->type == variableType){
         operator_variable_declaration();
+    } else {
+        throw err();
     }
 }
 
@@ -362,11 +366,12 @@ void operator_input_output(){
 
 
 
-void operator_assignment(){
+void operator_assignment(int varType){
     cout << "F: operator_assignment\n";
     if (cur->type != assignmentOperator) throw err();
     nextToken();
-    expression();
+    int curExpType = expression();
+    if (curExpType != varType) throw errType(curExpType, varType);
     if (cur->type != semicolon) throw err();
     if (stateSet.count(inFor1) == 0) nextToken();
 }
@@ -538,7 +543,6 @@ int expression() {
         throw err();
     return 0;
 }
-//max
 
 
 void arguments_to_call() {
@@ -576,12 +580,15 @@ void operator_io_write() {
 void operator_variable_declaration() {
     cout << "F: operator_variable_declaration\n";
     if (cur->type != variableType) throw err();
+    int curVarType = stringToType(cur->value);
     nextToken();
     if (cur->type != name) throw err();
+    string curName = cur->value;
     nextToken();
     if (cur->type == assignmentOperator){
-        operator_assignment();
+        operator_assignment(curVarType);
     } else if (cur->type == semicolon){
+        names[curName].push(new TokenType(curVarType, 0));
         if (stateSet.count(inFor1) == 0) nextToken();
     } else {
         throw err();

@@ -49,3 +49,8 @@ enum { //ET - Expression type
     ETString = 2,
     ETNumber = 3
 };
+
+enum {
+    isFunction = 1,
+    isVariable = 0
+};

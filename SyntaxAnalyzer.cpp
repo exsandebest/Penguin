@@ -13,7 +13,7 @@ int nestingLevel = 0;
 int currentFunctionType = -1;
 
 std::map<std::string, std::stack<tokenType > > names;
-std::stack<int> lastNames;
+std::stack<pair<string, int>> lastNames;
 
 vector <Token*> v;
 Token * cur;
@@ -50,7 +50,7 @@ void operator_continue();
 void operator_break();
 void operator_io_read();
 void operator_io_write();
-void arguments_to_call();
+void arguments_to_call(string functionName, bool special);
 void operator_variable_declaration();
 
 string err (){
@@ -196,6 +196,10 @@ void block(){
         operation();
     } while (cur->type != closingBrace);
     --nestingLevel;
+    while (!lastNames.empty() && lastNames.top().second > nestingLevel){
+        names[lastNames.top().first].pop();
+        lastNames.pop();
+    }
 }
 
 void operation(){
@@ -299,7 +303,9 @@ void operator_for(){
     if (curType != TypeBool) throw errType(curType, TypeBool);
     if (cur->type != semicolon) throw err();
     nextToken();
+    addState(inFor3);
     expression();
+    delState(inFor3);
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != openingBrace) throw err();
@@ -545,13 +551,22 @@ int expression() {
 }
 
 
-void arguments_to_call() {
+void arguments_to_call(string fucntionName, bool special = 0) {
     cout << "F: arguments_to_call\n";
+    int k = 0;
     while (cur->type != closingBracket){
-        expression();
+        if (special) {
+            if (cur->type != name) throw err();
+            if (!names[cur->value].empty()) throw err();
+            if (names[cur->value].top().isFunction) throw err();
+            nextToken();
+        } else {
+            int curType = expression();
+        }
         if (cur->type == closingBracket) break;
         if (cur->type != comma) throw err();
         nextToken();
+        ++k;
     }
 }
 
@@ -559,7 +574,7 @@ void operator_io_read() {
     cout << "F: operator_io_read\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
-    arguments_to_call();
+    arguments_to_call("read",1);
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != semicolon) throw err();
@@ -570,7 +585,7 @@ void operator_io_write() {
     cout << "F: operator_io_write\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
-    expression();
+    arguments_to_call("write");
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != semicolon) throw err();
@@ -587,8 +602,13 @@ void operator_variable_declaration() {
     nextToken();
     if (cur->type == assignmentOperator){
         operator_assignment(curVarType);
+        if (names[curName].top().level == nestingLevel) throw err();
+        names[curName].push(TokenType(curVarType, nestingLevel));
+        lastNames.push({curName, nestingLevel});
     } else if (cur->type == semicolon){
-        names[curName].push(new TokenType(curVarType, 0));
+        if (names[curName].top().level == nestingLevel) throw err();
+        names[curName].push(TokenType(curVarType, nestingLevel));
+        lastNames.push({curName, nestingLevel});
         if (stateSet.count(inFor1) == 0) nextToken();
     } else {
         throw err();

@@ -7,7 +7,7 @@ public:
         level;
     bool isFunction;
     std::vector<int> args;
-    TokenType(int type,bool isFunction): type(type), isFunction(isFunction) {
+    TokenType(int type, int level, bool isFunction = 0): type(type), level(level), isFunction(isFunction) {
 
     }
 };//endif

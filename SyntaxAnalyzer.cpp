@@ -65,6 +65,13 @@ string ttos (Token *) { //Token TO String
     return s;
 }
 
+int stringToType(string s){
+    if (s == "int") return TypeInt;
+    if (s == "bool") return TypeBool;
+    if (s == "string") return TypeString;
+    if (s == "double") return TypeDouble;
+}
+
 string errType(int currentType, int expectedType) {
     return string("Incorrect Expression Type: (" + to_string(currentType) + "), exprected (" + to_string(expectedType) + ")");
 }
@@ -148,7 +155,7 @@ void functions(){
 void function(){
     cout << "F: function\n";
     if (!(cur->type == variableType || cur->type == functionType)) throw err();
-    currentFunctionType = cur->value;
+    currentFunctionType = stringToType(cur->value);
     nextToken();
     if (cur->type != name) throw err();
     nextToken();
@@ -163,7 +170,7 @@ void function(){
     block();
     delState(inFunction);
     if (cur->type != closingBrace) throw err();
-    currentFunctionType = "";
+    currentFunctionType = -1;
 }
 
 void arguments(){

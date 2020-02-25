@@ -9,14 +9,22 @@
 
 using namespace std;
 
+//class for semanthic analyse
 class tokenType {
-    int nameType;
+public:
+    int returningType,
+        nameCategory;
     std::vector<int> args;
+
+    inline bool isFunction() {
+        return nameCategory == 1;
+    }
     tokenType() {
-        nameType = 0;
+        returningType = 0;
+        nameCategory = 0;
     }
 
-};
+};//endif
 
 std::map<std::string, std::stack<tokenType > > names;
 std::stack<int> lastNames;
@@ -376,6 +384,12 @@ int expression() {
     bool canBeBeforeassign = true;
 
     int expressionState = startExpect;
+    int expressionType = 0,
+        tmpExpressionType,
+        counter;
+    std::string nameValue;
+    std::map<string,
+            std::stack<tokenType> >::iterator pointer;
    // std::queue<int> exp;
 
    while (cur -> type != closingBracket && cur -> type != semicolon && cur -> type != comma) {
@@ -390,22 +404,37 @@ int expression() {
                 nextToken();
                 expressionState = 1;
            } else if (cur -> type == name) {
-                 //check stack
+
+                pointer = names.find(cur -> value);
+                
                 nextToken();
+                
 
                 if (cur -> type == openingBracket) {
                     nextToken();
 
+                    if (pointer -> empty() ||
+                        !names[nameValue].top().isFunction())
+                        throw err();
+
+                    counter = 0;
+
                     while(cur -> type != closingBracket) {
-                        expression();
+                        tmpExpressionType = expression();
+                        ++counter;
+                        if (counter > names[nameValue].top().args.size() ||
+                            nam)
                         if (cur -> type != comma &&
                             cur -> type != closingBracket)
                             throw err();
                         if (cur -> type != closingBracket)
                             nextToken();
                     }
+                    if (cnt )
                     nextToken();
                     canBeBeforeassign = false;
+                } else {
+
                 }
 
                 expressionState = 1;

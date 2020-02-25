@@ -1,5 +1,23 @@
 #include <string>
 
+//class for semanthic analyse
+class tokenType {
+public:
+    int returningType,
+        nameCategory,
+        level;
+    std::vector<int> args;
+
+    inline bool isFunction() {
+        return nameCategory == 1;
+    }
+    tokenType() {
+        returningType = 0;
+        nameCategory = 0;
+    }
+
+};//endif
+
 class Token {
 public:
     int type;
@@ -44,10 +62,11 @@ enum { //States
     inElse = 7
 };
 
-enum { //ET - Expression type
-    ETBool = 1,
-    ETString = 2,
-    ETNumber = 3
+enum { //Types
+    TypeBool = 1,
+    TypeString = 2,
+    TypeInt = 3,
+    TypeDouble = 4
 };
 
 enum {

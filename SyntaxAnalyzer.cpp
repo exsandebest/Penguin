@@ -9,22 +9,8 @@
 
 using namespace std;
 
-//class for semanthic analyse
-class tokenType {
-public:
-    int returningType,
-        nameCategory;
-    std::vector<int> args;
-
-    inline bool isFunction() {
-        return nameCategory == 1;
-    }
-    tokenType() {
-        returningType = 0;
-        nameCategory = 0;
-    }
-
-};//endif
+int nestingLevel = 0;
+int currentFunctionType = -1;
 
 std::map<std::string, std::stack<tokenType > > names;
 std::stack<int> lastNames;
@@ -38,7 +24,7 @@ int curPos = -1;
 
 string err();
 string ttos (Token * t);
-string errET();
+string errType();
 
 void addState(int state);
 void delState(int state);
@@ -79,8 +65,8 @@ string ttos (Token *) { //Token TO String
     return s;
 }
 
-string errET(int currentType, int exprectedType) {
-    return string("Incorrect Expression Type: (" + to_string(currentType) + "), exprected (" + to_string(exprectedType) + ")");
+string errType(int currentType, int expectedType) {
+    return string("Incorrect Expression Type: (" + to_string(currentType) + "), exprected (" + to_string(expectedType) + ")");
 }
 
 
@@ -161,7 +147,8 @@ void functions(){
 
 void function(){
     cout << "F: function\n";
-    if (!(cur->type == variableType || cur->type == 6)) throw err();
+    if (!(cur->type == variableType || cur->type == functionType)) throw err();
+    currentFunctionType = cur->value;
     nextToken();
     if (cur->type != name) throw err();
     nextToken();
@@ -176,6 +163,7 @@ void function(){
     block();
     delState(inFunction);
     if (cur->type != closingBrace) throw err();
+    currentFunctionType = "";
 }
 
 void arguments(){
@@ -270,8 +258,8 @@ void operator_while() {
     cout << "F: operator_while\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
-    int curET = expression();
-    //if (curET != ETBool) throw errET(curET, ETBool);
+    int curType = expression();
+    if (curType != TypeBool) throw errType(curType, TypeBool);
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != openingBrace) throw err();
@@ -296,8 +284,8 @@ void operator_for(){
     delState(inFor1);
     if (cur->type != semicolon) throw err();
     nextToken();
-    int curET = expression();
-    //if (curET != ETBool) throw errET(curET, ETBool);
+    int curType = expression();
+    if (curType != TypeBool) throw errType(curType, TypeBool);
     if (cur->type != semicolon) throw err();
     nextToken();
     expression();
@@ -316,8 +304,8 @@ void operator_if () {
     cout << "F: operator_if\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
-    int curET = expression();
-    //if (curET != ETBool) throw errET(curET, ETBool);
+    int curType = expression();
+    if (curType != TypeBool) throw errType(curType, TypeBool);
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != openingBrace) throw err();
@@ -347,7 +335,8 @@ void operator_if () {
 void operator_return(){
     cout << "F: operator_return\n";
     if (stateSet.count(inFunction) == 0) throw err();
-    expression();
+    int curType = expression();
+    if (curType != currentFunctionType) throw errType(curType, currentFunctionType);
     if (cur->type != semicolon) throw err();
     nextToken();
 }
@@ -406,9 +395,9 @@ int expression() {
            } else if (cur -> type == name) {
 
                 pointer = names.find(cur -> value);
-                
+
                 nextToken();
-                
+
 
                 if (cur -> type == openingBracket) {
                     nextToken();

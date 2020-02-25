@@ -12,7 +12,7 @@ using namespace std;
 int nestingLevel = 0;
 int currentFunctionType = -1;
 
-std::map<std::string, std::stack<tokenType > > names;
+std::map<std::string, std::stack<TokenType > > names;
 std::stack<pair<string, int>> lastNames;
 
 vector <Token*> v;
@@ -34,7 +34,7 @@ void program();
 void functions();
 void function();
 void globals();
-void arguments();
+void arguments(string functionName);
 void block();
 void operation();
 void _operator();
@@ -158,10 +158,14 @@ void function(){
     currentFunctionType = stringToType(cur->value);
     nextToken();
     if (cur->type != name) throw err();
+    string curName = cur->value;
+    if (!names[curName].empty()) throw err();
+    names[curName].push(TokenType(currentFunctionType, nestingLevel, true));
+    lastNames.push({currentFunctionType, nestingLevel});
     nextToken();
     if (cur->type != openingBracket) throw err();
     nextToken();
-    arguments();
+    arguments(curName);
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != openingBrace) throw err();
@@ -173,10 +177,11 @@ void function(){
     currentFunctionType = -1;
 }
 
-void arguments(){
+void arguments(string functionName){
     cout << "F: arguments\n";
     while (cur->type != closingBracket){
         if (cur->type != variableType) throw err();
+        names[fucntionName].top().args.push_back(stringToType(cur->value));
         nextToken();
         if (cur->type != name) throw err();
         nextToken();
@@ -396,7 +401,7 @@ int expression() {
         counter;
     std::string nameValue;
     std::map<string,
-            std::stack<tokenType> >::iterator pointer;
+            std::stack<TokenType> >::iterator pointer;
    // std::queue<int> exp;
 
    while (cur -> type != closingBracket && cur -> type != semicolon && cur -> type != comma) {
@@ -421,7 +426,7 @@ int expression() {
                     nextToken();
 
                     if (pointer -> empty() ||
-                        !names[nameValue].top().isFunction())
+                        !names[nameValue].top().isFunction)
                         throw err();
 
                     counter = 0;

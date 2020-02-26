@@ -449,7 +449,7 @@ void operator_assignment(int varType){
 
 //max
 int expression() {
-    if (debug) cout << "F: expression\n";
+    cout << "F: expression\n";
     std::map<std::string, int> priority;
     std::stack<Token*> signs;
     std::vector<Token*> ans;
@@ -465,15 +465,15 @@ int expression() {
     priority["+"] = priority["-"] = 6;
     priority["<"] = priority[">"] =
     priority["<="] =priority[">="] = 8;
-    priority["=="] = priority["!="] = 1;
+    priority["=="] = priority["!="] = 9;
     priority["and"] = 13;
     priority["or"] = 14;
     priority["**"] = 4;
-    priority["="] =priority["+="] =priority["-="]
+    priority["="] =priority["+="] =priority["-="] 
     =priority["*="] = priority["/="] =priority["%="] =15;
-
-    while ((cur -> type != closingBracket || afterOpeningBracket > 0)
-            && cur -> type != semicolon &&
+    
+    while ((cur -> type != closingBracket || afterOpeningBracket > 0) 
+            && cur -> type != semicolon && 
             (cur -> type != comma || afterOpeningBracket > 0)) {
         if (cur -> type == integerNumber || cur -> type == doubleNumber ||
             cur -> type == stringConstant || cur -> type == logicalConstant) {
@@ -514,16 +514,16 @@ int expression() {
                    cur -> type == assignmentOperator ||
                    cur -> type == logicalOperator) {
             if (cur -> value == "=" || cur -> value == "**") {
-                while(!signs.empty() && ((signs.top() -> type == unaryMathOperator) ||
-                      (signs.top() -> type == logicalOperator
+                while(!signs.empty() && signs.top() -> type != openingBracket && ((signs.top() -> type == unaryMathOperator) ||
+                      (signs.top() -> type == logicalOperator 
                       && signs.top() -> value == "!") ||
                       priority[signs.top() -> value] < priority[cur -> value])) {
                     ans.push_back(signs.top());
                     signs.pop();
                  }
             } else {
-                while(!signs.empty() && ((signs.top() -> type == unaryMathOperator) ||
-                      (signs.top() -> type == logicalOperator
+                while(!signs.empty() && signs.top() -> type != openingBracket && ((signs.top() -> type == unaryMathOperator) ||
+                      (signs.top() -> type == logicalOperator 
                       && signs.top() -> value == "!") ||
                       priority[signs.top() -> value] <= priority[cur -> value])) {
                     ans.push_back(signs.top());
@@ -543,8 +543,10 @@ int expression() {
                 ans.push_back(signs.top());
                 signs.pop();
             }
-            if (signs.empty())
+            if (signs.empty()){
+                cout << "kek\n";
                 throw err();
+            }
             else {
                 signs.pop();
                 if (!signs.empty() && signs.top() -> type == name) {
@@ -565,8 +567,13 @@ int expression() {
     stack<expressionElement*> exec;
     std::map<std::string, std::stack<TokenType> >::iterator ptr;
     int counter = 0;
+    
+    for (int i = 0; i < ans.size(); ++i) {
+        cout << ans[i]-> type << " " << ans[i] -> value << " " << endl;
+    }
 
-    for (int i = (int)ans.size() - 1; i >= 0; --i) {
+    for (int i = 0; i < (int)ans.size(); ++i) {
+        //cout << ans[i]-> type << " " << ans[i] -> value << " " << endl;
         if (ans[i] -> type == name) {
             if (ans[i] -> isFunction) {
                 ans[i] -> isSimpleVariable = false;
@@ -579,7 +586,7 @@ int expression() {
                         throw err("Incorrect arguments of function");
                     delete exec.top();
                     exec.pop();
-                    --counter;
+                    --counter; 
                 }
                 if (counter > -1)
                     throw err("Incorrect number of arguments of function");
@@ -647,9 +654,12 @@ int expression() {
             sec = exec.top();
             exec.pop();
             fir = exec.top();
+            cout << fir -> type << " " << sec -> type << endl;
+
             if (!((sec -> type == TypeInt && fir -> type == TypeInt) ||
                   (sec -> type == TypeDouble && fir -> type == TypeDouble) ||
-                  (sec -> type == TypeString && fir -> type == TypeString))) {
+                  (sec -> type == TypeString && fir -> type == TypeString) ||
+                  (sec -> type == TypeBool && fir -> type == TypeBool))) {
                 throw err();//несоответствие типов в математическом/строковом выражении
             }
             delete sec;
@@ -668,15 +678,13 @@ int expression() {
               throw err();
     }
     if (exec.size() != 1)
-        throw err();
+        throw err("Произошёл троллинг...");//троллинг
     int q = exec.top() -> type;
     delete exec.top();
 
     return q;
 }
 //max
-
-
 
 void arguments_to_call(string functionName, bool special = 0) {
     if (debug) cout << "F: arguments_to_call\n";

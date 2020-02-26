@@ -727,11 +727,11 @@ void operator_variable_declaration() {
     nextToken();
     if (cur->type == assignmentOperator){
         operator_assignment(curVarType);
-        if (!names[curName].empty() && names[curName].top().level == nestingLevel) throw err();
+        if (!names[curName].empty() && names[curName].top().level == nestingLevel) throw err("Name '" + curName + "' is already used");
         names[curName].push(TokenType(curVarType, nestingLevel));
         lastNames.push({curName, nestingLevel});
     } else if (cur->type == semicolon){
-        if (!names[curName].empty() && names[curName].top().level == nestingLevel) throw err();
+        if (!names[curName].empty() && names[curName].top().level == nestingLevel) throw err("Name '" + curName + "' is already used");
         names[curName].push(TokenType(curVarType, nestingLevel));
         lastNames.push({curName, nestingLevel});
         if (stateSet.count(inFor1) == 0) nextToken();

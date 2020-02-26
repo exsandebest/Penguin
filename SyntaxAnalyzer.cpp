@@ -9,7 +9,7 @@
 
 using namespace std;
 
-bool debug = false;
+bool debug = true;
 
 int nestingLevel = 0;
 int currentFunctionType = -1;
@@ -515,10 +515,10 @@ int expression() {
                 signs.push(cur);
                 nextToken();
             } else {
+                afterVariable = true;
                 q -> isSimpleVariable = true;
                 ans.push_back(q);
             }
-            afterVariable = true;
         } else if (cur -> type == comma) {
             if (!inFunction)
                 throw err();
@@ -627,8 +627,10 @@ int expression() {
                 exec.push(new expressionElement(ptr -> second.top().type));
             } else {
                 ptr = names.find(ans[i] -> value);
-                if (ptr -> second.empty() || ptr -> second.top().isFunction)
+                if (ptr -> second.empty())
                     throw err("Variable '" + ans[i] -> value + "' is not declared");
+                else if (ptr -> second.top().isFunction)
+                    throw err("Name '" + ans[i] -> value + "' is already engaged by function.");
                 exec.push(new expressionElement(ptr -> second.top().type));
                 exec.top() -> isSimpleVariable = true;
 

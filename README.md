@@ -7,7 +7,7 @@ Penguin.cpp
 LexicalAnalyzer.cpp
 SyntaxAnalyzer.cpp
 ```
-**You can use ``make.cmd`` (Windows) or ``make.sh`` (Linux) to do that**  
+**You can run ``make.cmd`` (for Windows) or ``make.sh`` (for Linux) to do that**  
 **After that you can use ``Penguin.exe path/to/program.peng`` to start**
 ## Documents about language
 * [Grammar](https://docs.google.com/document/d/1y9UAdCVIHkVw3AbSU_anU4KZSvI54mrA7OSpKjKvKgw)  

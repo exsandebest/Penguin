@@ -557,7 +557,8 @@ int expression() {
                 }
             }
             nextToken();
-        }
+        } else
+             throw err();
     }
     while (!signs.empty()) {
         if (signs.top() -> type == openingBracket)
@@ -565,6 +566,9 @@ int expression() {
         ans.push_back(signs.top());
         signs.pop();
     }
+    if (signs.empty())
+        return TypeNull;
+
     stack<expressionElement*> exec;
     std::map<std::string, std::stack<TokenType> >::iterator ptr;
     int counter = 0;
@@ -580,22 +584,22 @@ int expression() {
                 ans[i] -> isSimpleVariable = false;
                 ptr = names.find(ans[i] -> value);
                 if (ptr -> second.empty() && !ptr -> second.top().isFunction)
-                    throw err("Function '" + ans[i] -> value + "' is not declared");
+                    throw err("Function '" + ans[i] -> value + "' is not declared.");
                 counter = ptr -> second.top().args.size() - 1;
                 while (counter >= 0 && !exec.empty()) {
                     if (exec.top() -> type != ptr -> second.top().args[counter])
-                        throw err("Incorrect arguments of function");
+                        throw err("Incorrect arguments of function.");
                     delete exec.top();
                     exec.pop();
                     --counter;
                 }
                 if (counter > -1)
-                    throw err("Incorrect number of arguments of function");
+                    throw err("Incorrect number of arguments of function.");
                 exec.push(new expressionElement(ptr -> second.top().type));
             } else {
                 ptr = names.find(ans[i] -> value);
                 if (ptr -> second.empty() || ptr -> second.top().isFunction)
-                    throw err("Variable '" + ans[i] -> value + "' is not declared");
+                    throw err("Variable '" + ans[i] -> value + "' is not declared.");
                 exec.push(new expressionElement(ptr -> second.top().type));
                 exec.top() -> isSimpleVariable = true;
 
@@ -611,16 +615,16 @@ int expression() {
         } else if (ans[i] -> type == unaryMathOperator) {
             if (ans[i] -> value == "++" || ans[i] -> value == "--") {
                 if (!exec.top() -> isSimpleVariable)
-                    throw err("Can't increment/decrement a non-variable");
+                    throw err("Increment/decrement operations cannot be applied to non-variables.");
             }
             if (!(exec.top() -> type == TypeInt || exec.top() -> type == TypeDouble)) {
-                throw err("Can't make arifmethic operations to a non-number");
+                throw err("Unary arithmetic operations cannot be applied to non-numbers.");
             }
             exec.top() -> isSimpleVariable = false;
 
         } else if (ans[i] -> type == logicalOperator && ans[i] -> value == "!") {
             if (exec.top() -> type != TypeBool) {
-                throw err("Can't make logic operations to a non-logic expression");
+                throw err("Logic operations cannot be applied to non-bool types.");
             }
             exec.top() -> isSimpleVariable = false;
         } else if (ans[i] -> type == logicalOperator) {
@@ -629,7 +633,8 @@ int expression() {
             exec.pop();
             fir = exec.top();
             if (sec -> type != TypeBool || fir -> type != TypeBool) {
-                throw err();//несоответствие типов в логическом выражении
+                throw err("Logic operations cannot be applied to non-bool types.");
+                //несоответствие типов в логическом выражении
             }
             exec.top() -> isSimpleVariable = false;
             delete sec;
@@ -643,10 +648,10 @@ int expression() {
                 if (!((sec -> type == TypeInt && fir -> type == TypeInt) ||
                   (sec -> type == TypeDouble && fir -> type == TypeDouble) ||
                   (sec -> type == TypeString && fir -> type == TypeString)))
-                throw err();//несоответствие типов в математическом/строковом выражении
+                throw err("Operation '+' can be applied only to similar integer, double or string types.");//несоответствие типов в математическом/строковом выражении
             } else if (!((sec -> type == TypeInt && fir -> type == TypeInt) ||
                   (sec -> type == TypeDouble && fir -> type == TypeDouble))) {
-                throw err();//несоответствие типов в математическом выражении
+                throw err("Arithmetic operations can be applied only to similar integer or double types.");//несоответствие типов в математическом выражении
             }
             exec.top() -> isSimpleVariable = false;
             delete sec;
@@ -661,7 +666,7 @@ int expression() {
                   (sec -> type == TypeDouble && fir -> type == TypeDouble) ||
                   (sec -> type == TypeString && fir -> type == TypeString) ||
                   (sec -> type == TypeBool && fir -> type == TypeBool))) {
-                throw err();//несоответствие типов в математическом/строковом выражении
+                throw err("Comparsion operations can be applied only to similar non-null types.");//несоответствие типов в математическом/строковом выражении
             }
             delete sec;
             exec.top() -> isSimpleVariable = false;
@@ -676,7 +681,7 @@ int expression() {
             delete sec;
             fir -> isSimpleVariable = false;
         } else
-              throw err();
+              throw err("Trolling accured...");
     }
     if (exec.size() != 1)
         throw err("Произошёл троллинг...");//троллинг

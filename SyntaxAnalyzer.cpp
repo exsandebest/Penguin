@@ -60,7 +60,7 @@ string err (string errString = "", int line = 0){
         s += "Unexpected token: (" + to_string(cur->type) + ") '" + cur->value + "' on line " + to_string(cur->line) + "\n";
         return s;
     } else {
-        return "Error: " + errString + (line == -1? "" : " (line " + to_string(line) + ")") + "\n";
+        return "Error: " + errString + (line == -1 ? "" : " (line " + to_string(line) + ")") + "\n";
     }
 }
 
@@ -89,7 +89,8 @@ string typeToString(int type){
 }
 
 string errType(int currentType, int expectedType, int line = -1) {
-    return string("Incorrect Type: '" + typeToString(currentType) + "', expected '" + typeToString(expectedType) "'" + (line == -1 ? "" : (" (line " + to_string(line) + ")")) + "\n");
+    return string("Incorrect Type: '" + typeToString(currentType) + "', expected '" + typeToString(expectedType) + "'"
+    + (line == -1 ? "" : (" (line " + to_string(line) + ")")) + "\n");
 }
 
 
@@ -242,7 +243,7 @@ void arguments(string functionName, bool pre){
         if (cur->type != variableType) throw err();
         int curType = stringToType(cur->value);
         if (pre) {
-            names[functionName].top().args.push_back(curType));
+            names[functionName].top().args.push_back(curType);
         }
         nextToken();
         if (cur->type != name) throw err();
@@ -253,7 +254,7 @@ void arguments(string functionName, bool pre){
         }
         if (!pre) {
             if (!names[curName].empty() && names[curName].top().isFunction) throw err("'" + curName + "' is a Function", cur->line);
-            names[curName].push(TokenType(curVarType, nestingLevel + 1));
+            names[curName].push(TokenType(curType, nestingLevel + 1));
             lastNames.push({curName, nestingLevel + 1});
         }
         nextToken();

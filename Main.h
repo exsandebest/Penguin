@@ -1,6 +1,5 @@
 #include <string>
 
-//class for semanthic analyse
 class TokenType {
 public:
     int type,
@@ -10,7 +9,7 @@ public:
     TokenType(int type, int level, bool isFunction = 0): type(type), level(level), isFunction(isFunction) {
 
     }
-};//endif
+};
 
 class Token {
 public:
@@ -71,9 +70,4 @@ enum { //Types
     TypeInt = 3,
     TypeDouble = 4,
     TypeNull = 5
-};
-
-enum {
-    isFunction = 1,
-    isVariable = 0
 };

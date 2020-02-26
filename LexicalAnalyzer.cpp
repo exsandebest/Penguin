@@ -113,7 +113,7 @@ int parseNumber(int i) {
             addToken(doubleNumber,resValue);
             return i;
         } else {
-            throw "Incorrect number constant";
+            throw std::string("Incorrect number constant");
         }
     } else {
         addToken(integerNumber,resValue);

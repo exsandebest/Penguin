@@ -22,9 +22,9 @@ multiset<int> stateSet;
 
 int curPos = -1;
 
-string err(string errString);
-string ttos (Token * t);
-string errType();
+string err(string errString, int line);
+string tokenToString (Token * t); //Token TO String
+string errType(int currentType, int exprectedType, int line);
 
 void addState(int state);
 void delState(int state);
@@ -38,7 +38,6 @@ void function();
 void globals();
 void arguments(string functionName, bool check = 1);
 void block();
-void operation();
 void _operator();
 void operator_assignment(int varType);
 void operator_input_output();
@@ -55,17 +54,17 @@ void operator_io_write();
 void arguments_to_call(string functionName, bool special);
 void operator_variable_declaration();
 
-string err (string errString = ""){
+string err (string errString = "", int line = 0){
     if (errString == "") {
         string s = "";
         s += "Unexpected token: (" + to_string(cur->type) + ") '" + cur->value + "' on line " + to_string(cur->line) + "\n";
         return s;
     } else {
-        return "Error: " + errString;
+        return "Error: " + errString + (line == -1? "" : " (line " + to_string(line) + ")") + "\n";
     }
 }
 
-string ttos (Token *) { //Token TO String
+string tokenToString (Token *) { //Token TO String
     string s = "";
     s += "Debug: (" + to_string(cur->type) + ") '" + cur->value + "' on line " + to_string(cur->line) + "\n";
     return s;
@@ -76,11 +75,21 @@ int stringToType(string s){
     if (s == "bool") return TypeBool;
     if (s == "string") return TypeString;
     if (s == "double") return TypeDouble;
-    return TypeNull;
+    if (s == "null") return TypeNull;
+    return -1;
 }
 
-string errType(int currentType, int expectedType) {
-    return string("Incorrect Expression Type: (" + to_string(currentType) + "), exprected (" + to_string(expectedType) + ")");
+string typeToString(int type){
+    if (type == TypeInt) return "int";
+    if (type == TypeBool) return "bool";
+    if (type == TypeString) return "string";
+    if (type == TypeDouble) return "double";
+    if (type == TypeNull) return "null";
+    return "~typeToString converting error~";
+}
+
+string errType(int currentType, int expectedType, int line = -1) {
+    return string("Incorrect Type: '" + typeToString(currentType) + "', expected '" + typeToString(expectedType) "'" + (line == -1 ? "" : (" (line " + to_string(line) + ")")) + "\n");
 }
 
 
@@ -137,6 +146,7 @@ void preprocessing() {
     do {
         preprocessingFunction();
     } while (nextToken());
+    if (names["main"].empty()) throw err("Function 'main' is required");
 }
 
 void function() {
@@ -177,7 +187,7 @@ int nextToken(){
     ++curPos;
     if (curPos >= v.size()) return 0;
     cur = v[curPos];
-    cout << ttos(cur);
+    cout << tokenToString(cur);
     return 1;
 }
 
@@ -201,7 +211,7 @@ void preprocessingFunction(){
     nextToken();
     if (cur->type != name) throw err();
     string curName = cur->value;
-    if (!names[curName].empty()) throw err("Function redeclaration");
+    if (!names[curName].empty()) throw err("Redeclaration function '" + curName + "'", cur->line);
     names[curName].push(TokenType(preprocessingCurrentFunctionType, -1, true));
     lastNames.push({curName, -1});
     nextToken();
@@ -225,19 +235,26 @@ void preprocessingFunction(){
     preprocessingCurrentFunctionType = -1;
 }
 
-void arguments(string functionName, bool check){
+void arguments(string functionName, bool pre){
     set<string> tmpSet;
     cout << "F: arguments\n";
     while (cur->type != closingBracket){
         if (cur->type != variableType) throw err();
-        if (check) {
-            names[functionName].top().args.push_back(stringToType(cur->value));
+        int curType = stringToType(cur->value);
+        if (pre) {
+            names[functionName].top().args.push_back(curType));
         }
         nextToken();
         if (cur->type != name) throw err();
-        if (check) {
-            if (tmpSet.count(cur->value)) throw err("Duplicate name");
-            tmpSet.insert(cur->value);
+        string curName = cur->value;
+        if (pre) {
+            if (tmpSet.count(curName)) throw err("Duplicate argument name '" + curName + "'", cur->line);
+            tmpSet.insert(curName);
+        }
+        if (!pre) {
+            if (!names[curName].empty() && names[curName].top().isFunction) throw err("'" + curName + "' is a Function", cur->line);
+            names[curName].push(TokenType(curVarType, nestingLevel + 1));
+            lastNames.push({curName, nestingLevel + 1});
         }
         nextToken();
         if (cur->type == closingBracket) {
@@ -253,21 +270,12 @@ void block(){
     ++nestingLevel;
     cout << "F: block\n";
     do {
-        operation();
+        _operator();
     } while (cur->type != closingBrace);
     --nestingLevel;
     while (!lastNames.empty() && lastNames.top().second > nestingLevel){
         names[lastNames.top().first].pop();
         lastNames.pop();
-    }
-}
-
-void operation(){
-    cout << "F: operation\n";
-    if (cur->type == variableType || cur->type == readwriteOperator || cur->type == sOperator || cur->type == name || cur->type == unaryMathOperator){
-        _operator();
-    } else {
-        throw err();
     }
 }
 
@@ -304,10 +312,8 @@ void operator_main(){
         nextToken();
         operator_return();
     } else if (cur->value == "continue"){
-        nextToken();
         operator_continue();
     } else if (cur->value == "break"){
-        nextToken();
         operator_break();
     } else {
         throw err();
@@ -316,14 +322,16 @@ void operator_main(){
 
 void operator_continue(){
     cout << "F: operator_continue\n";
-    if (stateSet.count(inCycle) == 0) throw err();
+    if (stateSet.count(inCycle) == 0) throw err("Operator 'continue' is not in cycle", cur->line);
+    nextToken();
     if (cur->type != semicolon) throw err();
     nextToken();
 }
 
 void operator_break() {
     cout << "F: operator_break\n";
-    if (stateSet.count(inCycle) == 0) throw err();
+    if (stateSet.count(inCycle) == 0) throw err("Operator 'break' is not in cycle", cur->line);
+    nextToken();
     if (cur->type != semicolon) throw err();
     nextToken();
 }
@@ -334,7 +342,7 @@ void operator_while() {
     if (cur->type != openingBracket) throw err();
     nextToken();
     int curType = expression();
-    if (curType != TypeBool) throw errType(curType, TypeBool);
+    if (curType != TypeBool) throw errType(curType, TypeBool, cur->line);
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != openingBrace) throw err();
@@ -360,12 +368,10 @@ void operator_for(){
     if (cur->type != semicolon) throw err();
     nextToken();
     int curType = expression();
-    if (curType != TypeBool) throw errType(curType, TypeBool);
+    if (curType != TypeBool) throw errType(curType, TypeBool, cur->line);
     if (cur->type != semicolon) throw err();
     nextToken();
-    addState(inFor3);
     expression();
-    delState(inFor3);
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != openingBrace) throw err();
@@ -382,14 +388,12 @@ void operator_if () {
     if (cur->type != openingBracket) throw err();
     nextToken();
     int curType = expression();
-    if (curType != TypeBool) throw errType(curType, TypeBool);
+    if (curType != TypeBool) throw errType(curType, TypeBool, cur->line);
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != openingBrace) throw err();
     nextToken();
-    addState(inIf);
     block();
-    delState(inIf);
     if (cur->type != closingBrace) throw err();
     nextToken();
     if (cur->value != "else") return;
@@ -400,9 +404,7 @@ void operator_if () {
         nextToken();
     } else if (cur->value == "{"){
         nextToken();
-        addState(inElse);
         block();
-        delState(inElse);
         if (cur->type != closingBrace) throw err();
         nextToken();
     }
@@ -413,7 +415,7 @@ void operator_return(){
     cout << "F: operator_return\n";
     if (stateSet.count(inFunction) == 0) throw err();
     int curType = expression();
-    if (curType != currentFunctionType) throw errType(curType, currentFunctionType);
+    if (curType != currentFunctionType) throw errType(curType, currentFunctionType, cur->line);
     if (cur->type != semicolon) throw err();
     nextToken();
 }
@@ -437,7 +439,7 @@ void operator_assignment(int varType){
     if (cur->type != assignmentOperator) throw err();
     nextToken();
     int curExpType = expression();
-    if (curExpType != varType) throw errType(curExpType, varType);
+    if (curExpType != varType) throw errType(curExpType, varType, cur->line);
     if (cur->type != semicolon) throw err();
     if (stateSet.count(inFor1) == 0) nextToken();
 }
@@ -464,11 +466,11 @@ int expression() {
     priority["and"] = 13;
     priority["or"] = 14;
     priority["**"] = 4;
-    priority["="] =priority["+="] =priority["-="] 
+    priority["="] =priority["+="] =priority["-="]
     =priority["*="] = priority["/="] =priority["%="] =15;
-    
-    while ((cur -> type != closingBracket || afterOpeningBracket > 0) 
-            && cur -> type != semicolon && 
+
+    while ((cur -> type != closingBracket || afterOpeningBracket > 0)
+            && cur -> type != semicolon &&
             (cur -> type != comma || afterOpeningBracket > 0)) {
         if (cur -> type == integerNumber || cur -> type == doubleNumber ||
             cur -> type == stringConstant || cur -> type == logicalConstant) {
@@ -510,7 +512,7 @@ int expression() {
                    cur -> type == logicalOperator) {
             if (cur -> value == "=" || cur -> value == "**") {
                 while(!signs.empty() && ((signs.top() -> type == unaryMathOperator) ||
-                      (signs.top() -> type == logicalOperator 
+                      (signs.top() -> type == logicalOperator
                       && signs.top() -> value == "!") ||
                       priority[signs.top() -> value] < priority[cur -> value])) {
                     ans.push_back(signs.top());
@@ -518,7 +520,7 @@ int expression() {
                  }
             } else {
                 while(!signs.empty() && ((signs.top() -> type == unaryMathOperator) ||
-                      (signs.top() -> type == logicalOperator 
+                      (signs.top() -> type == logicalOperator
                       && signs.top() -> value == "!") ||
                       priority[signs.top() -> value] <= priority[cur -> value])) {
                     ans.push_back(signs.top());
@@ -574,7 +576,7 @@ int expression() {
                         throw err("Incorrect arguments of function");
                     delete exec.top();
                     exec.pop();
-                    --counter; 
+                    --counter;
                 }
                 if (counter > -1)
                     throw err("Incorrect number of arguments of function");
@@ -679,8 +681,8 @@ void arguments_to_call(string functionName, bool special = 0) {
     while (cur->type != closingBracket){
         if (special) {
             if (cur->type != name) throw err();
-            if (names[cur->value].empty()) throw err();
-            if (names[cur->value].top().isFunction) throw err();
+            if (names[cur->value].empty()) throw err("Variable '" + cur->value + "' is not declarated", cur->line);
+            if (names[cur->value].top().isFunction) throw err("'" + cur->value + "' is a Function");
             nextToken();
         } else {
             int curType = expression();
@@ -696,7 +698,7 @@ void operator_io_read() {
     cout << "F: operator_io_read\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
-    arguments_to_call("read",1);
+    arguments_to_call("read", 1);
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != semicolon) throw err();

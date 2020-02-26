@@ -57,11 +57,8 @@ enum { //Token's types
 
 enum { //States
     inCycle = 1,
-    inIf = 2,
     inFor1 = 3, //for (_________; i < n; ++i){}
-    inFor3 = 5, //for (int i = 0; i < n; ___){}
-    inFunction = 6,
-    inElse = 7
+    inFunction = 6
 };
 
 enum { //Types

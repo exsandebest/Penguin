@@ -445,10 +445,232 @@ void operator_assignment(int varType){
 
 //max
 int expression() {
-    cout << "F: expression\n";
+    std::map<std::string, int> priority;
+    std::stack<Token*> signs;
+    std::vector<Token*> ans;
 
-    return 0;
+    int afterOpeningBracket = 0;
+    bool mustBeObject = false;
+    bool mustBeVar = false;
+    int inFunction = 0;
+
+    priority["."] = 2;
+    priority["++"] = priority["!"] = 3;
+    priority["*"] = priority["/"] = priority["%"] = 5;
+    priority["+"] = priority["-"] = 6;
+    priority["<"] = priority[">"] =
+    priority["<="] =priority[">="] = 8;
+    priority["=="] = priority["!="] = 1;
+    priority["and"] = 13;
+    priority["or"] = 14;
+    priority["**"] = 4;
+    priority["="] =priority["+="] =priority["-="] 
+    =priority["*="] = priority["/="] =priority["%="] =15;
+    
+    while ((cur -> type != closingBracket || afterOpeningBracket > 0) 
+            && cur -> type != semicolon && 
+            (cur -> type != comma || afterOpeningBracket > 0)) {
+        if (cur -> type == integerNumber || cur -> type == doubleNumber ||
+            cur -> type == stringConstant || cur -> type == logicalConstant) {
+            ans.push_back(cur);
+            nextToken();
+        } else if (cur -> type == name) {
+            Token* q = cur;
+
+            nextToken();
+            if (cur -> type == openingBracket) {
+                q -> isFunction = true;
+                ++inFunction;
+                ++afterOpeningBracket;
+
+                signs.push(q);
+                signs.push(cur);
+                nextToken();
+            } else {
+                q -> isSimpleVariable = true;
+                ans.push_back(q);
+            }
+        } else if (cur -> type == comma) {
+            if (!inFunction)
+                throw err();
+            while (!signs.empty() && signs.top() -> type != openingBracket) {
+                ans.push_back(signs.top());
+                signs.pop();
+            }
+            if (signs.empty())
+                throw err();
+            nextToken();
+        } else if ((cur -> type == unaryMathOperator) ||
+            (cur -> type == logicalOperator && cur -> value == "!")) {
+            signs.push(cur);
+            nextToken();
+        } else if (cur -> type == binaryMathOperator ||
+                   cur -> type == comparsionOperator ||
+                   cur -> type == assignmentOperator ||
+                   cur -> type == logicalOperator) {
+            if (cur -> value == "=" || cur -> value == "**") {
+                while(!signs.empty() && ((signs.top() -> type == unaryMathOperator) ||
+                      (signs.top() -> type == logicalOperator 
+                      && signs.top() -> value == "!") ||
+                      priority[signs.top() -> value] < priority[cur -> value])) {
+                    ans.push_back(signs.top());
+                    signs.pop();
+                 }
+            } else {
+                while(!signs.empty() && ((signs.top() -> type == unaryMathOperator) ||
+                      (signs.top() -> type == logicalOperator 
+                      && signs.top() -> value == "!") ||
+                      priority[signs.top() -> value] <= priority[cur -> value])) {
+                    ans.push_back(signs.top());
+                    signs.pop();
+                 }
+            }
+
+            signs.push(cur);
+            nextToken();
+        } else if (cur -> type == openingBracket) {
+            ++afterOpeningBracket;
+            signs.push(cur);
+            nextToken();
+        } else if (cur -> type == closingBracket) {
+            --afterOpeningBracket;
+            while(!signs.empty() && signs.top() -> type != openingBracket) {
+                ans.push_back(signs.top());
+                signs.pop();
+            }
+            if (signs.empty())
+                throw err();
+            else {
+                signs.pop();
+                if (!signs.empty() && signs.top() -> type == name) {
+                    ans.push_back(signs.top());
+                    signs.pop();
+                    --inFunction;
+                }
+            }
+            nextToken();
+        }
+    }
+    while (!signs.empty()) {
+        if (signs.top() -> type == openingBracket)
+            throw err();
+        ans.push_back(signs.top());
+        signs.pop();
+    }
+    stack<expressionElement*> exec;
+    std::map<std::string, std::stack<TokenType> >::iterator ptr;
+    int counter = 0;
+
+    for (int i = (int)ans.size() - 1; i >= 0; --i) {
+        if (ans[i] -> type == name) {
+            if (ans[i] -> isFunction) {
+                ans[i] -> isSimpleVariable = false;
+                ptr = names.find(ans[i] -> value);
+                if (ptr -> second.empty() && !ptr -> second.top().isFunction)
+                    throw err("Function '" + ans[i] -> value + "' is not declared");
+                counter = ptr -> second.top().args.size() - 1;
+                while (counter >= 0 && !exec.empty()) {
+                    if (exec.top() -> type != ptr -> second.top().args[counter])
+                        throw err("Incorrect arguments of function");
+                    delete exec.top();
+                    exec.pop();
+                    --counter; 
+                }
+                if (counter > -1)
+                    throw err("Incorrect number of arguments of function");
+                exec.push(new expressionElement(ptr -> second.top().type));
+            } else {
+                ptr = names.find(ans[i] -> value);
+                if (ptr -> second.empty() || ptr -> second.top().isFunction)
+                    throw err("Variable '" + ans[i] -> value + "' is not declared");
+                exec.push(new expressionElement(ptr -> second.top().type));
+                exec.top() -> isSimpleVariable = true;
+
+            }
+        } else if (ans[i] -> type == integerNumber) {
+            exec.push(new expressionElement(3));
+        } else if (ans[i] -> type == doubleNumber) {
+            exec.push(new expressionElement(4));
+        } else if (ans[i] -> type == stringConstant) {
+            exec.push(new expressionElement(2));
+        } else if (ans[i] -> type == logicalConstant) {
+            exec.push(new expressionElement(1));
+        } else if (ans[i] -> type == unaryMathOperator) {
+            if (ans[i] -> value == "++" || ans[i] -> value == "--") {
+                if (!exec.top() -> isSimpleVariable)
+                    throw err("Can't increment/decrement a non-variable");
+            }
+            if (!(exec.top() -> type == TypeInt || exec.top() -> type == TypeDouble)) {
+                throw err("Can't make arifmethic operations to a non-number");
+            }
+            exec.top() -> isSimpleVariable = false;
+
+        } else if (ans[i] -> type == logicalOperator && ans[i] -> value == "!") {
+            if (exec.top() -> type != TypeBool) {
+                throw err("Can't make logic operations to a non-logic expression");
+            }
+            exec.top() -> isSimpleVariable = false;
+        } else if (ans[i] -> type == logicalOperator) {
+            expressionElement* sec, *fir;
+            sec = exec.top();
+            exec.pop();
+            fir = exec.top();
+            if (sec -> type != TypeBool || fir -> type != TypeBool) {
+                throw err();//несоответствие типов в логическом выражении
+            }
+            exec.top() -> isSimpleVariable = false;
+            delete sec;
+
+        } else if (ans[i] -> type == binaryMathOperator) {
+            expressionElement* sec, *fir;
+            sec = exec.top();
+            exec.pop();
+            fir = exec.top();
+            if (ans[i] -> value == "+") {
+                if (!((sec -> type == TypeInt && fir -> type == TypeInt) ||
+                  (sec -> type == TypeDouble && fir -> type == TypeDouble) ||
+                  (sec -> type == TypeString && fir -> type == TypeString)))
+                throw err();//несоответствие типов в математическом/строковом выражении
+            } else if (!((sec -> type == TypeInt && fir -> type == TypeInt) ||
+                  (sec -> type == TypeDouble && fir -> type == TypeDouble))) {
+                throw err();//несоответствие типов в математическом выражении
+            }
+            exec.top() -> isSimpleVariable = false;
+            delete sec;
+        } else if (ans[i] -> type == comparsionOperator) {
+            expressionElement* sec, *fir;
+            sec = exec.top();
+            exec.pop();
+            fir = exec.top();
+            if (!((sec -> type == TypeInt && fir -> type == TypeInt) ||
+                  (sec -> type == TypeDouble && fir -> type == TypeDouble) ||
+                  (sec -> type == TypeString && fir -> type == TypeString))) {
+                throw err();//несоответствие типов в математическом/строковом выражении
+            }
+            delete sec;
+            exec.top() -> isSimpleVariable = false;
+            exec.top() -> type = TypeBool;
+        } else if (ans[i] -> type == assignmentOperator) {
+            expressionElement* sec, *fir;
+            sec = exec.top();
+            exec.pop();
+            fir = exec.top();
+            if (!(fir -> isSimpleVariable) || fir -> type != sec -> type)
+                throw err();
+            delete sec;
+            fir -> isSimpleVariable = false;
+        } else
+              throw err();
+    }
+    if (exec.size() != 1)
+        throw err();
+    int q = exec.top() -> type;
+    delete exec.top();
+
+    return q;
 }
+//max
+
 
 
 void arguments_to_call(string functionName, bool special = 0) {

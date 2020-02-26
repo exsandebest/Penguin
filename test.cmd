@@ -22,6 +22,7 @@ echo.
 echo TEST: 6
 Penguin.exe examples/6.peng
 echo Expected status: ERROR
+echo.
 echo TEST: 7
 Penguin.exe examples/7.peng
 echo Expected status: OK

@@ -109,8 +109,13 @@ void delState(int state){
 int main (int argc, char const *argv[]){
     try {
         if (argc != 2) {
-            throw string("Incorrect arguments");
+            throw string("Incorrect arguments (SyntaxAnalyzer)");
         }
+    } catch (string err) {
+        cout << err << "\n";
+        return 0;
+    }
+    try {
         ifstream fin(argv[1]);
         int n, line, type, size;
         string tmp;
@@ -130,6 +135,14 @@ int main (int argc, char const *argv[]){
         }
         fin.close();
         remove(argv[1]);
+    } catch (...) {
+        ifstream fin(argv[1]);
+        string err;
+        getline(fin, err);
+        cout << err << "\n";
+        return 0;
+    }
+    try {
         nextToken();
         preprocessing();
         curPos = -1;
@@ -151,6 +164,7 @@ void preprocessing() {
     } while (nextToken());
     if (names["main"].empty()) throw err("Function 'main' is required", false);
     if (names["main"].top().args.size() > 0) throw err("Function 'main' must have no arguments", false);
+    if (names["main"].top().type != TypeNull) throw err("Function 'main' must have type 'null'", false);
 }
 
 void function() {
@@ -457,9 +471,12 @@ int expression() {
     std::stack<Token*> signs;
     std::vector<Token*> ans;
 
-    int afterOpeningBracket = 0;
+    bool afterOpeningBracket = false;
+    int afterOpBracket = 0;
     bool mustBeObject = false;
     bool mustBeVar = false;
+    bool afterVariable = false;
+
     int inFunction = 0;
 
     priority["."] = 2;
@@ -475,21 +492,24 @@ int expression() {
     priority["="] =priority["+="] =priority["-="]
     =priority["*="] = priority["/="] =priority["%="] =15;
 
-    while ((cur -> type != closingBracket || afterOpeningBracket > 0)
+    while ((cur -> type != closingBracket || afterOpBracket > 0)
             && cur -> type != semicolon &&
-            (cur -> type != comma || afterOpeningBracket > 0)) {
+            (cur -> type != comma || afterOpBracket > 0)) {
         if (cur -> type == integerNumber || cur -> type == doubleNumber ||
             cur -> type == stringConstant || cur -> type == logicalConstant) {
             ans.push_back(cur);
             nextToken();
+            afterVariable = true;
+            afterOpeningBracket = false;
         } else if (cur -> type == name) {
+            afterOpeningBracket = false;
             Token* q = cur;
 
             nextToken();
             if (cur -> type == openingBracket) {
                 q -> isFunction = true;
                 ++inFunction;
-                ++afterOpeningBracket;
+                ++afterOpBracket;
 
                 signs.push(q);
                 signs.push(cur);
@@ -498,6 +518,7 @@ int expression() {
                 q -> isSimpleVariable = true;
                 ans.push_back(q);
             }
+            afterVariable = true;
         } else if (cur -> type == comma) {
             if (!inFunction)
                 throw err();
@@ -510,12 +531,15 @@ int expression() {
             nextToken();
         } else if ((cur -> type == unaryMathOperator) ||
             (cur -> type == logicalOperator && cur -> value == "!")) {
+            if(afterVariable)
+                 throw err("Postfix increment/decrement is not included");
             signs.push(cur);
             nextToken();
         } else if (cur -> type == binaryMathOperator ||
                    cur -> type == comparsionOperator ||
                    cur -> type == assignmentOperator ||
                    cur -> type == logicalOperator) {
+            afterVariable = false;
             if (cur -> value == "=" || cur -> value == "**") {
                 while(!signs.empty() && signs.top() -> type != openingBracket && ((signs.top() -> type == unaryMathOperator) ||
                       (signs.top() -> type == logicalOperator
@@ -537,11 +561,15 @@ int expression() {
             signs.push(cur);
             nextToken();
         } else if (cur -> type == openingBracket) {
-            ++afterOpeningBracket;
+            ++afterOpBracket;
+            afterOpeningBracket = true;
             signs.push(cur);
             nextToken();
         } else if (cur -> type == closingBracket) {
-            --afterOpeningBracket;
+
+            --afterOpBracket;
+            if (afterOpeningBracket)
+                throw err("Empty brackets");
             while(!signs.empty() && signs.top() -> type != openingBracket) {
                 ans.push_back(signs.top());
                 signs.pop();
@@ -567,7 +595,7 @@ int expression() {
         ans.push_back(signs.top());
         signs.pop();
     }
-    if (signs.empty())
+    if (ans.size() == 0)
         return TypeNull;
 
     stack<expressionElement*> exec;
@@ -585,22 +613,22 @@ int expression() {
                 ans[i] -> isSimpleVariable = false;
                 ptr = names.find(ans[i] -> value);
                 if (ptr -> second.empty() && !ptr -> second.top().isFunction)
-                    throw err("Function '" + ans[i] -> value + "' is not declared.");
+                    throw err("Function '" + ans[i] -> value + "' is not declared");
                 counter = ptr -> second.top().args.size() - 1;
                 while (counter >= 0 && !exec.empty()) {
                     if (exec.top() -> type != ptr -> second.top().args[counter])
-                        throw err("Incorrect arguments of function.");
+                        throw err("Incorrect arguments of function");
                     delete exec.top();
                     exec.pop();
                     --counter;
                 }
                 if (counter > -1)
-                    throw err("Incorrect number of arguments of function.");
+                    throw err("Incorrect number of arguments of function");
                 exec.push(new expressionElement(ptr -> second.top().type));
             } else {
                 ptr = names.find(ans[i] -> value);
                 if (ptr -> second.empty() || ptr -> second.top().isFunction)
-                    throw err("Variable '" + ans[i] -> value + "' is not declared.");
+                    throw err("Variable '" + ans[i] -> value + "' is not declared");
                 exec.push(new expressionElement(ptr -> second.top().type));
                 exec.top() -> isSimpleVariable = true;
 
@@ -614,27 +642,35 @@ int expression() {
         } else if (ans[i] -> type == logicalConstant) {
             exec.push(new expressionElement(1));
         } else if (ans[i] -> type == unaryMathOperator) {
+            if (exec.empty())
+                throw err("Syntax error");
             if (ans[i] -> value == "++" || ans[i] -> value == "--") {
                 if (!exec.top() -> isSimpleVariable)
-                    throw err("Increment/decrement operations cannot be applied to non-variables.");
+                    throw err("Increment/decrement operations cannot be applied to non-variables");
             }
             if (!(exec.top() -> type == TypeInt || exec.top() -> type == TypeDouble)) {
-                throw err("Unary arithmetic operations cannot be applied to non-numbers.");
+                throw err("Unary arithmetic operations cannot be applied to non-numbers");
             }
             exec.top() -> isSimpleVariable = false;
 
         } else if (ans[i] -> type == logicalOperator && ans[i] -> value == "!") {
+            if (exec.empty())
+                throw err("Syntax error");
             if (exec.top() -> type != TypeBool) {
-                throw err("Logic operations cannot be applied to non-bool types.");
+                throw err("Logic operations cannot be applied to non-bool types");
             }
             exec.top() -> isSimpleVariable = false;
         } else if (ans[i] -> type == logicalOperator) {
             expressionElement* sec, *fir;
+            if (exec.empty())
+                throw err("Syntax error");
             sec = exec.top();
             exec.pop();
+            if (exec.empty())
+                throw err("Syntax error");
             fir = exec.top();
             if (sec -> type != TypeBool || fir -> type != TypeBool) {
-                throw err("Logic operations cannot be applied to non-bool types.");
+                throw err("Logic operations cannot be applied to non-bool types");
                 //несоответствие типов в логическом выражении
             }
             exec.top() -> isSimpleVariable = false;
@@ -642,24 +678,32 @@ int expression() {
 
         } else if (ans[i] -> type == binaryMathOperator) {
             expressionElement* sec, *fir;
+            if (exec.empty())
+                throw err("Syntax error");
             sec = exec.top();
             exec.pop();
+            if (exec.empty())
+                throw err("Syntax error");
             fir = exec.top();
             if (ans[i] -> value == "+") {
                 if (!((sec -> type == TypeInt && fir -> type == TypeInt) ||
                   (sec -> type == TypeDouble && fir -> type == TypeDouble) ||
                   (sec -> type == TypeString && fir -> type == TypeString)))
-                throw err("Operation '+' can be applied only to similar integer, double or string types.");//несоответствие типов в математическом/строковом выражении
+                throw err("Operation '+' can be applied only to similar integer, double or string types");//несоответствие типов в математическом/строковом выражении
             } else if (!((sec -> type == TypeInt && fir -> type == TypeInt) ||
                   (sec -> type == TypeDouble && fir -> type == TypeDouble))) {
-                throw err("Arithmetic operations can be applied only to similar integer or double types.");//несоответствие типов в математическом выражении
+                throw err("Arithmetic operations can be applied only to similar integer or double types");//несоответствие типов в математическом выражении
             }
             exec.top() -> isSimpleVariable = false;
             delete sec;
         } else if (ans[i] -> type == comparsionOperator) {
             expressionElement* sec, *fir;
+            if (exec.empty())
+                throw err("Syntax error");
             sec = exec.top();
             exec.pop();
+            if (exec.empty())
+                throw err("Syntax error");
             fir = exec.top();
             if (debug) cout << fir -> type << " " << sec -> type << endl;
 
@@ -667,25 +711,29 @@ int expression() {
                   (sec -> type == TypeDouble && fir -> type == TypeDouble) ||
                   (sec -> type == TypeString && fir -> type == TypeString) ||
                   (sec -> type == TypeBool && fir -> type == TypeBool))) {
-                throw err("Comparsion operations can be applied only to similar non-null types.");//несоответствие типов в математическом/строковом выражении
+                throw err("Comparsion operations can be applied only to similar non-null types");//несоответствие типов в математическом/строковом выражении
             }
             delete sec;
             exec.top() -> isSimpleVariable = false;
             exec.top() -> type = TypeBool;
         } else if (ans[i] -> type == assignmentOperator) {
             expressionElement* sec, *fir;
+            if (exec.empty())
+                throw err("Syntax error");
             sec = exec.top();
             exec.pop();
+            if (exec.empty())
+                throw err("Syntax error");
             fir = exec.top();
             if (!(fir -> isSimpleVariable) || fir -> type != sec -> type)
-                throw err();
+                throw err("Assignment can be applied only to variables");
             delete sec;
             fir -> isSimpleVariable = false;
         } else
               throw err("Trolling accured...");
     }
     if (exec.size() != 1)
-        throw err("Произошёл троллинг...");//троллинг
+        throw err("Syntax error");
     int q = exec.top() -> type;
     delete exec.top();
 

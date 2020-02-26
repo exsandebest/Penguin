@@ -9,6 +9,8 @@
 
 using namespace std;
 
+bool debug = false;
+
 int nestingLevel = 0;
 int currentFunctionType = -1;
 
@@ -142,7 +144,7 @@ int main (int argc, char const *argv[]){
 
 
 void preprocessing() {
-    cout << "F: preproccesing\n";
+     if (debug) cout << "F: preproccesing\n";
     globals();
     do {
         preprocessingFunction();
@@ -151,7 +153,7 @@ void preprocessing() {
 }
 
 void function() {
-    cout << "F: function\n";
+    if (debug) cout << "F: function\n";
     if (!(cur->type == variableType || cur->type == functionType)) throw err();
     currentFunctionType = stringToType(cur->value);
     nextToken();
@@ -174,7 +176,7 @@ void function() {
 
 
 void globals(){
-    cout << "F: globals\n";
+    if (debug) cout << "F: globals\n";
     while (cur->value == "import"){
         nextToken();
         if (cur -> type != stringConstant) throw err();
@@ -188,25 +190,25 @@ int nextToken(){
     ++curPos;
     if (curPos >= v.size()) return 0;
     cur = v[curPos];
-    cout << tokenToString(cur);
+    if (debug) cout << tokenToString(cur);
     return 1;
 }
 
 void program(){
-    cout << "F: program\n";
+    if (debug) cout << "F: program\n";
     globals();
     functions();
 }
 
 void functions(){
-    cout << "F: functions\n";
+    if (debug) cout << "F: functions\n";
     do {
         function();
     } while (nextToken());
 }
 
 void preprocessingFunction(){
-    cout << "F: preprocessingFunction\n";
+    if (debug) cout << "F: preprocessingFunction\n";
     if (!(cur->type == variableType || cur->type == functionType)) throw err();
     int preprocessingCurrentFunctionType = stringToType(cur->value);
     nextToken();
@@ -238,7 +240,7 @@ void preprocessingFunction(){
 
 void arguments(string functionName, bool pre){
     set<string> tmpSet;
-    cout << "F: arguments\n";
+    if (debug) cout << "F: arguments\n";
     while (cur->type != closingBracket){
         if (cur->type != variableType) throw err();
         int curType = stringToType(cur->value);
@@ -269,7 +271,7 @@ void arguments(string functionName, bool pre){
 
 void block(){
     ++nestingLevel;
-    cout << "F: block\n";
+    if (debug) cout << "F: block\n";
     do {
         _operator();
     } while (cur->type != closingBrace);
@@ -282,7 +284,7 @@ void block(){
 
 
 void _operator() {
-    cout << "F: _operator\n";
+    if (debug) cout << "F: _operator\n";
     if (cur->type == name || cur->type == unaryMathOperator) {
         expression();
         if (cur->type != semicolon) throw err();
@@ -299,7 +301,7 @@ void _operator() {
 }
 
 void operator_main(){
-    cout << "F: operator_main\n";
+    if (debug) cout << "F: operator_main\n";
     if (cur->value == "while"){
         nextToken();
         operator_while();
@@ -322,7 +324,7 @@ void operator_main(){
 }
 
 void operator_continue(){
-    cout << "F: operator_continue\n";
+    if (debug) cout << "F: operator_continue\n";
     if (stateSet.count(inCycle) == 0) throw err("Operator 'continue' is not in cycle", cur->line);
     nextToken();
     if (cur->type != semicolon) throw err();
@@ -330,7 +332,7 @@ void operator_continue(){
 }
 
 void operator_break() {
-    cout << "F: operator_break\n";
+    if (debug) cout << "F: operator_break\n";
     if (stateSet.count(inCycle) == 0) throw err("Operator 'break' is not in cycle", cur->line);
     nextToken();
     if (cur->type != semicolon) throw err();
@@ -339,7 +341,7 @@ void operator_break() {
 
 
 void operator_while() {
-    cout << "F: operator_while\n";
+    if (debug) cout << "F: operator_while\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
     int curType = expression();
@@ -356,7 +358,7 @@ void operator_while() {
 }
 
 void operator_for(){
-    cout << "F: operator_for\n";
+    if (debug) cout << "F: operator_for\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
     addState(inFor1);
@@ -385,7 +387,7 @@ void operator_for(){
 }
 
 void operator_if () {
-    cout << "F: operator_if\n";
+    if (debug) cout << "F: operator_if\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
     int curType = expression();
@@ -413,7 +415,7 @@ void operator_if () {
 
 
 void operator_return(){
-    cout << "F: operator_return\n";
+    if (debug) cout << "F: operator_return\n";
     if (stateSet.count(inFunction) == 0) throw err();
     int curType = expression();
     if (curType != currentFunctionType) throw errType(curType, currentFunctionType, cur->line);
@@ -423,7 +425,7 @@ void operator_return(){
 
 
 void operator_input_output(){
-    cout << "F: operator_input_output\n";
+    if (debug) cout << "F: operator_input_output\n";
     if (cur->value == "read"){
         nextToken();
         operator_io_read();
@@ -436,7 +438,7 @@ void operator_input_output(){
 
 
 void operator_assignment(int varType){
-    cout << "F: operator_assignment\n";
+    if (debug) cout << "F: operator_assignment\n";
     if (cur->type != assignmentOperator) throw err();
     nextToken();
     int curExpType = expression();
@@ -447,7 +449,7 @@ void operator_assignment(int varType){
 
 //max
 int expression() {
-    cout << "F: expression\n";
+    if (debug) cout << "F: expression\n";
     std::map<std::string, int> priority;
     std::stack<Token*> signs;
     std::vector<Token*> ans;
@@ -677,7 +679,7 @@ int expression() {
 
 
 void arguments_to_call(string functionName, bool special = 0) {
-    cout << "F: arguments_to_call\n";
+    if (debug) cout << "F: arguments_to_call\n";
     int k = 0;
     while (cur->type != closingBracket){
         if (special) {
@@ -696,7 +698,7 @@ void arguments_to_call(string functionName, bool special = 0) {
 }
 
 void operator_io_read() {
-    cout << "F: operator_io_read\n";
+    if (debug) cout << "F: operator_io_read\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
     arguments_to_call("read", 1);
@@ -707,7 +709,7 @@ void operator_io_read() {
 }
 
 void operator_io_write() {
-    cout << "F: operator_io_write\n";
+    if (debug) cout << "F: operator_io_write\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
     arguments_to_call("write");
@@ -718,7 +720,7 @@ void operator_io_write() {
 }
 
 void operator_variable_declaration() {
-    cout << "F: operator_variable_declaration\n";
+    if (debug) cout << "F: operator_variable_declaration\n";
     if (cur->type != variableType) throw err();
     int curVarType = stringToType(cur->value);
     nextToken();

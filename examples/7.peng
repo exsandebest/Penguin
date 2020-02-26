@@ -1,0 +1,17 @@
+import "Maksim.peng"
+
+null main(){
+    string s = "Lorem Ipsum";
+    string ss = "Another string";
+    string sss = s + ss;
+    write(sss);
+    string ssss;
+    read(ssss);
+    int k = 124;
+    write(ssss + sss);
+    writee(k);
+}
+
+null writee(int k) {
+    return;
+}

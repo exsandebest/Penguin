@@ -1,0 +1,3 @@
+bool check(int k) {
+    return (k%2);
+}

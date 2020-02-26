@@ -1,0 +1,11 @@
+null main () {
+    int x;
+}
+
+int kek () {
+    int y;
+}
+
+int lol (int a, int b, int c) {
+    int z;
+}

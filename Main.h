@@ -60,7 +60,8 @@ enum { //Types
     TypeBool = 1,
     TypeString = 2,
     TypeInt = 3,
-    TypeDouble = 4
+    TypeDouble = 4,
+    TypeNull = 5
 };
 
 enum {

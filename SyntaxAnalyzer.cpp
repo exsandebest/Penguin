@@ -31,13 +31,13 @@ void addState(int state);
 void delState(int state);
 
 int nextToken();
-void preproccesing();
-void preproccesingFunction();
+void preprocessing();
+void preprocessingFunction();
 void program();
 void functions();
 void function();
 void globals();
-void arguments(string functionName);
+void arguments(string functionName, bool check = 1);
 void block();
 void operation();
 void _operator();
@@ -62,7 +62,7 @@ string err (string errString = ""){
         s += "Unexpected token: (" + to_string(cur->type) + ") '" + cur->value + "' on line " + to_string(cur->line) + "\n";
         return s;
     } else {
-        return errString;
+        return "Error: " + errString;
     }
 }
 
@@ -132,16 +132,34 @@ int main (int argc, char const *argv[]){
 }
 
 
-void preproccessing() {
+void preprocessing() {
     cout << "F: preproccesing\n";
     globals();
     do {
-        preproccesingFunction();
+        preprocessingFunction();
     } while (nextToken());
 }
 
-void preproccesingFunction() {
-    cout << "F: preproccesingFunction\n";
+void function() {
+    cout << "F: function\n";
+    if (!(cur->type == variableType || cur->type == functionType)) throw err();
+    currentFunctionType = stringToType(cur->value);
+    nextToken();
+    if (cur->type != name) throw err();
+    string curName = cur->value;
+    nextToken();
+    if (cur->type != openingBracket) throw err();
+    nextToken();
+    arguments(curName, 0);
+    if (cur->type != closingBracket) throw err();
+    nextToken();
+    if (cur->type != openingBrace) throw err();
+    nextToken();
+    addState(inFunction);
+    block();
+    delState(inFunction);
+    if (cur->type != closingBrace) throw err();
+    currentFunctionType = -1;
 }
 
 
@@ -177,16 +195,16 @@ void functions(){
     } while (nextToken());
 }
 
-void function(){
-    cout << "F: function\n";
+void preprocessingFunction(){
+    cout << "F: fpreprocessingFunction\n";
     if (!(cur->type == variableType || cur->type == functionType)) throw err();
-    currentFunctionType = stringToType(cur->value);
+    int preprocessingCurrentFunctionType = stringToType(cur->value);
     nextToken();
     if (cur->type != name) throw err();
     string curName = cur->value;
-    if (!names[curName].empty()) throw err();
-    names[curName].push(TokenType(currentFunctionType, nestingLevel, true));
-    lastNames.push({curName, nestingLevel});
+    if (!names[curName].empty()) throw err("Function redeclaration");
+    names[curName].push(TokenType(preprocessingCurrentFunctionType, -1, true));
+    lastNames.push({curName, -1});
     nextToken();
     if (cur->type != openingBracket) throw err();
     nextToken();
@@ -194,24 +212,34 @@ void function(){
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != openingBrace) throw err();
-    nextToken();
-    addState(inFunction);
-    block();
-    delState(inFunction);
+    stack<bool> tmpStack;
+    tmpStack.push(1);
+    while (!tmpStack.empty() && curPos < v.size()){
+        nextToken();
+        if (cur->type == openingBrace) {
+            tmpStack.push(1);
+        } else if (cur->type == closingBrace){
+            tmpStack.pop();
+        }
+    }
     if (cur->type != closingBrace) throw err();
-    currentFunctionType = -1;
+    preprocessingCurrentFunctionType = -1;
 }
 
-void arguments(string functionName){
+void arguments(string functionName, bool check){
     set<string> tmpSet;
     cout << "F: arguments\n";
     while (cur->type != closingBracket){
         if (cur->type != variableType) throw err();
-        if (tmpSet.count(cur->value)) throw err("Duplicate name");
-        names[functionName].top().args.push_back(stringToType(cur->value));
-        tmpSet.insert(cur->value);
+        if (check) {
+            names[functionName].top().args.push_back(stringToType(cur->value));
+        }
         nextToken();
         if (cur->type != name) throw err();
+        if (check) {
+            if (tmpSet.count(cur->value)) throw err("Duplicate name");
+            tmpSet.insert(cur->value);
+        }
         nextToken();
         if (cur->type == closingBracket) {
             return;

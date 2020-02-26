@@ -18,7 +18,16 @@ public:
     std :: string value;
     int size;
     int line;
-    Token(int type, std :: string value, int line): type(type), value(value), size(value.size()), line(line) {}
+    bool isFunction;
+    bool isSimpleVariable;
+    Token(int type, std :: string value, int line): type(type), value(value), size(value.size()), line(line), isFunction(false), isSimpleVariable(false) {}
+};
+
+class expressionElement {
+public:
+    int type;
+    bool isSimpleVariable;
+    expressionElement(int tp): type(tp), isSimpleVariable(false) {}
 };
 
 enum { //Token's types
@@ -60,7 +69,8 @@ enum { //Types
     TypeBool = 1,
     TypeString = 2,
     TypeInt = 3,
-    TypeDouble = 4
+    TypeDouble = 4,
+    TypeNull = 5
 };
 
 enum {

@@ -11,7 +11,6 @@ using namespace std;
 
 int nestingLevel = 0;
 int currentFunctionType = -1;
-int preprocessorNestingLevel = 0;
 
 std::map<std::string, std::stack<TokenType > > names;
 std::stack<pair<string, int>> lastNames;
@@ -196,7 +195,7 @@ void functions(){
 }
 
 void preprocessingFunction(){
-    cout << "F: fpreprocessingFunction\n";
+    cout << "F: preprocessingFunction\n";
     if (!(cur->type == variableType || cur->type == functionType)) throw err();
     int preprocessingCurrentFunctionType = stringToType(cur->value);
     nextToken();
@@ -445,6 +444,7 @@ void operator_assignment(int varType){
 
 //max
 int expression() {
+    cout << "F: expression\n";
     std::map<std::string, int> priority;
     std::stack<Token*> signs;
     std::vector<Token*> ans;
@@ -679,7 +679,7 @@ void arguments_to_call(string functionName, bool special = 0) {
     while (cur->type != closingBracket){
         if (special) {
             if (cur->type != name) throw err();
-            if (!names[cur->value].empty()) throw err();
+            if (names[cur->value].empty()) throw err();
             if (names[cur->value].top().isFunction) throw err();
             nextToken();
         } else {
@@ -724,11 +724,11 @@ void operator_variable_declaration() {
     nextToken();
     if (cur->type == assignmentOperator){
         operator_assignment(curVarType);
-        if (names[curName].top().level == nestingLevel) throw err();
+        if (!names[curName].empty() && names[curName].top().level == nestingLevel) throw err();
         names[curName].push(TokenType(curVarType, nestingLevel));
         lastNames.push({curName, nestingLevel});
     } else if (cur->type == semicolon){
-        if (names[curName].top().level == nestingLevel) throw err();
+        if (!names[curName].empty() && names[curName].top().level == nestingLevel) throw err();
         names[curName].push(TokenType(curVarType, nestingLevel));
         lastNames.push({curName, nestingLevel});
         if (stateSet.count(inFor1) == 0) nextToken();

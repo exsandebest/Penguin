@@ -11,6 +11,7 @@ using namespace std;
 
 int nestingLevel = 0;
 int currentFunctionType = -1;
+int preprocessorNestingLevel = 0;
 
 std::map<std::string, std::stack<TokenType > > names;
 std::stack<pair<string, int>> lastNames;
@@ -30,6 +31,8 @@ void addState(int state);
 void delState(int state);
 
 int nextToken();
+void preproccesing();
+void preproccesingFunction();
 void program();
 void functions();
 void function();
@@ -73,7 +76,8 @@ int stringToType(string s){
     if (s == "int") return TypeInt;
     if (s == "bool") return TypeBool;
     if (s == "string") return TypeString;
-    return TypeDouble;
+    if (s == "double") return TypeDouble;
+    return TypeNull;
 }
 
 string errType(int currentType, int expectedType) {
@@ -116,6 +120,9 @@ int main (int argc, char const *argv[]){
         fin.close();
         remove(argv[1]);
         nextToken();
+        preprocessing();
+        curPos = -1;
+        nextToken();
         program();
         cout << "STATUS : OK";
     } catch (string err){
@@ -123,6 +130,20 @@ int main (int argc, char const *argv[]){
         return 0;
     }
 }
+
+
+void preproccessing() {
+    cout << "F: preproccesing\n";
+    globals();
+    do {
+        preproccesingFunction();
+    } while (nextToken());
+}
+
+void preproccesingFunction() {
+    cout << "F: preproccesingFunction\n";
+}
+
 
 void globals(){
     cout << "F: globals\n";

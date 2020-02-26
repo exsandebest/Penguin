@@ -709,8 +709,7 @@ int expression() {
 
             if (!((sec -> type == TypeInt && fir -> type == TypeInt) ||
                   (sec -> type == TypeDouble && fir -> type == TypeDouble) ||
-                  (sec -> type == TypeString && fir -> type == TypeString) ||
-                  (sec -> type == TypeBool && fir -> type == TypeBool))) {
+                  (sec -> type == TypeString && fir -> type == TypeString))) {
                 throw err("Comparsion operations can be applied only to similar non-null types");//несоответствие типов в математическом/строковом выражении
             }
             delete sec;

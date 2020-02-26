@@ -22,7 +22,7 @@ multiset<int> stateSet;
 
 int curPos = -1;
 
-string err();
+string err(string errString);
 string ttos (Token * t);
 string errType();
 
@@ -53,10 +53,14 @@ void operator_io_write();
 void arguments_to_call(string functionName, bool special);
 void operator_variable_declaration();
 
-string err (){
-    string s = "";
-    s += "Unexpected token: (" + to_string(cur->type) + ") '" + cur->value + "' on line " + to_string(cur->line) + "\n";
-    return s;
+string err (string errString = ""){
+    if (errString == "") {
+        string s = "";
+        s += "Unexpected token: (" + to_string(cur->type) + ") '" + cur->value + "' on line " + to_string(cur->line) + "\n";
+        return s;
+    } else {
+        return errString;
+    }
 }
 
 string ttos (Token *) { //Token TO String
@@ -69,7 +73,7 @@ int stringToType(string s){
     if (s == "int") return TypeInt;
     if (s == "bool") return TypeBool;
     if (s == "string") return TypeString;
-    if (s == "double") return TypeDouble;
+    return TypeDouble;
 }
 
 string errType(int currentType, int expectedType) {
@@ -161,7 +165,7 @@ void function(){
     string curName = cur->value;
     if (!names[curName].empty()) throw err();
     names[curName].push(TokenType(currentFunctionType, nestingLevel, true));
-    lastNames.push({currentFunctionType, nestingLevel});
+    lastNames.push({curName, nestingLevel});
     nextToken();
     if (cur->type != openingBracket) throw err();
     nextToken();
@@ -178,10 +182,13 @@ void function(){
 }
 
 void arguments(string functionName){
+    set<string> tmpSet;
     cout << "F: arguments\n";
     while (cur->type != closingBracket){
         if (cur->type != variableType) throw err();
-        names[fucntionName].top().args.push_back(stringToType(cur->value));
+        if (tmpSet.count(cur->value)) throw err("Duplicate name");
+        names[functionName].top().args.push_back(stringToType(cur->value));
+        tmpSet.insert(cur->value);
         nextToken();
         if (cur->type != name) throw err();
         nextToken();
@@ -391,172 +398,11 @@ void operator_assignment(int varType){
 int expression() {
     cout << "F: expression\n";
 
-    enum {signExpect = 1, startExpect = 0, numExpect = 2,
-          };
-    bool canBeBeforeassign = true;
-
-    int expressionState = startExpect;
-    int expressionType = 0,
-        tmpExpressionType,
-        counter;
-    std::string nameValue;
-    std::map<string,
-            std::stack<TokenType> >::iterator pointer;
-   // std::queue<int> exp;
-
-   while (cur -> type != closingBracket && cur -> type != semicolon && cur -> type != comma) {
-       if (expressionState == 0) {
-           if (cur -> type == openingBracket) {
-                canBeBeforeassign = false;
-
-                nextToken();
-                expression();
-                if (cur -> type != closingBracket)
-                    throw err();
-                nextToken();
-                expressionState = 1;
-           } else if (cur -> type == name) {
-
-                pointer = names.find(cur -> value);
-
-                nextToken();
-
-
-                if (cur -> type == openingBracket) {
-                    nextToken();
-
-                    if (pointer -> empty() ||
-                        !names[nameValue].top().isFunction)
-                        throw err();
-
-                    counter = 0;
-
-                    while(cur -> type != closingBracket) {
-                        tmpExpressionType = expression();
-                        ++counter;
-                        if (counter > names[nameValue].top().args.size() ||
-                            nam)
-                        if (cur -> type != comma &&
-                            cur -> type != closingBracket)
-                            throw err();
-                        if (cur -> type != closingBracket)
-                            nextToken();
-                    }
-                    if (cnt )
-                    nextToken();
-                    canBeBeforeassign = false;
-                } else {
-
-                }
-
-                expressionState = 1;
-           } else if (cur -> type == stringConstant) {
-                canBeBeforeassign = false;
-
-                nextToken();
-                expressionState = 1;
-           } else if (cur -> type == integerNumber || cur -> type == doubleNumber) {
-                canBeBeforeassign = false;
-
-                nextToken();
-                expressionState = 1;
-           } else if (cur -> type == logicalConstant) {
-                canBeBeforeassign = false;
-
-                nextToken();
-                expressionState = 1;
-           } else if (cur -> type == unaryMathOperator) {
-                canBeBeforeassign = false;
-
-                nextToken();
-                expressionState = 2;
-               // if (expressionState == )
-           } else if ((cur -> type == logicalOperator && cur -> value == "!")) {
-                canBeBeforeassign = false;
-
-                nextToken();
-                expressionState = 2;
-           } else
-                throw err();
-       } else if (expressionState == 1) {
-            if (cur -> type == binaryMathOperator) {//math
-                canBeBeforeassign = false;
-
-                nextToken();
-                expressionState = 0;
-            } else if (cur -> type == comparsionOperator) {//logic
-                canBeBeforeassign = false;
-
-                nextToken();
-                expressionState = 0;
-            } else if (cur -> type == assignmentOperator &&
-                canBeBeforeassign) {
-                nextToken();
-                expressionState = 0;
-            } else if (cur -> type == logicalOperator) {//logic
-                canBeBeforeassign = false;
-
-                nextToken();
-                expressionState = 0;
-            }
-            else
-                throw err();
-       } else if (expressionState == 2) {
-            if (cur -> type == openingBracket) {
-                canBeBeforeassign = false;
-
-                nextToken();
-                expression();
-                if (cur -> type != closingBracket)
-                    throw err();
-                nextToken();
-                expressionState = 1;
-            } else if (cur -> type == name) {
-                 //check stack
-
-                nextToken();
-                if (cur -> type == openingBracket) {
-                    nextToken();
-
-                    while(cur -> type != closingBracket) {
-                        expression();
-                        if (cur -> type != comma &&
-                            cur -> type != closingBracket)
-                            throw err();
-                        if (cur -> type != closingBracket)
-                            nextToken();
-                    }
-                    nextToken();
-                    canBeBeforeassign = false;
-                }
-                expressionState = 1;
-            } else if (cur -> type == stringConstant) {
-                canBeBeforeassign = false;
-
-                nextToken();
-                expressionState = 1;
-            } else if (cur -> type == integerNumber || cur -> type == doubleNumber) {
-                canBeBeforeassign = false;
-
-                nextToken();
-                expressionState = 1;
-            }  else if (cur -> type == logicalConstant) {
-                canBeBeforeassign = false;
-
-                nextToken();
-                expressionState = 1;
-            } else
-                throw err();
-       }
-
-    }
-    if (expressionState != 1)
-        throw err();
     return 0;
 }
 
 
-void arguments_to_call(string fucntionName, bool special = 0) {
+void arguments_to_call(string functionName, bool special = 0) {
     cout << "F: arguments_to_call\n";
     int k = 0;
     while (cur->type != closingBracket){

@@ -56,7 +56,7 @@ void operator_io_write();
 void arguments_to_call(string functionName, bool special);
 void operator_variable_declaration();
 
-string err (string errString = "", int line = 0){
+string err (string errString = "", int line = -1){
     if (errString == "") {
         string s = "";
         s += "Unexpected token: (" + to_string(cur->type) + ") '" + cur->value + "' on line " + to_string(cur->line) + "\n";
@@ -135,7 +135,7 @@ int main (int argc, char const *argv[]){
         curPos = -1;
         nextToken();
         program();
-        cout << "STATUS : OK";
+        cout << "STATUS : OK\n";
     } catch (string err){
         cout << err;
         return 0;
@@ -312,7 +312,6 @@ void operator_main(){
         nextToken();
         operator_if();
     } else if (cur->value == "return"){
-        nextToken();
         operator_return();
     } else if (cur->value == "continue"){
         operator_continue();
@@ -416,10 +415,13 @@ void operator_if () {
 
 void operator_return(){
     if (debug) cout << "F: operator_return\n";
+    nextToken();
     if (stateSet.count(inFunction) == 0) throw err();
-    int curType = expression();
-    if (curType != currentFunctionType) throw errType(curType, currentFunctionType, cur->line);
-    if (cur->type != semicolon) throw err();
+    if (cur->type != semicolon) {
+        int curType = expression();
+        if (curType != currentFunctionType) throw errType(curType, currentFunctionType, cur->line);
+        if (cur->type != semicolon) throw err();
+    }
     nextToken();
 }
 
@@ -449,7 +451,7 @@ void operator_assignment(int varType){
 
 //max
 int expression() {
-    cout << "F: expression\n";
+    if (debug) cout << "F: expression\n";
     std::map<std::string, int> priority;
     std::stack<Token*> signs;
     std::vector<Token*> ans;
@@ -469,11 +471,11 @@ int expression() {
     priority["and"] = 13;
     priority["or"] = 14;
     priority["**"] = 4;
-    priority["="] =priority["+="] =priority["-="] 
+    priority["="] =priority["+="] =priority["-="]
     =priority["*="] = priority["/="] =priority["%="] =15;
-    
-    while ((cur -> type != closingBracket || afterOpeningBracket > 0) 
-            && cur -> type != semicolon && 
+
+    while ((cur -> type != closingBracket || afterOpeningBracket > 0)
+            && cur -> type != semicolon &&
             (cur -> type != comma || afterOpeningBracket > 0)) {
         if (cur -> type == integerNumber || cur -> type == doubleNumber ||
             cur -> type == stringConstant || cur -> type == logicalConstant) {
@@ -515,7 +517,7 @@ int expression() {
                    cur -> type == logicalOperator) {
             if (cur -> value == "=" || cur -> value == "**") {
                 while(!signs.empty() && signs.top() -> type != openingBracket && ((signs.top() -> type == unaryMathOperator) ||
-                      (signs.top() -> type == logicalOperator 
+                      (signs.top() -> type == logicalOperator
                       && signs.top() -> value == "!") ||
                       priority[signs.top() -> value] < priority[cur -> value])) {
                     ans.push_back(signs.top());
@@ -523,7 +525,7 @@ int expression() {
                  }
             } else {
                 while(!signs.empty() && signs.top() -> type != openingBracket && ((signs.top() -> type == unaryMathOperator) ||
-                      (signs.top() -> type == logicalOperator 
+                      (signs.top() -> type == logicalOperator
                       && signs.top() -> value == "!") ||
                       priority[signs.top() -> value] <= priority[cur -> value])) {
                     ans.push_back(signs.top());
@@ -544,7 +546,6 @@ int expression() {
                 signs.pop();
             }
             if (signs.empty()){
-                cout << "kek\n";
                 throw err();
             }
             else {
@@ -567,13 +568,13 @@ int expression() {
     stack<expressionElement*> exec;
     std::map<std::string, std::stack<TokenType> >::iterator ptr;
     int counter = 0;
-    
-    for (int i = 0; i < ans.size(); ++i) {
-        cout << ans[i]-> type << " " << ans[i] -> value << " " << endl;
+    if (debug) {
+        for (int i = 0; i < ans.size(); ++i) {
+            cout << ans[i]-> type << " " << ans[i] -> value << " " << endl;
+        }
     }
 
     for (int i = 0; i < (int)ans.size(); ++i) {
-        //cout << ans[i]-> type << " " << ans[i] -> value << " " << endl;
         if (ans[i] -> type == name) {
             if (ans[i] -> isFunction) {
                 ans[i] -> isSimpleVariable = false;
@@ -586,7 +587,7 @@ int expression() {
                         throw err("Incorrect arguments of function");
                     delete exec.top();
                     exec.pop();
-                    --counter; 
+                    --counter;
                 }
                 if (counter > -1)
                     throw err("Incorrect number of arguments of function");
@@ -654,7 +655,7 @@ int expression() {
             sec = exec.top();
             exec.pop();
             fir = exec.top();
-            cout << fir -> type << " " << sec -> type << endl;
+            if (debug) cout << fir -> type << " " << sec -> type << endl;
 
             if (!((sec -> type == TypeInt && fir -> type == TypeInt) ||
                   (sec -> type == TypeDouble && fir -> type == TypeDouble) ||

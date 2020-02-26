@@ -1,4 +1,4 @@
-import "Maksim.peng"
+import "Maksim.peng";
 
 null main(){
     string s = "Lorem Ipsum";

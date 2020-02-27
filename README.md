@@ -9,6 +9,9 @@ SyntaxAnalyzer.cpp
 ```
 **You can run ``make.cmd`` (for Windows) or ``make.sh`` (for Linux) to do that**  
 **After that you can use ``Penguin.exe path/to/program.peng`` to start**
+
+## Testing
+**To start testing you can run ``test.cmd`` (for Windows) of ``test.sh`` (for Linux)**
 ## Documents about language
 * [Grammar](https://docs.google.com/document/d/1y9UAdCVIHkVw3AbSU_anU4KZSvI54mrA7OSpKjKvKgw)  
 * [Types of tokens](https://docs.google.com/spreadsheets/d/1OBjwfQxot8h_A8aIbHIXjujbpoGofYAS0elkgWege0g)  

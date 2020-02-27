@@ -9,7 +9,7 @@
 
 using namespace std;
 
-bool debug = true;
+bool debug = false;
 
 int nestingLevel = 0;
 int currentFunctionType = -1;
@@ -708,11 +708,18 @@ int expression() {
                 throw err("Syntax error");
             fir = exec.top();
             if (debug) cout << fir -> type << " " << sec -> type << endl;
-
-            if (!((sec -> type == TypeInt && fir -> type == TypeInt) ||
+            if (ans[i] -> value == "==" || ans[i] -> value == "!=") {
+                if (!((sec -> type == TypeInt && fir -> type == TypeInt) ||
+                  (sec -> type == TypeDouble && fir -> type == TypeDouble) ||
+                  (sec -> type == TypeString && fir -> type == TypeString) ||
+                  (sec -> type == TypeBool && fir -> type == TypeBool))) {
+                    throw err("Equqal/Not Equal operations can be applied only to similar non-null types");//несоответствие типов в математическом/строковом выражении
+                }
+            }
+            else if (!((sec -> type == TypeInt && fir -> type == TypeInt) ||
                   (sec -> type == TypeDouble && fir -> type == TypeDouble) ||
                   (sec -> type == TypeString && fir -> type == TypeString))) {
-                throw err("Comparsion operations can be applied only to similar non-null types");//несоответствие типов в математическом/строковом выражении
+                throw err("Comparsion operations can be applied only to similar non-null, non-bool types");//несоответствие типов в математическом/строковом выражении
             }
             delete sec;
             exec.top() -> isSimpleVariable = false;

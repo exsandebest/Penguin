@@ -12,21 +12,30 @@ public:
 };
 
 
+enum { //Types
+    TypeBool = 1,
+    TypeString = 2,
+    TypeInt = 3,
+    TypeDouble = 4,
+    TypeNull = 5,
+    TypeSpecial = 6
+};
+
 class PToken {
 public:
     int type;
-    string valueString = "";
+    std :: string valueString = "";
     int valueInt = 0;
     double valueDouble = 0;
     bool valueBool = false;
-    string special = "";
+    std :: string special = "";
     int arg = 0;
     PToken(int a) : valueInt(a), type(TypeInt){}
     PToken(double a) : valueDouble(a), type(TypeDouble){}
-    PToken(string a) : valueString(a), type(TypeString){}
+    PToken(std :: string a) : valueString(a), type(TypeString){}
     PToken(bool a) : valueBool(a), type(TypeBool){}
-    PToken(string a, int arg) : special(a), type(TypeSpecial), arg(arg){}
-}
+    PToken(std :: string a, int arg) : special(a), type(TypeSpecial), arg(arg){}
+};
 
 
 
@@ -78,13 +87,4 @@ enum { //States
     inCycle = 1,
     inFor1 = 3, //for (_________; i < n; ++i){}
     inFunction = 6
-};
-
-enum { //Types
-    TypeBool = 1,
-    TypeString = 2,
-    TypeInt = 3,
-    TypeDouble = 4,
-    TypeNull = 5,
-    TypeSpacial = 6
 };

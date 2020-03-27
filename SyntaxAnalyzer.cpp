@@ -22,6 +22,11 @@ Token * cur;
 stack<int> stateStack;
 multiset<int> stateSet;
 
+//Poliz
+vector <PToken*> p;
+stack <int> posOfStart; // Position of start of cycle (before condition)
+stack <int> posOfEnd; // Position of those elements, which need end position
+
 int curPos = -1;
 
 string err(string errString, bool showLine);
@@ -55,6 +60,7 @@ void operator_io_read();
 void operator_io_write();
 void arguments_to_call(string functionName, bool special);
 void operator_variable_declaration();
+void exec();
 
 string err (string errString = "", bool showLine = 1){
     if (errString == "") {
@@ -810,5 +816,12 @@ void operator_variable_declaration() {
         if (stateSet.count(inFor1) == 0) nextToken();
     } else {
         throw err();
+    }
+}
+
+void exec(){
+    int i = 0;
+    while (true) {
+        PToken * tkn = p[i];
     }
 }

@@ -617,6 +617,8 @@ int expression() {
         if (ans[i] -> type == name) {
             if (ans[i] -> isFunction) {
                 ans[i] -> isSimpleVariable = false;
+                if (ans[i] -> value == "main")
+                    throw err("Can't call function 'main'");
                 ptr = names.find(ans[i] -> value);
                 if (ptr -> second.empty() && !ptr -> second.top().isFunction)
                     throw err("Function '" + ans[i] -> value + "' is not declared");

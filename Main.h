@@ -24,17 +24,9 @@ enum { //Types
 class PToken {
 public:
     int type;
-    std :: string valueString = "";
-    int valueInt = 0;
-    double valueDouble = 0;
-    bool valueBool = false;
-    std :: string special = "";
-    int arg = 0;
-    PToken(int a) : valueInt(a), type(TypeInt){}
-    PToken(double a) : valueDouble(a), type(TypeDouble){}
-    PToken(std :: string a) : valueString(a), type(TypeString){}
-    PToken(bool a) : valueBool(a), type(TypeBool){}
-    PToken(std :: string a, int arg) : special(a), type(TypeSpecial), arg(arg){}
+    std :: string value;
+    std :: vector <int> args;
+    PToken(int t, string s): type(t), value(s){}
 };
 
 

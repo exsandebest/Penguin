@@ -26,7 +26,7 @@ public:
     int type;
     std :: string value;
     std :: vector <int> args;
-    PToken(int t, string s): type(t), value(s){}
+    PToken(int t, std :: string s): type(t), value(s){}
 };
 
 
@@ -79,4 +79,11 @@ enum { //States
     inCycle = 1,
     inFor1 = 3, //for (_________; i < n; ++i){}
     inFunction = 6
+};
+
+
+enum { // P - Poliz
+    POperator = 1,
+    PVariable = 2,
+    PSpecial = 3
 };

@@ -23,9 +23,14 @@ stack<int> stateStack;
 multiset<int> stateSet;
 
 //Poliz
-vector <PToken*> p;
-stack <int> posOfStart; // Position of start of cycle (before condition)
-stack <int> posOfEnd; // Position of those elements, which need end position
+//Я заебался писать на английском, поэтому мне стало похуй
+vector <int> posOfStart; // Position of start of cycle (before condition)
+vector <int> posOfEnd; // Position of those elements, which need end position
+vector <int> posOfEndCnt; // Количество элементов, которым я должен отдать позицию конца
+string CurrentFunction = "";
+map <string, pair <vector < pair <int, string> > , vector <PToken> > > polizMap;
+//   Name           args       argtype argname          function poliz
+
 
 int curPos = -1;
 
@@ -53,7 +58,7 @@ void operator_while();
 void operator_for();
 void operator_return();
 int expression();
-void operator_if();
+int operator_if();
 void operator_continue();
 void operator_break();
 void operator_io_read();
@@ -180,6 +185,7 @@ void function() {
     nextToken();
     if (cur->type != name) throw err();
     string curName = cur->value;
+    CurrentFunction = curName;
     nextToken();
     if (cur->type != openingBracket) throw err();
     nextToken();
@@ -279,6 +285,7 @@ void arguments(string functionName, bool pre){
             if (!names[curName].empty() && names[curName].top().isFunction) throw err("'" + curName + "' is a Function");
             names[curName].push(TokenType(curType, nestingLevel + 1));
             lastNames.push({curName, nestingLevel + 1});
+            polizMap[functionName].first.push_back({curType, curName});
         }
         nextToken();
         if (cur->type == closingBracket) {
@@ -348,6 +355,8 @@ void operator_continue(){
     if (stateSet.count(inCycle) == 0) throw err("Operator 'continue' is not in cycle");
     nextToken();
     if (cur->type != semicolon) throw err();
+    polizMap[CurrentFunction].second.push_back(PToken(POperator, "continue"));
+    polizMap[CurrentFunction].second.back().args.push_back(posOfStart.back());
     nextToken();
 }
 
@@ -356,6 +365,9 @@ void operator_break() {
     if (stateSet.count(inCycle) == 0) throw err("Operator 'break' is not in cycle");
     nextToken();
     if (cur->type != semicolon) throw err();
+    polizMap[CurrentFunction].second.push_back(PToken(POperator, "break"));
+    posOfEnd.push_back(polizMap[CurrentFunction].second.size() - 1);
+    ++posOfEndCnt[posOfEndCnt.size() - 1];
     nextToken();
 }
 
@@ -366,6 +378,10 @@ void operator_while() {
     nextToken();
     int curType = expression();
     if (curType != TypeBool) throw errType(curType, TypeBool);
+    polizMap[CurrentFunction].second.push_back(PToken(POperator, "while"));
+    posOfEnd.push_back(polizMap[CurrentFunction].second.size() - 1);
+    posOfEndCnt.push_back(1);
+    posOfStart.push_back(polizMap[CurrentFunction].second.size() - 1);
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != openingBrace) throw err();
@@ -374,6 +390,11 @@ void operator_while() {
     block();
     delState(inCycle);
     if (cur->type != closingBrace) throw err();
+    for (int i = 0; i < posOfEndCnt.back(); ++i){
+        polizMap[CurrentFunction].second[posOfEnd.back()].args.push_back(polizMap[CurrentFunction].second.size());
+        posOfEnd.pop_back();
+    }
+    posOfEndCnt.pop_back();
     nextToken();
 }
 
@@ -392,9 +413,13 @@ void operator_for(){
     nextToken();
     int curType = expression();
     if (curType != TypeBool) throw errType(curType, TypeBool);
+    polizMap[CurrentFunction].second.push_back(PToken(POperator, "for"));
+    posOfEnd.push_back(polizMap[CurrentFunction].second.size() - 1);
+    posOfEndCnt.push_back(1);
+    posOfStart.push_back(polizMap[CurrentFunction].second.size() - 1);
     if (cur->type != semicolon) throw err();
     nextToken();
-    expression();
+    expression(); // Что делать с "Шагом" цикла? Он же должен быть вставлен в его конец!!!
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != openingBrace) throw err();
@@ -403,14 +428,21 @@ void operator_for(){
     block();
     delState(inCycle);
     if (cur->type != closingBrace) throw err();
+    for (int i = 0; i < posOfEndCnt.back(); ++i){
+        polizMap[CurrentFunction].second[posOfEnd.back()].args.push_back(polizMap[CurrentFunction].second.size());
+        posOfEnd.pop_back();
+    }
+    posOfEndCnt.pop_back();
     nextToken();
 }
 
-void operator_if () {
+int operator_if () {
     if (debug) cout << "F: operator_if\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
     int curType = expression();
+    polizMap[CurrentFunction].second.push_back(PToken(POperator, "if"));
+    int putHereEnd = polizMap[CurrentFunction].second.size() - 1;
     if (curType != TypeBool) throw errType(curType, TypeBool);
     if (cur->type != closingBracket) throw err();
     nextToken();
@@ -419,18 +451,20 @@ void operator_if () {
     block();
     if (cur->type != closingBrace) throw err();
     nextToken();
-    if (cur->value != "else") return;
+    if (cur->value != "else") return putHereEnd;
     nextToken();
     if (cur->value == "if"){
         nextToken();
-        operator_if();
+        polizMap[CurrentFunction].second[putHereEnd].args.push_back(operator_if());
         nextToken();
     } else if (cur->value == "{"){
+        polizMap[CurrentFunction].second[putHereEnd].args.push_back(polizMap[CurrentFunction].second.size() - 1);
         nextToken();
         block();
         if (cur->type != closingBrace) throw err();
         nextToken();
     }
+    return putHereEnd;
 }
 
 
@@ -822,8 +856,9 @@ void operator_variable_declaration() {
 }
 
 void exec(){
+    vector <PToken> curPoliz = polizMap["main"].second;
     int i = 0;
-    while (true) {
-        PToken * tkn = p[i];
+    while (true){
+        PToken tkn = curPoliz[i];
     }
 }

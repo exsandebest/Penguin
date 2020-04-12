@@ -417,9 +417,11 @@ void operator_for(){
     delState(inFor1);
     if (cur->type != semicolon) throw err();
     nextToken();
-    pair <int, vector<PToken> > p = expression();
-    int curType = p.first;
+    pair <int, vector<PToken> > cycleCondition = expression();
+    int curType = cycleCondition.first;
     if (curType != TypeBool) throw errType(curType, TypeBool);
+    polizMap[CurrentFunction].second.push_back(PToken(POperator, "goto"));
+    int posOfGoto = polizMap[CurrentFunction].second.size() - 1;
     //TODO: Сделать нормальную обработку цикла for
     polizMap[CurrentFunction].second.push_back(PToken(POperator, "for"));
     posOfEnd.push_back(polizMap[CurrentFunction].second.size() - 1);
@@ -427,7 +429,10 @@ void operator_for(){
     posOfStart.push_back(polizMap[CurrentFunction].second.size() - 1);
     if (cur->type != semicolon) throw err();
     nextToken();
-    expression(); // Что делать с "Шагом" цикла? Он же должен быть вставлен в его конец!!!
+    pair <int, vector<PToken> > cycleStep = expression();
+    polizMap[CurrentFunction].second.insert(polizMap[CurrentFunction].second.end(), cycleStep.second.begin(), cycleStep.second.end());
+    polizMap[CurrentFunction].second[posOfGoto].args.push_back(polizMap[CurrentFunction].second.size());
+    polizMap[CurrentFunction].second.insert(polizMap[CurrentFunction].second.end(), cycleCondition.second.begin(), cycleCondition.second.end());
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != openingBrace) throw err();

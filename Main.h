@@ -29,7 +29,15 @@ public:
     PToken(int t, std :: string s): type(t), value(s){}
 };
 
-
+class Variable {
+public:
+    int type,
+        level;
+    int intValue = 0;
+    std :: string stringValue = "";
+    double doubleValue = 0.0;
+    bool boolValue = false;
+};
 
 class Token {
 public:

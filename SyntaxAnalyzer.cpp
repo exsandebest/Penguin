@@ -30,6 +30,8 @@ vector <int> posOfEndCnt; // Количество элементов, котор
 string CurrentFunction = "";
 map <string, pair <vector < pair <int, string> > , vector <PToken> > > polizMap;
 //   Name           args       argtype argname          function poliz
+std::map<std::string, std::stack<Variable> > polizNames;
+std::stack<pair<string, int>> polizLastNames;
 
 
 int curPos = -1;
@@ -57,7 +59,7 @@ void operator_main();
 void operator_while();
 void operator_for();
 void operator_return();
-int expression();
+pair <int, vector<PToken> > expression();
 int operator_if();
 void operator_continue();
 void operator_break();
@@ -314,7 +316,8 @@ void block(){
 void _operator() {
     if (debug) cout << "F: _operator\n";
     if (cur->type == name || cur->type == unaryMathOperator) {
-        expression();
+        pair <int, vector<PToken> > p = expression();
+        polizMap[CurrentFunction].second.insert(polizMap[CurrentFunction].second.end(), p.second.begin(), p.second.end());
         if (cur->type != semicolon) throw err();
         nextToken();
     } else if (cur->type == readwriteOperator) {
@@ -376,8 +379,10 @@ void operator_while() {
     if (debug) cout << "F: operator_while\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
-    int curType = expression();
+    pair <int, vector<PToken> > p = expression();
+    int curType = p.first;
     if (curType != TypeBool) throw errType(curType, TypeBool);
+    polizMap[CurrentFunction].second.insert(polizMap[CurrentFunction].second.end(), p.second.begin(), p.second.end());
     polizMap[CurrentFunction].second.push_back(PToken(POperator, "while"));
     posOfEnd.push_back(polizMap[CurrentFunction].second.size() - 1);
     posOfEndCnt.push_back(1);
@@ -406,13 +411,16 @@ void operator_for(){
     if (cur->type == variableType) {
         operator_variable_declaration();
     } else {
-        expression();
+        pair <int, vector<PToken> > p = expression();
+        polizMap[CurrentFunction].second.insert(polizMap[CurrentFunction].second.end(), p.second.begin(), p.second.end());
     }
     delState(inFor1);
     if (cur->type != semicolon) throw err();
     nextToken();
-    int curType = expression();
+    pair <int, vector<PToken> > p = expression();
+    int curType = p.first;
     if (curType != TypeBool) throw errType(curType, TypeBool);
+    //TODO: Сделать нормальную обработку цикла for
     polizMap[CurrentFunction].second.push_back(PToken(POperator, "for"));
     posOfEnd.push_back(polizMap[CurrentFunction].second.size() - 1);
     posOfEndCnt.push_back(1);
@@ -440,7 +448,9 @@ int operator_if () {
     if (debug) cout << "F: operator_if\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
-    int curType = expression();
+    pair <int, vector<PToken> > p = expression();
+    int curType = p.first;
+    polizMap[CurrentFunction].second.insert(polizMap[CurrentFunction].second.end(), p.second.begin(), p.second.end());
     polizMap[CurrentFunction].second.push_back(PToken(POperator, "if"));
     int putHereEnd = polizMap[CurrentFunction].second.size() - 1;
     if (curType != TypeBool) throw errType(curType, TypeBool);
@@ -473,7 +483,8 @@ void operator_return(){
     nextToken();
     if (stateSet.count(inFunction) == 0) throw err();
     if (cur->type != semicolon) {
-        int curType = expression();
+        pair <int, vector<PToken> > p = expression();
+        int curType = p.first;
         if (curType != currentFunctionType) throw errType(curType, currentFunctionType);
         if (cur->type != semicolon) throw err();
     }
@@ -498,14 +509,15 @@ void operator_assignment(int varType){
     if (debug) cout << "F: operator_assignment\n";
     if (cur->type != assignmentOperator) throw err();
     nextToken();
-    int curExpType = expression();
+    pair <int, vector<PToken> > p = expression();
+    int curExpType = p.first;
     if (curExpType != varType) throw errType(curExpType, varType);
     if (cur->type != semicolon) throw err();
     if (stateSet.count(inFor1) == 0) nextToken();
 }
 
 //max
-int expression() {
+int expression() { //TODO FOR MAX: replace 'int' on 'pair <int, vector<PToken> >'
     if (debug) cout << "F: expression\n";
     std::map<std::string, int> priority;
     std::stack<Token*> signs;
@@ -801,7 +813,8 @@ void arguments_to_call(string functionName, bool special = 0) {
             if (names[cur->value].top().isFunction) throw err("'" + cur->value + "' is a Function");
             nextToken();
         } else {
-            int curType = expression();
+            pair <int, vector<PToken> > p = expression();
+            int curType = p.first;
         }
         if (cur->type == closingBracket) break;
         if (cur->type != comma) throw err();
@@ -855,10 +868,21 @@ void operator_variable_declaration() {
     }
 }
 
-void exec(){
-    vector <PToken> curPoliz = polizMap["main"].second;
-    int i = 0;
-    while (true){
-        PToken tkn = curPoliz[i];
+int get_arguments_count(string fName){
+    return 0;
+}
+
+
+void exec(string functionName = "main"){
+    vector <PToken> curPoliz = polizMap[functionName].second;
+    stack <PToken> s;
+    while (!curPoliz.empty()){
+        PToken tkn = curPoliz.back();
+        curPoliz.pop_back();
+        if (tkn.type == PVariable){
+            s.push(tkn);
+        } else if (tkn.type == POperator) {
+            int argsCnt = get_arguments_count(tkn.value);
+        }
     }
 }

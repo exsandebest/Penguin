@@ -93,5 +93,6 @@ enum { //States
 enum { // P - Poliz
     POperator = 1,
     PVariable = 2,
-    PSpecial = 3
+    PSpecial = 3,
+    PType = 4
 };

@@ -53,7 +53,7 @@ void globals();
 void arguments(string functionName, bool check = 1);
 void block();
 void _operator();
-void operator_assignment(int varType);
+void operator_assignment(int varType, string varName);
 void operator_input_output();
 void operator_main();
 void operator_while();
@@ -510,7 +510,7 @@ void operator_input_output(){
 
 
 
-void operator_assignment(int varType){
+void operator_assignment(int varType, string varName){
     if (debug) cout << "F: operator_assignment\n";
     if (cur->type != assignmentOperator) throw err();
     nextToken();
@@ -519,6 +519,9 @@ void operator_assignment(int varType){
     if (curExpType != varType) throw errType(curExpType, varType);
     if (cur->type != semicolon) throw err();
     if (stateSet.count(inFor1) == 0) nextToken();
+    polizMap[CurrentFunction].second.push_back(PToken(PVariable, varName));
+    polizMap[CurrentFunction].second.insert(polizMap[CurrentFunction].second.end(), p.second.begin(), p.second.end());
+    polizMap[CurrentFunction].second.push_back(PToken(POperator, "="));
 }
 
 //max
@@ -859,7 +862,9 @@ void operator_variable_declaration() {
     string curName = cur->value;
     nextToken();
     if (cur->type == assignmentOperator){
-        operator_assignment(curVarType);
+        polizMap[CurrentFunction].second.push_back(PToken(PVariable, curName));
+        polizMap[CurrentFunction].second.push_back(PToken(PType, curType));
+        operator_assignment(curVarType, curName);
         if (!names[curName].empty() &&  (names[curName].top().level == nestingLevel || names[curName].top().isFunction)) throw err("Name '" + curName + "' is already used");
         names[curName].push(TokenType(curVarType, nestingLevel));
         lastNames.push({curName, nestingLevel});
@@ -868,6 +873,8 @@ void operator_variable_declaration() {
         names[curName].push(TokenType(curVarType, nestingLevel));
         lastNames.push({curName, nestingLevel});
         if (stateSet.count(inFor1) == 0) nextToken();
+        polizMap[CurrentFunction].second.push_back(PToken(PVariable, curName));
+        polizMap[CurrentFunction].second.push_back(PToken(PType, curType));
     } else {
         throw err();
     }

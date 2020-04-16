@@ -31,6 +31,7 @@ public:
     double doubleValue = 0.0;
     bool boolValue = false;
     PToken(int t, std :: string s): type(t), value(s){}
+    PToken(): type(PSpecial), value(""){}
 };
 
 class Variable {

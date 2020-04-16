@@ -919,19 +919,187 @@ void exec(string functionName = "main"){
         } else if (tkn.type == PUnaryOperation){
             PToken t = s.pop();
             if (tkn.value == "!"){
-                polizLastNames[t.value].top().boolValue = !polizLastNames[t.value].top().boolValue;
-            } else if (tkn.value == "-"){
-                if (polizLastNames[t.value].top().type == TypeDouble){
-                    polizLastNames[t.value].top().doubleValue = -polizLastNames[t.value].top().doubleValue;
-                } else if (polizLastNames[t.value].top().type == TypeInt){
-                    polizLastNames[t.value].top().intValue = -polizLastNames[t.value].top().intValue;
-                } else {
-                    throw string("Ban");
+                if (t.type == PVariable) {
+                    polizLastNames[t.value].top().boolValue = !polizLastNames[t.value].top().boolValue;
+                } else if (t.type == PBoolValue){
+                    t.boolValue = !t.boolValue;
                 }
+                s.push(t);
+            } else if (tkn.value == "-"){
+                if (t.type == PVariable) {
+                    if (polizLastNames[t.value].top().type == TypeDouble){
+                        polizLastNames[t.value].top().doubleValue = -polizLastNames[t.value].top().doubleValue;
+                    } else if (polizLastNames[t.value].top().type == TypeInt){
+                        polizLastNames[t.value].top().intValue = -polizLastNames[t.value].top().intValue;
+                    }
+                } else if (t.type == PDoubleValue){
+                    t.doubleValue = -t.doubleValue;
+                } else if (t.type == PIntValue){
+                    t.intValue = -t.intValue;
+                }
+                s.push(t);
+            } else if (tkn.value == "++"){
+                //PVariable
+                if (polizLastNames[t.value].top().type == TypeDouble){
+                    polizLastNames[t.value].top().doubleValue = polizLastNames[t.value].top().doubleValue + 1;
+                } else if (polizLastNames[t.value].top().type == TypeInt){
+                    polizLastNames[t.value].top().intValue = polizLastNames[t.value].top().intValue + 1;
+                }
+                s.push(t);
+            } else if (tkn.value == "--"){
+                //PVariable
+                if (polizLastNames[t.value].top().type == TypeDouble){
+                    polizLastNames[t.value].top().doubleValue = polizLastNames[t.value].top().doubleValue - 1;
+                } else if (polizLastNames[t.value].top().type == TypeInt){
+                    polizLastNames[t.value].top().intValue = polizLastNames[t.value].top().intValue - 1;
+                }
+                s.push(t);
             }
         } else if (tkn.type == PBinaryOperation){
+            PToken t1 = s.pop();
+            PToken t2 = s.pop();
             if (tkn.value == "="){
-                
+                // PVariable
+                // P...Value
+                if (t2.type == PIntValue){
+                    polizLastNames[t1.value].top().intValue = t2.intValue;
+                } else if (t2.type == PDoubleValue){
+                    polizLastNames[t1.value].top().doubleValue = t2.doubleValue;
+                } else if (t2.type == PStringValue){
+                    polizLastNames[t1.value].top().stringValue = t2.stringValue;
+                } else if (t2.type == PBoolValue){
+                    polizLastNames[t1.value].top().boolValue = t2.boolValue;
+                }
+                s.push(t2);
+            } else if (tkn.value == "+") {
+                PToken myT = PToken();
+                if (t1.type == PIntValue){
+                    myT.type = PIntValue;
+                    myT.intValue = t1.intValue + t2.intValue;
+                } else if (t1.type == PDoubleValue){
+                    myT.type = PDoubleValue;
+                    myT.doubleValue = t1.doubleValue + t2.doubleValue;
+                } else if (t1.type == PStringValue){
+                    myT.type = PStringValue;
+                    myT.stringValue = t1.stringValue + t2.stringValue;
+                }
+                s.push(myT);
+            } else if (tkn.value == "-"){
+                PToken myT = PToken();
+                if (t1.type == PIntValue){
+                    myT.type = PIntValue;
+                    myT.intValue = t1.intValue - t2.intValue;
+                } else if (t1.type == PDoubleValue){
+                    myT.type = PDoubleValue;
+                    myT.doubleValue = t1.doubleValue - t2.doubleValue;
+                }
+                s.push(myT);
+            } else if (tkn.value == "**"){
+                PToken myT = PToken();
+                if (t1.type == PIntValue){
+                    myT.type = PIntValue;
+                    myT.intValue = spow(t1.intValue, t2.intValue);
+                } else if (t1.type == PDoubleValue){
+                    myT.type = PDoubleValue;
+                    myT.doubleValue = spow(t1.doubleValue, t2.doubleValue);
+                }
+                s.push(myT);
+            } else if (tkn.value == "and"){
+                PToken myT = PToken();
+                myT.type = PBoolValue;
+                myT.boolValue = t1.boolValue && t2.boolValue;
+                s.push(myT);
+            } else if (tkn.value == "or"){
+                PToken myT = PToken();
+                myT.type = PBoolValue;
+                myT.boolValue = t1.boolValue || t2.boolValue;
+                s.push(myT);
+            } else if (tkn.value == "%"){
+                PToken myT = PToken();
+                if (t1.type == PIntValue){
+                    myT.type = PIntValue;
+                    myT.intValue = t1.intValue % t2.intValue;
+                } else if (t1.type == PDoubleValue){
+                    myT.type = PDoubleValue;
+                    myT.doubleValue = t1.doubleValue % t2.doubleValue;
+                }
+                s.push(myT);
+            } else if (tkn.value == "/"){
+                PToken myT = PToken();
+                if (t1.type == PIntValue){
+                    myT.type = PIntValue;
+                    myT.intValue = t1.intValue / t2.intValue;
+                } else if (t1.type == PDoubleValue){
+                    myT.type = PDoubleValue;
+                    myT.doubleValue = t1.doubleValue / t2.doubleValue;
+                }
+                s.push(myT);
+            } else if (tkn.value == "*"){
+                PToken myT = PToken();
+                if (t1.type == PIntValue){
+                    myT.type = PIntValue;
+                    myT.intValue = t1.intValue * t2.intValue;
+                } else if (t1.type == PDoubleValue){
+                    myT.type = PDoubleValue;
+                    myT.doubleValue = t1.doubleValue * t2.doubleValue;
+                }
+                s.push(myT);
+            } else if (tkn.value == "<"){
+                PToken myT = PToken();
+                myT.type = PBoolValue;
+                if (t1.type == PIntValue){
+                    myT.boolValue = t1.intValue < t2.intValue;
+                } else if (t1.type == PDoubleValue){
+                    myT.boolValue = t1.doubleValue < t2.doubleValue;
+                }
+                s.push(myT);
+            } else if (tkn.value == ">"){
+                PToken myT = PToken();
+                myT.type = PBoolValue;
+                if (t1.type == PIntValue){
+                    myT.boolValue = t1.intValue > t2.intValue;
+                } else if (t1.type == PDoubleValue){
+                    myT.boolValue = t1.doubleValue > t2.doubleValue;
+                }
+                s.push(myT);
+            } else if (tkn.value == ">="){
+                PToken myT = PToken();
+                myT.type = PBoolValue;
+                if (t1.type == PIntValue){
+                    myT.boolValue = t1.intValue >= t2.intValue;
+                } else if (t1.type == PDoubleValue){
+                    myT.boolValue = t1.doubleValue >= t2.doubleValue;
+                }
+                s.push(myT);
+            } else if (tkn.value == "<="){
+                PToken myT = PToken();
+                myT.type = PBoolValue;
+                if (t1.type == PIntValue){
+                    myT.boolValue = t1.intValue <= t2.intValue;
+                } else if (t1.type == PDoubleValue){
+                    myT.boolValue = t1.doubleValue <= t2.doubleValue;
+                }
+                s.push(myT);
+            } else if (tkn.value == "=="){
+                PToken myT = PToken();
+                myT.type = PBoolValue;
+                if (t1.type == PIntValue){
+                    myT.boolValue = t1.intValue == t2.intValue;
+                } else if (t1.type == PDoubleValue){
+                    myT.boolValue = t1.doubleValue == t2.doubleValue;
+                }
+                s.push(myT);
+            } else if (tkn.value == "!="){
+                PToken myT = PToken();
+                myT.type = PBoolValue;
+                if (t1.type == PIntValue){
+                    myT.boolValue = t1.intValue != t2.intValue;
+                } else if (t1.type == PDoubleValue){
+                    myT.boolValue = t1.doubleValue != t2.doubleValue;
+                }
+                s.push(myT);
+            } else if (tkn.value == "+="){
+                //.....
             }
         }
     }

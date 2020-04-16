@@ -162,6 +162,7 @@ int main (int argc, char const *argv[]){
         nextToken();
         program();
         cout << "STATUS : OK\n";
+        nestingLevel = 0;
     } catch (string err){
         cout << err;
         return 0;
@@ -358,7 +359,7 @@ void operator_continue(){
     if (stateSet.count(inCycle) == 0) throw err("Operator 'continue' is not in cycle");
     nextToken();
     if (cur->type != semicolon) throw err();
-    polizMap[CurrentFunction].second.push_back(PToken(POperator, "continue"));
+    polizMap[CurrentFunction].second.push_back(PToken(POperator, "goto"));
     polizMap[CurrentFunction].second.back().args.push_back(posOfStart.back());
     nextToken();
 }
@@ -368,9 +369,9 @@ void operator_break() {
     if (stateSet.count(inCycle) == 0) throw err("Operator 'break' is not in cycle");
     nextToken();
     if (cur->type != semicolon) throw err();
-    polizMap[CurrentFunction].second.push_back(PToken(POperator, "break"));
+    polizMap[CurrentFunction].second.push_back(PToken(POperator, "goto"));
     posOfEnd.push_back(polizMap[CurrentFunction].second.size() - 1);
-    ++posOfEndCnt[posOfEndCnt.size() - 1];
+    ++posOfEndCnt.back();
     nextToken();
 }
 
@@ -382,11 +383,11 @@ void operator_while() {
     pair <int, vector<PToken> > p = expression();
     int curType = p.first;
     if (curType != TypeBool) throw errType(curType, TypeBool);
+    posOfStart.push_back(polizMap[CurrentFunction].second.size());
     polizMap[CurrentFunction].second.insert(polizMap[CurrentFunction].second.end(), p.second.begin(), p.second.end());
-    polizMap[CurrentFunction].second.push_back(PToken(POperator, "while"));
+    polizMap[CurrentFunction].second.push_back(PToken(POperator, "if"));
     posOfEnd.push_back(polizMap[CurrentFunction].second.size() - 1);
     posOfEndCnt.push_back(1);
-    posOfStart.push_back(polizMap[CurrentFunction].second.size() - 1);
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != openingBrace) throw err();
@@ -395,6 +396,9 @@ void operator_while() {
     block();
     delState(inCycle);
     if (cur->type != closingBrace) throw err();
+    polizMap[CurrentFunction].second.push_back(PToken(POperator, "goto"));
+    polizMap[CurrentFunction].second.back().args.push_back(posOfStart.back());
+    posOfStart.pop_back();
     for (int i = 0; i < posOfEndCnt.back(); ++i){
         polizMap[CurrentFunction].second[posOfEnd.back()].args.push_back(polizMap[CurrentFunction].second.size());
         posOfEnd.pop_back();
@@ -422,17 +426,16 @@ void operator_for(){
     if (curType != TypeBool) throw errType(curType, TypeBool);
     polizMap[CurrentFunction].second.push_back(PToken(POperator, "goto"));
     int posOfGoto = polizMap[CurrentFunction].second.size() - 1;
-    //TODO: Сделать нормальную обработку цикла for
-    polizMap[CurrentFunction].second.push_back(PToken(POperator, "for"));
-    posOfEnd.push_back(polizMap[CurrentFunction].second.size() - 1);
-    posOfEndCnt.push_back(1);
-    posOfStart.push_back(polizMap[CurrentFunction].second.size() - 1);
     if (cur->type != semicolon) throw err();
     nextToken();
     pair <int, vector<PToken> > cycleStep = expression();
     polizMap[CurrentFunction].second.insert(polizMap[CurrentFunction].second.end(), cycleStep.second.begin(), cycleStep.second.end());
     polizMap[CurrentFunction].second[posOfGoto].args.push_back(polizMap[CurrentFunction].second.size());
+    posOfStart.push_back(polizMap[CurrentFunction].second.size());
     polizMap[CurrentFunction].second.insert(polizMap[CurrentFunction].second.end(), cycleCondition.second.begin(), cycleCondition.second.end());
+    polizMap[CurrentFunction].second.push_back(PToken(POperator, "if"));
+    posOfEnd.push_back(polizMap[CurrentFunction].second.size() - 1);
+    posOfEndCnt.push_back(1);
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != openingBrace) throw err();
@@ -441,6 +444,9 @@ void operator_for(){
     block();
     delState(inCycle);
     if (cur->type != closingBrace) throw err();
+    polizMap[CurrentFunction].second.push_back(PToken(POperator, goto));
+    polizMap[CurrentFunction].second.back().args.push_back(posOfStart.back());
+    posOfStart.pop_back();
     for (int i = 0; i < posOfEndCnt.back(); ++i){
         polizMap[CurrentFunction].second[posOfEnd.back()].args.push_back(polizMap[CurrentFunction].second.size());
         posOfEnd.pop_back();
@@ -521,7 +527,7 @@ void operator_assignment(int varType, string varName){
     if (stateSet.count(inFor1) == 0) nextToken();
     polizMap[CurrentFunction].second.push_back(PToken(PVariable, varName));
     polizMap[CurrentFunction].second.insert(polizMap[CurrentFunction].second.end(), p.second.begin(), p.second.end());
-    polizMap[CurrentFunction].second.push_back(PToken(POperator, "="));
+    polizMap[CurrentFunction].second.push_back(PToken(PBinaryOperation, "="));
 }
 
 //max
@@ -863,7 +869,7 @@ void operator_variable_declaration() {
     nextToken();
     if (cur->type == assignmentOperator){
         polizMap[CurrentFunction].second.push_back(PToken(PVariable, curName));
-        polizMap[CurrentFunction].second.push_back(PToken(PType, curType));
+        polizMap[CurrentFunction].second.push_back(PToken(PType, typeToString(curVarType)));
         operator_assignment(curVarType, curName);
         if (!names[curName].empty() &&  (names[curName].top().level == nestingLevel || names[curName].top().isFunction)) throw err("Name '" + curName + "' is already used");
         names[curName].push(TokenType(curVarType, nestingLevel));
@@ -874,27 +880,59 @@ void operator_variable_declaration() {
         lastNames.push({curName, nestingLevel});
         if (stateSet.count(inFor1) == 0) nextToken();
         polizMap[CurrentFunction].second.push_back(PToken(PVariable, curName));
-        polizMap[CurrentFunction].second.push_back(PToken(PType, curType));
+        polizMap[CurrentFunction].second.push_back(PToken(PType, typeToString(curVarType)));
     } else {
         throw err();
     }
 }
 
-int get_arguments_count(string fName){
-    return 0;
+int get_arguments_count(string fn){ //function name
+    return polizMap[fn].first.size();
 }
 
 
 void exec(string functionName = "main"){
     vector <PToken> curPoliz = polizMap[functionName].second;
     stack <PToken> s;
-    while (!curPoliz.empty()){
-        PToken tkn = curPoliz.back();
-        curPoliz.pop_back();
+    int i = 0;
+    while (i < curPoliz.size()){
+        PToken tkn = curPoliz[i];
         if (tkn.type == PVariable){
             s.push(tkn);
-        } else if (tkn.type == POperator) {
-            int argsCnt = get_arguments_count(tkn.value);
+        } else if (tkn.type == PType) {
+            PToken t = s.pop();
+            polizNames[t.value].push(Variable(tkn.value, nestingLevel));
+            polizLastNames.push({t.value, stringToType(tkn.value)});
+        } else if (tkn.type == POperator){
+            if (tkn.value == "goto"){
+                i = tkn.args.back();
+                continue;
+            } else if (tkn.value == "if"){
+                PToken t = s.pop();
+                if (t.boolValue){
+                    ++i;
+                } else {
+                    i = tkn.args.back();
+                }
+                continue;
+            }
+        } else if (tkn.type == PUnaryOperation){
+            PToken t = s.pop();
+            if (tkn.value == "!"){
+                polizLastNames[t.value].top().boolValue = !polizLastNames[t.value].top().boolValue;
+            } else if (tkn.value == "-"){
+                if (polizLastNames[t.value].top().type == TypeDouble){
+                    polizLastNames[t.value].top().doubleValue = -polizLastNames[t.value].top().doubleValue;
+                } else if (polizLastNames[t.value].top().type == TypeInt){
+                    polizLastNames[t.value].top().intValue = -polizLastNames[t.value].top().intValue;
+                } else {
+                    throw string("Ban");
+                }
+            }
+        } else if (tkn.type == PBinaryOperation){
+            if (tkn.value == "="){
+                
+            }
         }
     }
 }

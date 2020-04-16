@@ -26,6 +26,10 @@ public:
     int type;
     std :: string value;
     std :: vector <int> args;
+    int intValue = 0;
+    std :: string stringValue = "";
+    double doubleValue = 0.0;
+    bool boolValue = false;
     PToken(int t, std :: string s): type(t), value(s){}
 };
 
@@ -37,6 +41,10 @@ public:
     std :: string stringValue = "";
     double doubleValue = 0.0;
     bool boolValue = false;
+    Variable(int t, int lvl){
+        level = lvl;
+        type = t;
+    };
 };
 
 class Token {
@@ -94,5 +102,12 @@ enum { // P - Poliz
     POperator = 1,
     PVariable = 2,
     PSpecial = 3,
-    PType = 4
+    PType = 4,
+    PFunction = 5,
+    PUnaryOperation = 6,
+    PBinaryOperation = 7,
+    PIntValue = 8,
+    PDoubleValue = 9,
+    PStringValue = 10,
+    PBoolValue = 11
 };

@@ -493,12 +493,17 @@ void operator_return(){
     if (debug) cout << "F: operator_return\n";
     nextToken();
     if (stateSet.count(inFunction) == 0) throw err();
+    int returnHasArgs = 0;
     if (cur->type != semicolon) {
+        returnHasArgs = 1;
         pair <int, vector<PToken> > p = expression();
         int curType = p.first;
         if (curType != currentFunctionType) throw errType(curType, currentFunctionType);
         if (cur->type != semicolon) throw err();
+        polizMap[CurrentFunction].second.insert(polizMap[CurrentFunction].second.end(), p.second.begin(), p.second.end());
     }
+    polizMap[CurrentFunction].second.push_back(PToken(POperator, "return"));
+    polizMap[CurrentFunction].second.back().args.push_back(returnHasArgs);
     nextToken();
 }
 

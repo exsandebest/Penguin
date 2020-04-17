@@ -67,7 +67,7 @@ void operator_io_read();
 void operator_io_write();
 void arguments_to_call(string functionName, bool special);
 void operator_variable_declaration();
-void exec();
+PToken exec(string functionName, vector <PToken> arguments);
 
 string err (string errString = "", bool showLine = 1){
     if (errString == "") {
@@ -163,6 +163,7 @@ int main (int argc, char const *argv[]){
         program();
         cout << "STATUS : OK\n";
         nestingLevel = 0;
+        //exec("main");
     } catch (string err){
         cout << err;
         return 0;
@@ -896,7 +897,19 @@ int get_arguments_count(string fn){ //function name
 }
 
 
-void exec(string functionName = "main"){
+PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VALUES (P...Value)!!!
+    for (int i = 0; i < args.size(); ++i){
+        polizNames[ polizMap[functionName].first[i].first ].push(Variable(polizMap[functionName].first[i].second, 1 /*nestingLevel*/)); // ??????????????????
+        if (args[i].type == PIntValue){
+            polizNames[ polizMap[functionName].first[i].first ].top().intValue = args[i].intValue;
+        } else if (args[i].type == PDoubleValue) {
+            polizNames[ polizMap[functionName].first[i].first ].top().doubleValue = args[i].doubleValue;
+        } else if (args[i].type == PStringValue) {
+            polizNames[ polizMap[functionName].first[i].first ].top().stringValue = args[i].stringValue;
+        } else if (args[i].type == PBoolValue){
+            polizNames[ polizMap[functionName].first[i].first ].top().boolValue = args[i].boolValue;
+        }
+    }
     vector <PToken> curPoliz = polizMap[functionName].second;
     stack <PToken> s;
     int i = 0;
@@ -920,6 +933,9 @@ void exec(string functionName = "main"){
                     i = tkn.args.back();
                 }
                 continue;
+            } else if (tkn.value == "return"){
+                PToken t = s.pop();
+                return s.pop();
             }
         } else if (tkn.type == PUnaryOperation){
             PToken t = s.pop();
@@ -1158,4 +1174,5 @@ void exec(string functionName = "main"){
             //.........
         }
     }
+    return PToken();
 }

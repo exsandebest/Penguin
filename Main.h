@@ -24,14 +24,14 @@ enum { //Types
 class PToken {
 public:
     int type;
-    std :: string value;
+    std :: string value = "";
     std :: vector <int> args;
     int intValue = 0;
     std :: string stringValue = "";
     double doubleValue = 0.0;
     bool boolValue = false;
     PToken(int t, std :: string s): type(t), value(s){}
-    PToken(): type(PSpecial), value(""){}
+    PToken(): type(PNull){}
 };
 
 class Variable {
@@ -110,5 +110,6 @@ enum { // P - Poliz
     PIntValue = 8,
     PDoubleValue = 9,
     PStringValue = 10,
-    PBoolValue = 11
+    PBoolValue = 11,
+    PNull = 12
 };

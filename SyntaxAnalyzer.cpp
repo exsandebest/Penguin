@@ -1062,11 +1062,13 @@ PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VA
                     newT.type = PIntValue;
                     int v1 = (t1.type == PIntValue ? t1.intValue : polizNames[t1.value].top().intValue);
                     int v2 = (t2.type == PIntValue ? t2.intValue : polizNames[t2.value].top().intValue);
+                    if (v2 == 0) throw string("Division by zero");
                     newT.intValue = v1 / v2;
                 } else if (t1.type == PDoubleValue || (t1.type == PVariable && polizNames[t1.value].top().type == TypeDouble)){
                     newT.type = PDoubleValue;
                     double v1 = (t1.type == PDoubleValue ? t1.doubleValue : polizNames[t1.value].top().doubleValue);
                     double v2 = (t2.type == PDoubleValue ? t2.doubleValue : polizNames[t2.value].top().doubleValue);
+                    if (v2 == 0) throw string("Division by zero");
                     newT.doubleValue = v1 / v2;
                 }
             } else if (tkn.value == "*"){

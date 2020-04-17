@@ -972,33 +972,18 @@ void exec(string functionName = "main"){
             if (tkn.value == "="){
                 // PVariable
                 // P...Value or PVariable
-                if (t2.type == PIntValue){
+                if (polizNames[t1.value].top().type == TypeInt){
                     newT.type = PIntValue;
-                    newT.intValue = polizNames[t1.value].top().intValue = t2.intValue;
-                } else if (t2.type == PDoubleValue){
+                    newT.intValue = polizNames[t1.value].top().intValue = (t2.type == PVariable ? polizMap[t2.value].top().intValue : t2.intValue);
+                } else if (polizNames[t1.value].top().type == TypeDouble){
                     newT.type = PDoubleValue;
-                    newT.doubleValue = polizNames[t1.value].top().doubleValue = t2.doubleValue;
-                } else if (t2.type == PStringValue){
+                    newT.doubleValue = polizNames[t1.value].top().doubleValue = (t2.type == PVariable ? polizMap[t2.value].top().doubleValue : t2.doubleValue);
+                } else if (polizNames[t1.value].top().type == TypeString){
                     newT.type = PStringValue;
-                    newT.stringValue = polizNames[t1.value].top().stringValue = t2.stringValue;
-                } else if (t2.type == PBoolValue){
+                    newT.stringValue = polizNames[t1.value].top().stringValue = (t2.type == PVariable ? polizMap[t2.value].top().stringValue : t2.stringValue);
+                } else if (polizNames[t1.value].top().type == TypeBool){
                     newT.type = PBoolValue;
-                    newT.boolValue = polizNames[t1.value].top().boolValue = t2.boolValue;
-                } else if (t2.type == PVariable){
-                    int varType = polizNames[t2.value].top().type;
-                    if (varType == TypeInt){
-                        newT.type = PIntValue;
-                        newT.intValue = polizNames[t1.value].top().intValue = polizNames[t2.value].top().intValue;
-                    } else if (varType == TypeDouble){
-                        newT.type = PDoubleValue;
-                        newT.doubleValue = polizNames[t1.value].top().doubleValue = polizNames[t2.value].top().doubleValue;
-                    } else if (varType == TypeString){
-                        newT.type = PStringValue;
-                        newT.stringValue = polizNames[t1.value].top().stringValue = polizNames[t2.value].top().stringValue;
-                    } else if (varType == TypeBool){
-                        newT.type = PBoolValue;
-                        newT.boolValue = polizNames[t1.value].top().boolValue = polizNames[t2.value].top().boolValue;
-                    }
+                    newT.boolValue = polizNames[t1.value].top().boolValue = (t2.type == PVariable ? polizMap[t2.value].top().boolValue : t2.boolValue);
                 }
             } else if (tkn.value == "+") {
                 if ((t1.type == PIntValue) || (t1.type == PVariable && polizNames[t1.value].top().type == TypeInt)){
@@ -1043,13 +1028,13 @@ void exec(string functionName = "main"){
                 }
             } else if (tkn.value == "and"){
                 newT.type = PBoolValue;
-                int v1 = (t1.type == PBoolValue ? t1.boolValue : polizNames[t1.value].top().boolValue);
-                int v2 = (t2.type == PBoolValue ? t2.boolValue : polizNames[t2.value].top().boolValue);
+                bool v1 = (t1.type == PBoolValue ? t1.boolValue : polizNames[t1.value].top().boolValue);
+                bool v2 = (t2.type == PBoolValue ? t2.boolValue : polizNames[t2.value].top().boolValue);
                 newT.boolValue = v1 && v2;
             } else if (tkn.value == "or"){
                 newT.type = PBoolValue;
-                int v1 = (t1.type == PBoolValue ? t1.boolValue : polizNames[t1.value].top().boolValue);
-                int v2 = (t2.type == PBoolValue ? t2.boolValue : polizNames[t2.value].top().boolValue);
+                bool v1 = (t1.type == PBoolValue ? t1.boolValue : polizNames[t1.value].top().boolValue);
+                bool v2 = (t2.type == PBoolValue ? t2.boolValue : polizNames[t2.value].top().boolValue);
                 newT.boolValue = v1 || v2;
             } else if (tkn.value == "%"){
                 newT.type = PIntValue;

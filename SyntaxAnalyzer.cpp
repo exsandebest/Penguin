@@ -892,11 +892,6 @@ void operator_variable_declaration() {
     }
 }
 
-int get_arguments_count(string fn){ //function name
-    return polizMap[fn].first.size();
-}
-
-
 PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VALUES (P...Value)!!!
     for (int i = 0; i < args.size(); ++i){
         polizNames[ polizMap[functionName].first[i].first ].push(Variable(polizMap[functionName].first[i].second, 1 /*nestingLevel*/)); // ??????????????????
@@ -1171,7 +1166,34 @@ PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VA
             }
             s.push(newT);
         } else if (tkn.type == PFunction){
-            //.........
+            int argsCnt = polizMap[tkn.value].first.size();
+            vector <PToken> newArgs;
+            for (int i = 0; i < argsCnt; ++i){
+                PToken oneArg = s.pop();
+                if (oneArg.type == PVariable){
+                    PToken newOneArg = PToken();
+                    PToken curVariable = polizNames[oneArg.value].top()
+                    int oneArgType = curVariable.type;
+                    if (oneArgType == TypeInt){
+                        newOneArg.type = PIntValue;
+                        newOneArg.intValue = curVariable.intValue;
+                    } else if (oneArgType == TypeDouble){
+                        newOneArg.type = PDoubleValue;
+                        newOneArg.doubleValue = curVariable.doubleValue;
+                    } else if (oneArgType == TypeString){
+                        newOneArg.type = PStringValue;
+                        newOneArg.stringValue = curVariable.stringValue;
+                    } else if (oneArgType == TypeBool){
+                        newOneArg.type = PBoolValue;
+                        newOneArg.boolValue = curVariable.boolValue;
+                    }
+                    newArgs.push_back(newOneArg);
+                } else if (oneArg.type == PIntValue || oneArg.type == PDoubleValue || oneArg.type == PStringValue || oneArg.type == PBoolValue) {
+                    newArgs.push_back(oneArg);
+                }
+            }
+            PToken result = exec(tkn.value, newArgs);
+            if (result.type != PNull) s.push(result);
         }
     }
     return PToken();

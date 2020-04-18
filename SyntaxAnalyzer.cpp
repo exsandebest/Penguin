@@ -537,11 +537,14 @@ void operator_assignment(int varType, string varName){
 }
 
 //max
-int expression() { //TODO FOR MAX: replace 'int' on 'pair <int, vector<PToken> >'
+pair<int, vector<PToken> > expression() { //TODO FOR MAX: replace 'int' on 'pair <int, vector<PToken> >'
     if (debug) cout << "F: expression\n";
     std::map<std::string, int> priority;
     std::stack<Token*> signs;
+
     std::vector<Token*> ans;
+    std::vector<PToken> expressionInPolishNotation;
+
 
     bool afterOpeningBracket = false;
     int afterOpBracket = 0;
@@ -582,7 +585,6 @@ int expression() { //TODO FOR MAX: replace 'int' on 'pair <int, vector<PToken> >
                 q -> isFunction = true;
                 ++inFunction;
                 ++afterOpBracket;
-
                 signs.push(q);
                 signs.push(cur);
                 nextToken();
@@ -629,7 +631,6 @@ int expression() { //TODO FOR MAX: replace 'int' on 'pair <int, vector<PToken> >
                     signs.pop();
                  }
             }
-
             signs.push(cur);
             nextToken();
         } else if (cur -> type == openingBracket) {
@@ -667,8 +668,36 @@ int expression() { //TODO FOR MAX: replace 'int' on 'pair <int, vector<PToken> >
         ans.push_back(signs.top());
         signs.pop();
     }
+    for (auto cur : ans) {
+         if (cur -> type == integerNumber) {
+            expressionInPolishNotation.push_back(PToken(PIntValue, cur -> value));
+            expressionInPolishNotation[(int)expressionInPolishNotation.size() - 1].intValue = stoi(cur -> value);
+        } else if (cur -> type == doubleNumber) {
+            expressionInPolishNotation.push_back(PToken(PDoubleValue, cur -> value));
+            expressionInPolishNotation[(int)expressionInPolishNotation.size() - 1].doubleValue = stod(cur -> value);
+        } else if (cur -> type == stringConstant) {
+            expressionInPolishNotation.push_back(PToken(PStringValue, cur -> value));
+            expressionInPolishNotation[(int)expressionInPolishNotation.size() - 1].stringValue = cur -> value;
+        } else if (cur -> type == logicalConstant) {
+                expressionInPolishNotation.push_back(PToken(PBoolValue, cur -> value));
+                expressionInPolishNotation[(int)expressionInPolishNotation.size() - 1].boolValue = (cur -> value == "True");
+        } else if (cur -> type == name && cur -> isFunction) {
+                expressionInPolishNotation.push_back(PToken(PFunction, cur -> value));
+        } else if (cur -> type == name) {
+                expressionInPolishNotation.push_back(PToken(PVariable, cur -> value));
+        } else if (cur -> type == unaryMathOperator || 
+                  (cur -> type == logicalOperator && cur -> type == "!")) {
+                expressionInPolishNotation.push_back(PToken(PUnaryOperation, cur -> value));
+        } else if (cur -> type == binaryMathOperator ||
+                   cur -> type == logicalOperator ||
+                   cur -> type == comparsionOperator ||
+                   cur -> type == assignmentOperator) {
+                expressionInPolishNotation.push_back(PToken(PFunction, cur -> value));
+        } else 
+             throw err();
+    }
     if (ans.size() == 0)
-        return TypeNull;
+        return {TypeNull, expressionInPolishNotation};
 
     stack<expressionElement*> exec;
     std::map<std::string, std::stack<TokenType> >::iterator ptr;
@@ -819,7 +848,7 @@ int expression() { //TODO FOR MAX: replace 'int' on 'pair <int, vector<PToken> >
     int q = exec.top() -> type;
     delete exec.top();
 
-    return q;
+    return {q, expressionInPolishNotation};
 }
 //max
 

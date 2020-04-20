@@ -863,6 +863,7 @@ int arguments_to_call(string functionName, bool special = 0) {
             if (cur->type != name) throw err();
             if (names[cur->value].empty()) throw err("Variable '" + cur->value + "' is not declarated");
             if (names[cur->value].top().isFunction) throw err("'" + cur->value + "' is a Function");
+            polizMap[CurrentFunction].second.push_back(PToken(PVariable, cur->value));
             nextToken();
         } else {
             pair <int, vector<PToken> > p = expression();
@@ -881,7 +882,9 @@ void operator_io_read() {
     if (debug) cout << "F: operator_io_read\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
-    arguments_to_call("read", 1);
+    int argsCnt = arguments_to_call("read", 1);
+    polizMap[CurrentFunction].second.push_back(PToken(PIO, "read"));
+    polizMap[CurrentFunction].second.back().args.push_back(argsCnt);
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != semicolon) throw err();
@@ -1281,6 +1284,27 @@ PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VA
                         cout << t.stringValue;
                     } else if (t.type == PBoolValue){
                         cout << (t.boolValue ? "true" : "false");
+                    }
+                }
+            } else if (tkn.value == "read"){
+                if (debug) cout << "read\n";
+                int argsCnt = tkn.args.back();
+                for (int i = 0; i < argsCnt; ++i){
+                    PToken t = s.top();
+                    s.pop();
+                    if (t.type == PVariable){
+                        int curVarType = polizNames[t.value].top().type;
+                        if (curVarType == TypeInt){
+                            cin >> polizNames[t.value].top().intValue;
+                        } else if (curVarType == TypeDouble){
+                            cin >> polizNames[t.value].top().doubleValue;
+                        } else if (curVarType == TypeString){
+                            cin >> polizNames[t.value].top().stringValue;
+                        } else if (curVarType == TypeBool){
+                            string s;
+                            cin >> s;
+                            polizNames[t.value].top().boolValue = (s == "true" ? 1 : 0);
+                        }
                     }
                 }
             }

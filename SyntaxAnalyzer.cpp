@@ -1345,9 +1345,14 @@ PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VA
             } else if (tkn.value == "read"){
                 if (debug) cout << "read\n";
                 int argsCnt = tkn.args.back();
+                vector <PToken> tmpVec;
                 for (int i = 0; i < argsCnt; ++i){
                     PToken t = s.top();
+                    tmpVec.push_back(t);
                     s.pop();
+                }
+                for (int i = argsCnt - 1; i >= 0; --i){
+                    PToken t = tmpVec[i];
                     if (t.type == PVariable){
                         int curVarType = polizNames[t.value].top().type;
                         if (curVarType == TypeInt){

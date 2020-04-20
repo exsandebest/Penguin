@@ -462,9 +462,9 @@ void operator_for(){
     if (cur->type != semicolon) throw err();
     nextToken();
     pair <int, vector<PToken> > cycleStep = expression();
+    posOfStart.push_back(polizMap[CurrentFunction].second.size());
     polizMap[CurrentFunction].second.insert(polizMap[CurrentFunction].second.end(), cycleStep.second.begin(), cycleStep.second.end());
     polizMap[CurrentFunction].second[posOfGoto].args.push_back(polizMap[CurrentFunction].second.size());
-    posOfStart.push_back(polizMap[CurrentFunction].second.size());
     polizMap[CurrentFunction].second.insert(polizMap[CurrentFunction].second.end(), cycleCondition.second.begin(), cycleCondition.second.end());
     polizMap[CurrentFunction].second.push_back(PToken(POperator, "if"));
     posOfEnd.push_back(polizMap[CurrentFunction].second.size() - 1);

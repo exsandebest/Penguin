@@ -21,6 +21,24 @@ enum { //Types
     TypeSpecial = 6
 };
 
+
+enum { // P - Poliz
+    POperator = 1,
+    PVariable = 2,
+    PSpecial = 3,
+    PType = 4,
+    PFunction = 5,
+    PUnaryOperation = 6,
+    PBinaryOperation = 7,
+    PIntValue = 8,
+    PDoubleValue = 9,
+    PStringValue = 10,
+    PBoolValue = 11,
+    PNull = 12
+};
+
+
+
 class PToken {
 public:
     int type;
@@ -96,20 +114,4 @@ enum { //States
     inCycle = 1,
     inFor1 = 3, //for (_________; i < n; ++i){}
     inFunction = 6
-};
-
-
-enum { // P - Poliz
-    POperator = 1,
-    PVariable = 2,
-    PSpecial = 3,
-    PType = 4,
-    PFunction = 5,
-    PUnaryOperation = 6,
-    PBinaryOperation = 7,
-    PIntValue = 8,
-    PDoubleValue = 9,
-    PStringValue = 10,
-    PBoolValue = 11,
-    PNull = 12
 };

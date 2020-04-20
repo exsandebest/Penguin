@@ -6,6 +6,7 @@
 #include <set>
 #include <map>
 #include "Main.h"
+#include "Math.h"
 
 using namespace std;
 
@@ -445,7 +446,7 @@ void operator_for(){
     block();
     delState(inCycle);
     if (cur->type != closingBrace) throw err();
-    polizMap[CurrentFunction].second.push_back(PToken(POperator, goto));
+    polizMap[CurrentFunction].second.push_back(PToken(POperator, "goto"));
     polizMap[CurrentFunction].second.back().args.push_back(posOfStart.back());
     posOfStart.pop_back();
     for (int i = 0; i < posOfEndCnt.back(); ++i){
@@ -685,7 +686,7 @@ pair<int, vector<PToken> > expression() { //TODO FOR MAX: replace 'int' on 'pair
                 expressionInPolishNotation.push_back(PToken(PFunction, cur -> value));
         } else if (cur -> type == name) {
                 expressionInPolishNotation.push_back(PToken(PVariable, cur -> value));
-        } else if (cur -> type == unaryMathOperator || 
+        } else if (cur -> type == unaryMathOperator ||
                   (cur -> type == logicalOperator && cur -> type == "!")) {
                 expressionInPolishNotation.push_back(PToken(PUnaryOperation, cur -> value));
         } else if (cur -> type == binaryMathOperator ||
@@ -693,7 +694,7 @@ pair<int, vector<PToken> > expression() { //TODO FOR MAX: replace 'int' on 'pair
                    cur -> type == comparsionOperator ||
                    cur -> type == assignmentOperator) {
                 expressionInPolishNotation.push_back(PToken(PFunction, cur -> value));
-        } else 
+        } else
              throw err();
     }
     if (ans.size() == 0)
@@ -923,15 +924,15 @@ void operator_variable_declaration() {
 
 PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VALUES (P...Value)!!!
     for (int i = 0; i < args.size(); ++i){
-        polizNames[ polizMap[functionName].first[i].first ].push(Variable(polizMap[functionName].first[i].second, 1 /*nestingLevel*/)); // ??????????????????
+        polizNames[ polizMap[functionName].first[i].second ].push(Variable(polizMap[functionName].first[i].first, 1 /*nestingLevel*/)); // ??????????????????
         if (args[i].type == PIntValue){
-            polizNames[ polizMap[functionName].first[i].first ].top().intValue = args[i].intValue;
+            polizNames[ polizMap[functionName].first[i].second ].top().intValue = args[i].intValue;
         } else if (args[i].type == PDoubleValue) {
-            polizNames[ polizMap[functionName].first[i].first ].top().doubleValue = args[i].doubleValue;
+            polizNames[ polizMap[functionName].first[i].second ].top().doubleValue = args[i].doubleValue;
         } else if (args[i].type == PStringValue) {
-            polizNames[ polizMap[functionName].first[i].first ].top().stringValue = args[i].stringValue;
+            polizNames[ polizMap[functionName].first[i].second ].top().stringValue = args[i].stringValue;
         } else if (args[i].type == PBoolValue){
-            polizNames[ polizMap[functionName].first[i].first ].top().boolValue = args[i].boolValue;
+            polizNames[ polizMap[functionName].first[i].second ].top().boolValue = args[i].boolValue;
         }
     }
     vector <PToken> curPoliz = polizMap[functionName].second;
@@ -942,15 +943,17 @@ PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VA
         if (tkn.type == PVariable || tkn.type == PIntValue || tkn.type == PDoubleValue || tkn.type == PStringValue || tkn.type == PBoolValue){
             s.push(tkn);
         } else if (tkn.type == PType) {
-            PToken t = s.pop();
-            polizNames[t.value].push(Variable(tkn.value, nestingLevel));
+            PToken t = s.top();
+            s.pop();
+            polizNames[t.value].push(Variable(stringToType(tkn.value), nestingLevel));
             polizLastNames.push({t.value, 1 /*nestingLevel*/}); // ??????????????
         } else if (tkn.type == POperator){
             if (tkn.value == "goto"){
                 i = tkn.args.back();
                 continue;
             } else if (tkn.value == "if"){
-                PToken t = s.pop();
+                PToken t = s.top();
+                s.pop();
                 if (t.boolValue){
                     ++i;
                 } else {
@@ -958,11 +961,17 @@ PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VA
                 }
                 continue;
             } else if (tkn.value == "return"){
-                PToken t = s.pop();
-                return s.pop();
+                if (tkn.args.back()){
+                    PToken t = s.top();
+                    s.pop();
+                    return t;
+                } else {
+                    return PToken();
+                }
             }
         } else if (tkn.type == PUnaryOperation){
-            PToken t = s.pop();
+            PToken t = s.top();
+            s.pop();
             PToken newT = PToken();
             if (tkn.value == "!"){
                 newT.type = PBoolValue;
@@ -977,7 +986,7 @@ PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VA
                     if (polizNames[t.value].top().type == TypeDouble){
                         newT.type = PDoubleValue;
                         newT.doubleValue = -polizNames[t.value].top().doubleValue;
-                    } else if (polizLastNames[t.value].top().type == TypeInt){
+                    } else if (polizNames[t.value].top().type == TypeInt){
                         newT.type = PIntValue;
                         newT.intValue = -polizNames[t.value].top().intValue;
                     }
@@ -1004,31 +1013,33 @@ PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VA
                 if (polizNames[t.value].top().type == TypeDouble){
                     newT.type = PDoubleValue;
                     newT.doubleValue = polizNames[t.value].top().doubleValue = polizNames[t.value].top().doubleValue - 1;
-                } else if (polizLastNames[t.value].top().type == TypeInt){
+                } else if (polizNames[t.value].top().type == TypeInt){
                     newT.type = PIntValue;
                     newT.intValue = polizNames[t.value].top().intValue = polizNames[t.value].top().intValue - 1;
                 }
                 s.push(newT);
             }
         } else if (tkn.type == PBinaryOperation){
-            PToken t1 = s.pop();
-            PToken t2 = s.pop();
-            PTokenn newT = PToken();
+            PToken t1 = s.top();
+            s.pop();
+            PToken t2 = s.top();
+            s.pop();
+            PToken newT = PToken();
             if (tkn.value == "="){
                 // PVariable
                 // P...Value or PVariable
                 if (polizNames[t1.value].top().type == TypeInt){
                     newT.type = PIntValue;
-                    newT.intValue = polizNames[t1.value].top().intValue = (t2.type == PVariable ? polizMap[t2.value].top().intValue : t2.intValue);
+                    newT.intValue = polizNames[t1.value].top().intValue = (t2.type == PVariable ? polizNames[t2.value].top().intValue : t2.intValue);
                 } else if (polizNames[t1.value].top().type == TypeDouble){
                     newT.type = PDoubleValue;
-                    newT.doubleValue = polizNames[t1.value].top().doubleValue = (t2.type == PVariable ? polizMap[t2.value].top().doubleValue : t2.doubleValue);
+                    newT.doubleValue = polizNames[t1.value].top().doubleValue = (t2.type == PVariable ? polizNames[t2.value].top().doubleValue : t2.doubleValue);
                 } else if (polizNames[t1.value].top().type == TypeString){
                     newT.type = PStringValue;
-                    newT.stringValue = polizNames[t1.value].top().stringValue = (t2.type == PVariable ? polizMap[t2.value].top().stringValue : t2.stringValue);
+                    newT.stringValue = polizNames[t1.value].top().stringValue = (t2.type == PVariable ? polizNames[t2.value].top().stringValue : t2.stringValue);
                 } else if (polizNames[t1.value].top().type == TypeBool){
                     newT.type = PBoolValue;
-                    newT.boolValue = polizNames[t1.value].top().boolValue = (t2.type == PVariable ? polizMap[t2.value].top().boolValue : t2.boolValue);
+                    newT.boolValue = polizNames[t1.value].top().boolValue = (t2.type == PVariable ? polizNames[t2.value].top().boolValue : t2.boolValue);
                 }
             } else if (tkn.value == "+") {
                 if ((t1.type == PIntValue) || (t1.type == PVariable && polizNames[t1.value].top().type == TypeInt)){
@@ -1200,10 +1211,11 @@ PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VA
             int argsCnt = polizMap[tkn.value].first.size();
             vector <PToken> newArgs;
             for (int i = 0; i < argsCnt; ++i){
-                PToken oneArg = s.pop();
+                PToken oneArg = s.top();
+                s.pop();
                 if (oneArg.type == PVariable){
                     PToken newOneArg = PToken();
-                    PToken curVariable = polizNames[oneArg.value].top()
+                    Variable curVariable = polizNames[oneArg.value].top();
                     int oneArgType = curVariable.type;
                     if (oneArgType == TypeInt){
                         newOneArg.type = PIntValue;

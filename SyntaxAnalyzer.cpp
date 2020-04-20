@@ -10,7 +10,7 @@
 
 using namespace std;
 
-bool debug = true;
+bool debug = false;
 
 int nestingLevel = 0;
 int currentFunctionType = -1;
@@ -61,13 +61,14 @@ void operator_while();
 void operator_for();
 void operator_return();
 pair <int, vector<PToken> > expression();
-int operator_if();
+int operator_if(bool isRepeat = 0);
 void operator_continue();
 void operator_break();
 void operator_io_read();
 void operator_io_write();
 int arguments_to_call(string functionName, bool special);
 void operator_variable_declaration();
+void debugPoliz(string fun);
 PToken exec(string functionName, vector <PToken> arguments);
 
 string err (string errString = "", bool showLine = 1){
@@ -84,6 +85,35 @@ string tokenToString (Token *) { //Token TO String
     string s = "";
     s += "Debug: (" + to_string(cur->type) + ") '" + cur->value + "' (line " + to_string(cur->line) + ")\n";
     return s;
+}
+
+void debugPoliz(string fun){
+    cout << "POLIZ DEBUG: '" << fun << "'\n";
+    vector <PToken> v = polizMap[fun].second;
+    for (int i = 0; i < v.size(); ++i){
+        PToken t = v[i];
+        cout << i << "\t";
+        if (t.type == PVariable || t.type == PFunction || t.type == PIO || t.type == PType || t.type == PBinaryOperation || t.type == PUnaryOperation){
+            cout << t.value;
+        } else if (t.type == POperator){
+            cout << t.value;
+            if (!t.args.empty()){
+                cout << "(" << t.args.back() << ")";
+            }
+        } else if (t.type == PIntValue){
+            cout << t.intValue;
+        } else if (t.type == PDoubleValue){
+            cout << t.doubleValue;
+        } else if (t.type == PStringValue){
+            cout << t.stringValue;
+        } else if (t.type == PBoolValue){
+            cout << (t.boolValue ? "true" : "false");
+        } else if (t.type == PNull){
+            cout << "NULL";
+        }
+        cout << "\n";
+    }
+    cout << "END OF POLIZ DEBUG\n";
 }
 
 int stringToType(string s){
@@ -458,37 +488,57 @@ void operator_for(){
     nextToken();
 }
 
-int operator_if () {
+int operator_if (bool isRepeat) {
     if (debug) cout << "F: operator_if\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
     pair <int, vector<PToken> > p = expression();
     int curType = p.first;
+    if (curType != TypeBool) throw errType(curType, TypeBool);
+    if (!isRepeat) posOfEndCnt.push_back(0);
+    int answer = polizMap[CurrentFunction].second.size();
     polizMap[CurrentFunction].second.insert(polizMap[CurrentFunction].second.end(), p.second.begin(), p.second.end());
     polizMap[CurrentFunction].second.push_back(PToken(POperator, "if"));
     int putHereEnd = polizMap[CurrentFunction].second.size() - 1;
-    if (curType != TypeBool) throw errType(curType, TypeBool);
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != openingBrace) throw err();
     nextToken();
     block();
+    polizMap[CurrentFunction].second.push_back(PToken(POperator, "goto"));
+    ++posOfEndCnt.back();
+    posOfEnd.push_back(polizMap[CurrentFunction].second.size() - 1);
     if (cur->type != closingBrace) throw err();
     nextToken();
-    if (cur->value != "else") return putHereEnd;
+    if (cur->value != "else") {
+        polizMap[CurrentFunction].second[putHereEnd].args.push_back(polizMap[CurrentFunction].second.size());
+        int sz = polizMap[CurrentFunction].second.size();
+        for (int i = 0; i < posOfEndCnt.back(); ++i){
+            polizMap[CurrentFunction].second[posOfEnd.back()].args.push_back(sz);
+            posOfEnd.pop_back();
+        }
+        posOfEndCnt.pop_back();
+        return answer;
+    }
     nextToken();
     if (cur->value == "if"){
         nextToken();
-        polizMap[CurrentFunction].second[putHereEnd].args.push_back(operator_if());
-        nextToken();
+        int position = operator_if(1);
+        polizMap[CurrentFunction].second[putHereEnd].args.push_back(position);
     } else if (cur->value == "{"){
-        polizMap[CurrentFunction].second[putHereEnd].args.push_back(polizMap[CurrentFunction].second.size() - 1);
+        polizMap[CurrentFunction].second[putHereEnd].args.push_back(polizMap[CurrentFunction].second.size());
         nextToken();
         block();
         if (cur->type != closingBrace) throw err();
+        int sz = polizMap[CurrentFunction].second.size();
+        for (int i = 0; i < posOfEndCnt.back(); ++i){
+            polizMap[CurrentFunction].second[posOfEnd.back()].args.push_back(sz);
+            posOfEnd.pop_back();
+        }
+        posOfEndCnt.pop_back();
         nextToken();
     }
-    return putHereEnd;
+    return answer;
 }
 
 
@@ -946,6 +996,7 @@ PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VA
         }
     }
     if (debug) cout << "Args: ok\n";
+    if (debug) debugPoliz(functionName);
     vector <PToken> curPoliz = polizMap[functionName].second;
     stack <PToken> s;
     int i = 0;

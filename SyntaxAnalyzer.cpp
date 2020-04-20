@@ -10,7 +10,7 @@
 
 using namespace std;
 
-bool debug = false;
+bool debug = true;
 
 int nestingLevel = 0;
 int currentFunctionType = -1;
@@ -164,7 +164,8 @@ int main (int argc, char const *argv[]){
         program();
         cout << "STATUS : OK\n";
         nestingLevel = 0;
-        //exec("main");
+        vector <PToken> tmp;
+        exec("main", tmp);
     } catch (string err){
         cout << err;
         return 0;
@@ -687,13 +688,13 @@ pair<int, vector<PToken> > expression() { //TODO FOR MAX: replace 'int' on 'pair
         } else if (cur -> type == name) {
                 expressionInPolishNotation.push_back(PToken(PVariable, cur -> value));
         } else if (cur -> type == unaryMathOperator ||
-                  (cur -> type == logicalOperator && cur -> type == "!")) {
+                  (cur -> type == logicalOperator && cur -> value == "!")) {
                 expressionInPolishNotation.push_back(PToken(PUnaryOperation, cur -> value));
         } else if (cur -> type == binaryMathOperator ||
                    cur -> type == logicalOperator ||
                    cur -> type == comparsionOperator ||
                    cur -> type == assignmentOperator) {
-                expressionInPolishNotation.push_back(PToken(PFunction, cur -> value));
+                expressionInPolishNotation.push_back(PToken(PBinaryOperation, cur -> value));
         } else
              throw err();
     }
@@ -923,6 +924,7 @@ void operator_variable_declaration() {
 }
 
 PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VALUES (P...Value)!!!
+    if (debug) cout << "exec: " << functionName << ", args.size = " << args.size() << "\n";
     for (int i = 0; i < args.size(); ++i){
         polizNames[ polizMap[functionName].first[i].second ].push(Variable(polizMap[functionName].first[i].first, 1 /*nestingLevel*/)); // ??????????????????
         if (args[i].type == PIntValue){
@@ -935,11 +937,13 @@ PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VA
             polizNames[ polizMap[functionName].first[i].second ].top().boolValue = args[i].boolValue;
         }
     }
+    if (debug) cout << "Args: ok\n";
     vector <PToken> curPoliz = polizMap[functionName].second;
     stack <PToken> s;
     int i = 0;
     while (i < curPoliz.size()){
         PToken tkn = curPoliz[i];
+        if (debug) cout << tkn.type << "\n";
         if (tkn.type == PVariable || tkn.type == PIntValue || tkn.type == PDoubleValue || tkn.type == PStringValue || tkn.type == PBoolValue){
             s.push(tkn);
         } else if (tkn.type == PType) {
@@ -1238,6 +1242,7 @@ PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VA
             PToken result = exec(tkn.value, newArgs);
             if (result.type != PNull) s.push(result);
         }
+        ++i;
     }
     return PToken();
 }

@@ -66,7 +66,7 @@ void operator_continue();
 void operator_break();
 void operator_io_read();
 void operator_io_write();
-void arguments_to_call(string functionName, bool special);
+int arguments_to_call(string functionName, bool special);
 void operator_variable_declaration();
 PToken exec(string functionName, vector <PToken> arguments);
 
@@ -854,10 +854,11 @@ pair<int, vector<PToken> > expression() { //TODO FOR MAX: replace 'int' on 'pair
 }
 //max
 
-void arguments_to_call(string functionName, bool special = 0) {
+int arguments_to_call(string functionName, bool special = 0) {
     if (debug) cout << "F: arguments_to_call\n";
     int k = 0;
     while (cur->type != closingBracket){
+        ++k;
         if (special) {
             if (cur->type != name) throw err();
             if (names[cur->value].empty()) throw err("Variable '" + cur->value + "' is not declarated");
@@ -866,12 +867,14 @@ void arguments_to_call(string functionName, bool special = 0) {
         } else {
             pair <int, vector<PToken> > p = expression();
             int curType = p.first;
+            polizMap[CurrentFunction].second.insert(polizMap[CurrentFunction].second.end(), p.second.begin(), p.second.end());
         }
         if (cur->type == closingBracket) break;
         if (cur->type != comma) throw err();
         nextToken();
-        ++k;
+
     }
+    return k;
 }
 
 void operator_io_read() {
@@ -889,7 +892,9 @@ void operator_io_write() {
     if (debug) cout << "F: operator_io_write\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
-    arguments_to_call("write");
+    int argsCnt = arguments_to_call("write");
+    polizMap[CurrentFunction].second.push_back(PToken(PIO, "write"));
+    polizMap[CurrentFunction].second.back().args.push_back(argsCnt);
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != semicolon) throw err();
@@ -943,15 +948,18 @@ PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VA
     int i = 0;
     while (i < curPoliz.size()){
         PToken tkn = curPoliz[i];
-        if (debug) cout << tkn.type << "\n";
         if (tkn.type == PVariable || tkn.type == PIntValue || tkn.type == PDoubleValue || tkn.type == PStringValue || tkn.type == PBoolValue){
+            if (debug) cout << "POperand: " << tkn.type << "\n";
             s.push(tkn);
         } else if (tkn.type == PType) {
+            if (debug) cout << "PType: " << tkn.value << "\n";
             PToken t = s.top();
             s.pop();
             polizNames[t.value].push(Variable(stringToType(tkn.value), nestingLevel));
             polizLastNames.push({t.value, 1 /*nestingLevel*/}); // ??????????????
+
         } else if (tkn.type == POperator){
+            if (debug) cout << "POperator: " << tkn.value << "\n";
             if (tkn.value == "goto"){
                 i = tkn.args.back();
                 continue;
@@ -974,6 +982,7 @@ PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VA
                 }
             }
         } else if (tkn.type == PUnaryOperation){
+            if (debug) cout << "PUnaryOperation: " << tkn.value << "\n";
             PToken t = s.top();
             s.pop();
             PToken newT = PToken();
@@ -1024,9 +1033,10 @@ PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VA
                 s.push(newT);
             }
         } else if (tkn.type == PBinaryOperation){
-            PToken t1 = s.top();
-            s.pop();
+            if (debug) cout << "PBinaryOperation: " << tkn.value << "\n";
             PToken t2 = s.top();
+            s.pop();
+            PToken t1 = s.top();
             s.pop();
             PToken newT = PToken();
             if (tkn.value == "="){
@@ -1212,6 +1222,7 @@ PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VA
             }
             s.push(newT);
         } else if (tkn.type == PFunction){
+            if (debug) cout << "PFunction\n";
             int argsCnt = polizMap[tkn.value].first.size();
             vector <PToken> newArgs;
             for (int i = 0; i < argsCnt; ++i){
@@ -1240,7 +1251,39 @@ PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VA
                 }
             }
             PToken result = exec(tkn.value, newArgs);
+            if (debug) cout << "Result type: " << result.type << "\n";
             if (result.type != PNull) s.push(result);
+        } else if (tkn.type == PIO){
+            if (debug) cout << "PIO\n";
+            if (tkn.value == "write"){
+                if (debug) cout << "write\n";
+                int argsCnt = tkn.args.back();
+                for (int i = 0; i < argsCnt; ++i){
+                    PToken t = s.top();
+                    s.pop();
+                    if (t.type == PVariable){
+                        Variable curArg = polizNames[t.value].top();
+                        int curArgType = curArg.type;
+                        if (curArgType == TypeInt){
+                            cout << curArg.intValue;
+                        } else if (curArgType == TypeDouble){
+                            cout << curArg.doubleValue;
+                        } else if (curArgType == TypeString){
+                            cout << curArg.stringValue;
+                        } else if (curArgType == TypeBool){
+                            cout << (curArg.boolValue ? "true" : "false");
+                        }
+                    } else if (t.type == PIntValue){
+                        cout << t.intValue;
+                    } else if (t.type == PDoubleValue){
+                        cout << t.doubleValue;
+                    } else if (t.type == PStringValue){
+                        cout << t.stringValue;
+                    } else if (t.type == PBoolValue){
+                        cout << (t.boolValue ? "true" : "false");
+                    }
+                }
+            }
         }
         ++i;
     }

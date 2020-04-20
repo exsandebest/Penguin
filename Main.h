@@ -34,7 +34,8 @@ enum { // P - Poliz
     PDoubleValue = 9,
     PStringValue = 10,
     PBoolValue = 11,
-    PNull = 12
+    PNull = 12,
+    PIO = 13 // Input/output
 };
 
 

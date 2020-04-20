@@ -1,7 +1,8 @@
 bool check(int k) {
-    return (k%2 == 1);
+    return (k%2 == 0);
 }
 
 null main(){
-    bool g = check(2);
+    bool g = check(565465464);
+    write(g);
 }

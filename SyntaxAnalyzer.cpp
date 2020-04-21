@@ -1357,6 +1357,7 @@ PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VA
                         cout << (t.boolValue ? "true" : "false");
                     }
                 }
+                cout << "\n";
             } else if (tkn.value == "read"){
                 if (debug) cout << "read\n";
                 int argsCnt = tkn.args.back();

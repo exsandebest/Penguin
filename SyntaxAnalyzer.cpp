@@ -66,7 +66,7 @@ void operator_continue();
 void operator_break();
 void operator_io_read();
 void operator_io_write();
-int arguments_to_call(string functionName, bool special);
+int arguments_to_call(string functionName);
 void operator_variable_declaration();
 void debugPoliz(string fun);
 PToken exec(string functionName, vector <PToken> arguments);
@@ -908,12 +908,12 @@ pair<int, vector<PToken> > expression() { //TODO FOR MAX: replace 'int' on 'pair
 }
 //max
 
-int arguments_to_call(string functionName, bool special = 0) {
+int arguments_to_call(string functionName) {
     if (debug) cout << "F: arguments_to_call\n";
     int k = 0;
     while (cur->type != closingBracket){
         ++k;
-        if (special) {
+        if (functionName == "read") {
             if (cur->type != name) throw err();
             if (names[cur->value].empty()) throw err("Variable '" + cur->value + "' is not declarated");
             if (names[cur->value].top().isFunction) throw err("'" + cur->value + "' is a Function");
@@ -922,6 +922,7 @@ int arguments_to_call(string functionName, bool special = 0) {
         } else {
             pair <int, vector<PToken> > p = expression();
             int curType = p.first;
+            if (curType == TypeNull) throw err("Cannot write NULL");
             polizMap[CurrentFunction].second.insert(polizMap[CurrentFunction].second.end(), p.second.begin(), p.second.end());
         }
         if (cur->type == closingBracket) break;
@@ -936,7 +937,7 @@ void operator_io_read() {
     if (debug) cout << "F: operator_io_read\n";
     if (cur->type != openingBracket) throw err();
     nextToken();
-    int argsCnt = arguments_to_call("read", 1);
+    int argsCnt = arguments_to_call("read");
     polizMap[CurrentFunction].second.push_back(PToken(PIO, "read"));
     polizMap[CurrentFunction].second.back().args.push_back(argsCnt);
     if (cur->type != closingBracket) throw err();

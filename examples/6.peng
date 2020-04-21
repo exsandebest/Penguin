@@ -1,8 +1,0 @@
-bool check(int k) {
-    return (k%2 == 0);
-}
-
-null main(){
-    bool g = check(565465464);
-    write(g);
-}

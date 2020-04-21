@@ -1,18 +1,12 @@
 null main (){
     int a;
-    int b;
-    int k;
-    k = 0;
-    read(a,b);
-    while (a<b){
-        ++k;
-        ++a;
-        int g = a + b;
+    read(a);
+    if (a > 2){
+        string a = "str";
+        write(a);
+    } else {
+        bool a = true;
+        write(a);
     }
-    /*Мда
-    Это те ещё комментарии
-    На русском...
-    */
-    write(k+a+b);
-    return 0;
+    write(a+2);
 }

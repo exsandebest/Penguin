@@ -93,7 +93,9 @@ void debugPoliz(string fun){
     for (int i = 0; i < v.size(); ++i){
         PToken t = v[i];
         cout << i << "\t";
-        if (t.type == PVariable || t.type == PFunction || t.type == PIO || t.type == PType || t.type == PBinaryOperation || t.type == PUnaryOperation){
+        if (t.type == PVariable || t.type == PFunction || t.type == PIO ||
+            t.type == PType || t.type == PBinaryOperation || t.type == PUnaryOperation ||
+            t.type == PSpecial){
             cout << t.value;
         } else if (t.type == POperator){
             cout << t.value;
@@ -336,10 +338,12 @@ void arguments(string functionName, bool pre){
 void block(){
     ++nestingLevel;
     if (debug) cout << "F: block\n";
+    polizMap[CurrentFunction].second.push_back(PToken(PSpecial, "levelup"));
     do {
         _operator();
     } while (cur->type != closingBrace);
     --nestingLevel;
+    polizMap[CurrentFunction].second.push_back(PToken(PSpecial, "leveldown"));
     while (!lastNames.empty() && lastNames.top().second > nestingLevel){
         names[lastNames.top().first].pop();
         lastNames.pop();
@@ -983,8 +987,9 @@ void operator_variable_declaration() {
 
 PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VALUES (P...Value)!!!
     if (debug) cout << "exec: " << functionName << ", args.size = " << args.size() << "\n";
+    int nestLvl = 0;
     for (int i = 0; i < args.size(); ++i){
-        polizNames[ polizMap[functionName].first[i].second ].push(Variable(polizMap[functionName].first[i].first, 1 /*nestingLevel*/)); // ??????????????????
+        polizNames[ polizMap[functionName].first[i].second ].push(Variable(polizMap[functionName].first[i].first));
         if (args[i].type == PIntValue){
             polizNames[ polizMap[functionName].first[i].second ].top().intValue = args[i].intValue;
         } else if (args[i].type == PDoubleValue) {
@@ -1009,9 +1014,19 @@ PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VA
             if (debug) cout << "PType: " << tkn.value << "\n";
             PToken t = s.top();
             s.pop();
-            polizNames[t.value].push(Variable(stringToType(tkn.value), nestingLevel));
-            polizLastNames.push({t.value, 1 /*nestingLevel*/}); // ??????????????
+            polizNames[t.value].push(Variable(stringToType(tkn.value)));
+            polizLastNames.push({t.value, nestLvl});
 
+        } else if (tkn.type == PSpecial) {
+            if (tkn.value == "levelup"){
+                ++nestLvl;
+            } else if (tkn.value == "leveldown"){
+                while (!polizLastNames.empty() && polizLastNames.top().second >= nestLvl){
+                    polizNames[polizLastNames.top().first].pop();
+                    polizLastNames.pop();
+                }
+                --nestLvl;
+            }
         } else if (tkn.type == POperator){
             if (debug) cout << "POperator: " << tkn.value << "\n";
             if (tkn.value == "goto"){
@@ -1371,6 +1386,10 @@ PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VA
             }
         }
         ++i;
+    }
+    while (!polizLastNames.empty() && polizLastNames.top().second >= nestLvl){
+        polizNames[polizLastNames.top().first].pop();
+        polizLastNames.pop();
     }
     return PToken();
 }

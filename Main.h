@@ -55,16 +55,12 @@ public:
 
 class Variable {
 public:
-    int type,
-        level;
+    int type;
     int intValue = 0;
     std :: string stringValue = "";
     double doubleValue = 0.0;
     bool boolValue = false;
-    Variable(int t, int lvl){
-        level = lvl;
-        type = t;
-    };
+    Variable(int t): type(t){};
 };
 
 class Token {

@@ -69,7 +69,7 @@ void operator_io_write();
 int arguments_to_call(string functionName);
 void operator_variable_declaration();
 void debugPoliz(string fun);
-PToken exec(string functionName, vector <PToken> arguments);
+PToken exec(string functionName, vector <PToken> arguments, int nestLvl);
 
 string err (string errString = "", bool showLine = 1){
     if (errString == "") {
@@ -195,9 +195,8 @@ int main (int argc, char const *argv[]){
         nextToken();
         program();
         cout << "STATUS : OK\n";
-        nestingLevel = 0;
         vector <PToken> tmp;
-        exec("main", tmp);
+        exec("main", tmp, 0);
     } catch (string err){
         cout << err;
         return 0;
@@ -986,11 +985,11 @@ void operator_variable_declaration() {
     }
 }
 
-PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VALUES (P...Value)!!!
+PToken exec(string functionName, vector <PToken> args, int nestLvl){ // args contains ONLY VALUES (P...Value)!!!
     if (debug) cout << "exec: " << functionName << ", args.size = " << args.size() << "\n";
-    int nestLvl = 0;
     for (int i = 0; i < args.size(); ++i){
         polizNames[ polizMap[functionName].first[i].second ].push(Variable(polizMap[functionName].first[i].first));
+        polizLastNames.push({polizMap[functionName].first[i].second, nestLvl + 1}); // ?????????
         if (args[i].type == PIntValue){
             polizNames[ polizMap[functionName].first[i].second ].top().intValue = args[i].intValue;
         } else if (args[i].type == PDoubleValue) {
@@ -1295,9 +1294,14 @@ PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VA
             if (debug) cout << "PFunction\n";
             int argsCnt = polizMap[tkn.value].first.size();
             vector <PToken> newArgs;
+            vector <PToken> tmpVec;
             for (int i = 0; i < argsCnt; ++i){
                 PToken oneArg = s.top();
+                tmpVec.push_back(oneArg);
                 s.pop();
+            }
+            for (int i = argsCnt - 1; i >= 0; --i){
+                PToken oneArg = tmpVec[i];
                 if (oneArg.type == PVariable){
                     PToken newOneArg = PToken();
                     Variable curVariable = polizNames[oneArg.value].top();
@@ -1320,7 +1324,9 @@ PToken exec(string functionName, vector <PToken> args){ // args contains ONLY VA
                     newArgs.push_back(oneArg);
                 }
             }
-            PToken result = exec(tkn.value, newArgs);
+            ++nestLvl;
+            PToken result = exec(tkn.value, newArgs, nestLvl);
+            --nestLvl;
             if (debug) cout << "Result type: " << result.type << "\n";
             if (result.type != PNull) s.push(result);
         } else if (tkn.type == PIO){

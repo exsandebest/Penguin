@@ -4,6 +4,7 @@ int max(int a, int b) {
     } else {
         return b;
     }
+    return 0;
 }
 
 int test(int a) {

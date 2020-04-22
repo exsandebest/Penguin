@@ -1,10 +1,20 @@
 null main(){
-    int a;
-    read(a);
-    write(p2(a), " = ", a, " / 2" );
+    int n;
+    read(n);
+    for(int i = 0; i < n; ++i){
+
+        int a = readInt();
+        w(a);
+    }
 }
 
-int p2(int a){
-    a = a/2;
+null w(int a){
+    write(a);
+}
+
+
+int readInt(){
+    int a;
+    read(a);
     return a;
 }

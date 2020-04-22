@@ -1,0 +1,10 @@
+null main(){
+    int a;
+    read(a);
+    write(p2(a), " = ", a, " / 2" );
+}
+
+int p2(int a){
+    a = a/2;
+    return a;
+}

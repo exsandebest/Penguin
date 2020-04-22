@@ -1,0 +1,35 @@
+int max(int a, int b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+int test(int a) {
+   a = a+a;
+}
+
+int euclid(int a, int b) {
+
+    while(a > 0 and b > 0) {
+        if (a < b) {
+            b = b % a;
+        } else {
+            a = a % b;
+        }
+    }
+    return max(a, b);
+}
+
+
+null main() {
+    int a;
+    int b;
+
+    read(a, b);
+
+    write(euclid(a, b), " - gcd from ", a, " and ", b);
+
+    return;
+}

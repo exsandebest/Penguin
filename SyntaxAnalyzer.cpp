@@ -987,9 +987,10 @@ void operator_variable_declaration() {
 
 PToken exec(string functionName, vector <PToken> args, int nestLvl){ // args contains ONLY VALUES (P...Value)!!!
     if (debug) cout << "exec: " << functionName << ", args.size = " << args.size() << "\n";
+    int startLvl = nestLvl;
     for (int i = 0; i < args.size(); ++i){
         polizNames[ polizMap[functionName].first[i].second ].push(Variable(polizMap[functionName].first[i].first));
-        polizLastNames.push({polizMap[functionName].first[i].second, nestLvl + 1}); // ?????????
+        polizLastNames.push({polizMap[functionName].first[i].second, nestLvl});
         if (args[i].type == PIntValue){
             polizNames[ polizMap[functionName].first[i].second ].top().intValue = args[i].intValue;
         } else if (args[i].type == PDoubleValue) {
@@ -1006,6 +1007,7 @@ PToken exec(string functionName, vector <PToken> args, int nestLvl){ // args con
     stack <PToken> s;
     int i = 0;
     while (i < curPoliz.size()){
+        if (debug) cout << "CURRENT NESTLVL: " << nestLvl << "\n";
         PToken tkn = curPoliz[i];
         if (tkn.type == PVariable || tkn.type == PIntValue || tkn.type == PDoubleValue || tkn.type == PStringValue || tkn.type == PBoolValue){
             if (debug) cout << "POperand: " << tkn.type << "\n";
@@ -1016,7 +1018,6 @@ PToken exec(string functionName, vector <PToken> args, int nestLvl){ // args con
             s.pop();
             polizNames[t.value].push(Variable(stringToType(tkn.value)));
             polizLastNames.push({t.value, nestLvl});
-
         } else if (tkn.type == PSpecial) {
             if (tkn.value == "levelup"){
                 ++nestLvl;
@@ -1045,8 +1046,33 @@ PToken exec(string functionName, vector <PToken> args, int nestLvl){ // args con
                 if (tkn.args.back()){
                     PToken t = s.top();
                     s.pop();
+                    if (t.type == PVariable){
+                        Variable curVariable = polizNames[t.value].top();
+                        int varType = curVariable.type;
+                        if (varType == TypeInt){
+                            t.type = PIntValue;
+                            t.intValue = curVariable.intValue;
+                        } else if (varType == TypeDouble){
+                            t.type = PDoubleValue;
+                            t.doubleValue = curVariable.doubleValue;
+                        } else if (varType == TypeString){
+                            t.type = PStringValue;
+                            t.stringValue = curVariable.stringValue;
+                        } else if (varType == TypeBool){
+                            t.type = PBoolValue;
+                            t.boolValue = curVariable.boolValue;
+                        }
+                    }
+                    while (!polizLastNames.empty() && polizLastNames.top().second >= startLvl){
+                        polizNames[polizLastNames.top().first].pop();
+                        polizLastNames.pop();
+                    }
                     return t;
                 } else {
+                    while (!polizLastNames.empty() && polizLastNames.top().second >= startLvl){
+                        polizNames[polizLastNames.top().first].pop();
+                        polizLastNames.pop();
+                    }
                     return PToken();
                 }
             }

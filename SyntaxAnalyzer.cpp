@@ -790,7 +790,7 @@ pair<int, vector<PToken> > expression() { //TODO FOR MAX: replace 'int' on 'pair
                 if (ans[i] -> value == "main")
                     throw err("Can't call function 'main'");
                 ptr = names.find(ans[i] -> value);
-                if (ptr == nullptr || ptr -> second.empty() || !ptr -> second.top().isFunction)
+                if (ptr == names.end() || ptr -> second.empty() || !ptr -> second.top().isFunction)
                     throw err("Function '" + ans[i] -> value + "' is not declared");
                 counter = ptr -> second.top().args.size() - 1;
                 while (counter >= 0 && !exec.empty()) {
@@ -805,7 +805,7 @@ pair<int, vector<PToken> > expression() { //TODO FOR MAX: replace 'int' on 'pair
                 exec.push(new expressionElement(ptr -> second.top().type));
             } else {
                 ptr = names.find(ans[i] -> value);
-                if (ptr == nullptr || ptr -> second.empty())
+                if (ptr == names.end() || ptr -> second.empty())
                     throw err("Variable '" + ans[i] -> value + "' is not declared");
                 else if (ptr -> second.top().isFunction)
                     throw err("Name '" + ans[i] -> value + "' is already engaged by function.");

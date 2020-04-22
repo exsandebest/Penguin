@@ -25,7 +25,6 @@ stack<int> stateStack;
 multiset<int> stateSet;
 
 //Poliz
-//Я заебался писать на английском, поэтому мне стало похуй
 vector <int> posOfStart; // Position of start of cycle (before condition)
 vector <int> posOfEnd; // Position of those elements, which need end position
 vector <int> posOfEndCnt; // Количество элементов, которым я должен отдать позицию конца

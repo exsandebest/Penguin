@@ -954,6 +954,9 @@ void operator_io_read() {
     if (cur->type != openingBracket) throw err();
     nextToken();
     int argsCnt = arguments_to_call("read");
+    if (argsCnt == 0){
+        throw err("Function 'read' must have at least one argument");
+    }
     polizMap[CurrentFunction].second.push_back(PToken(PIO, "read"));
     polizMap[CurrentFunction].second.back().args.push_back(argsCnt);
     if (cur->type != closingBracket) throw err();

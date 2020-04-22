@@ -29,6 +29,9 @@ multiset<int> stateSet;
 vector <int> posOfStart; // Position of start of cycle (before condition)
 vector <int> posOfEnd; // Position of those elements, which need end position
 vector <int> posOfEndCnt; // Количество элементов, которым я должен отдать позицию конца
+
+vector <int> posOfEndIf; // Position of those elements, which need end position
+vector <int> posOfEndCntIf; // Количество элементов, которым я должен отдать позицию конца
 string CurrentFunction = "";
 map <string, pair <vector < pair <int, string> > , vector <PToken> > > polizMap;
 //   Name           args       argtype argname          function poliz
@@ -505,7 +508,7 @@ int operator_if (bool isRepeat) {
     pair <int, vector<PToken> > p = expression();
     int curType = p.first;
     if (curType != TypeBool) throw errType(curType, TypeBool);
-    if (!isRepeat) posOfEndCnt.push_back(0);
+    if (!isRepeat) posOfEndCntIf.push_back(0);
     int answer = polizMap[CurrentFunction].second.size();
     polizMap[CurrentFunction].second.insert(polizMap[CurrentFunction].second.end(), p.second.begin(), p.second.end());
     polizMap[CurrentFunction].second.push_back(PToken(POperator, "if"));
@@ -516,18 +519,18 @@ int operator_if (bool isRepeat) {
     nextToken();
     block();
     polizMap[CurrentFunction].second.push_back(PToken(POperator, "goto"));
-    ++posOfEndCnt.back();
-    posOfEnd.push_back(polizMap[CurrentFunction].second.size() - 1);
+    ++posOfEndCntIf.back();
+    posOfEndIf.push_back(polizMap[CurrentFunction].second.size() - 1);
     if (cur->type != closingBrace) throw err();
     nextToken();
     if (cur->value != "else") {
         polizMap[CurrentFunction].second[putHereEnd].args.push_back(polizMap[CurrentFunction].second.size());
         int sz = polizMap[CurrentFunction].second.size();
-        for (int i = 0; i < posOfEndCnt.back(); ++i){
-            polizMap[CurrentFunction].second[posOfEnd.back()].args.push_back(sz);
-            posOfEnd.pop_back();
+        for (int i = 0; i < posOfEndCntIf.back(); ++i){
+            polizMap[CurrentFunction].second[posOfEndIf.back()].args.push_back(sz);
+            posOfEndIf.pop_back();
         }
-        posOfEndCnt.pop_back();
+        posOfEndCntIf.pop_back();
         return answer;
     }
     nextToken();
@@ -541,11 +544,11 @@ int operator_if (bool isRepeat) {
         block();
         if (cur->type != closingBrace) throw err();
         int sz = polizMap[CurrentFunction].second.size();
-        for (int i = 0; i < posOfEndCnt.back(); ++i){
-            polizMap[CurrentFunction].second[posOfEnd.back()].args.push_back(sz);
-            posOfEnd.pop_back();
+        for (int i = 0; i < posOfEndCntIf.back(); ++i){
+            polizMap[CurrentFunction].second[posOfEndIf.back()].args.push_back(sz);
+            posOfEndIf.pop_back();
         }
-        posOfEndCnt.pop_back();
+        posOfEndCntIf.pop_back();
         nextToken();
     }
     return answer;

@@ -15,8 +15,9 @@ bool debug = false;
 int nestingLevel = 0;
 int currentFunctionType = -1;
 
-std::map<std::string, std::stack<TokenType > > names;
-std::stack<pair<string, int>> lastNames;
+map< string, stack<TokenType > > names;
+stack<pair<string, int>> lastNames;
+map <string, pair <int, bool>> functionHasReturn;
 
 vector <Token*> v;
 Token * cur;
@@ -224,6 +225,7 @@ void function() {
     string curName = cur->value;
     CurrentFunction = curName;
     nextToken();
+    functionHasReturn[CurrentFunction] = {currentFunctionType, false};
     if (cur->type != openingBracket) throw err();
     nextToken();
     arguments(curName, 0);
@@ -235,6 +237,9 @@ void function() {
     block();
     delState(inFunction);
     if (cur->type != closingBrace) throw err();
+    if (functionHasReturn[CurrentFunction].first != TypeNull && !functionHasReturn[CurrentFunction].second){
+        throw err("Function '" + CurrentFunction + "' must have operator 'return' on main nesting level");
+    }
     currentFunctionType = -1;
 }
 
@@ -557,9 +562,16 @@ void operator_return(){
         if (curType != currentFunctionType) throw errType(curType, currentFunctionType);
         if (cur->type != semicolon) throw err();
         polizMap[CurrentFunction].second.insert(polizMap[CurrentFunction].second.end(), p.second.begin(), p.second.end());
+    } else {
+        if (currentFunctionType != TypeNull){
+            throw errType(TypeNull, currentFunctionType);
+        }
     }
     polizMap[CurrentFunction].second.push_back(PToken(POperator, "return"));
     polizMap[CurrentFunction].second.back().args.push_back(returnHasArgs);
+    if (nestingLevel == 1){
+        functionHasReturn[CurrentFunction].second = true;
+    }
     nextToken();
 }
 

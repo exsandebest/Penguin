@@ -47,6 +47,8 @@ inline double exp(double a) {
 }
 
 inline double peng_pow(double a, double b) {
+    if (a < 0)
+	    throw "ERROR : raising a negative number to a fractional power";
     if (a == 0) {
         if (b == 0)
 	        return 1;

@@ -747,7 +747,7 @@ pair<int, vector<PToken> > expression() { //TODO FOR MAX: replace 'int' on 'pair
             expressionInPolishNotation[(int)expressionInPolishNotation.size() - 1].stringValue = cur -> value;
         } else if (cur -> type == logicalConstant) {
                 expressionInPolishNotation.push_back(PToken(PBoolValue, cur -> value));
-                expressionInPolishNotation[(int)expressionInPolishNotation.size() - 1].boolValue = (cur -> value == "True");
+                expressionInPolishNotation[(int)expressionInPolishNotation.size() - 1].boolValue = (cur -> value == "true");
         } else if (cur -> type == name && cur -> isFunction) {
                 expressionInPolishNotation.push_back(PToken(PFunction, cur -> value));
         } else if (cur -> type == name) {

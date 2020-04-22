@@ -1,0 +1,85 @@
+double abs(double a) {
+    if (a < 0.0) {
+       return -a;
+    }
+    return a;
+}
+
+int absi(int a) {
+    if (a < 0) {
+        return -a;
+    }
+    return a;
+}
+
+double ln(double a) {    
+    double EPS = 0.00000001;
+    double ECONST = 2.7182818284;
+    double res = 0.0;
+ 
+    double xpt = (a - 1.0) / (a + 1.0);
+    double intermediateRes = -1.0;
+    double numerator = xpt;
+    double denominator = 1.0;
+    xpt = xpt ** 2.0;
+    
+    while (abs(res - intermediateRes) > EPS) {
+        intermediateRes = res;
+        res = res + numerator / pipika;
+        numerator = numerator * xpt;
+        denominator = denominator + 2.0;
+    }
+    
+    return 2.0 * res;
+}
+
+double log(double a, double b) {
+    double EPS = 0.00000001;
+    
+    if (a <= 0.0 or b <= 0.0 or abs(a - 1.0) <= EPS) {
+        return 0.0;
+    }
+    return ln(b)/ln(a);
+}
+
+double exp(double a) {
+    double EPS = 0.00000001;
+    double res = 0.0;
+    double intermediateRes = -1.0;
+    double numerator = 1.0;
+    double denominator = 1.0;
+    double cnt = 1.0;
+    
+    while (abs(res - intermediateRes) > EPS) {
+       intermediateRes = res;
+       res = res + numerator/denominator;
+       numerator = numerator * a;
+       denominator = denominator * cnt;
+       cnt = cnt + 1.0;
+    }
+    return res;
+}
+
+int combination(int n, int k) {
+    if (k == 0 or k == n) {
+        return 1;
+    }
+    return combination(n - 1, k - 1) + combination(n - 1, k);
+}
+
+int factorial(int n) {
+    int ans = 1;
+    for (int i = 2; i <= n; ++i) {
+        ans = ans * i;
+    }
+    return ans;
+}
+
+null main() {
+    write(log(2.0, 256.0));
+    write(combination(10, 2));
+    write(factorial(5));
+    
+
+    return;
+}

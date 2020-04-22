@@ -742,7 +742,11 @@ pair<int, vector<PToken> > expression() { //TODO FOR MAX: replace 'int' on 'pair
     for (auto cur : ans) {
          if (cur -> type == integerNumber) {
             expressionInPolishNotation.push_back(PToken(PIntValue, cur -> value));
-            expressionInPolishNotation[(int)expressionInPolishNotation.size() - 1].intValue = stoi(cur -> value);
+            try {
+                expressionInPolishNotation[(int)expressionInPolishNotation.size() - 1].intValue = stoi(cur -> value);
+            } catch(...) {
+                throw "ERROR : number in input is too big";
+            }
         } else if (cur -> type == doubleNumber) {
             expressionInPolishNotation.push_back(PToken(PDoubleValue, cur -> value));
             expressionInPolishNotation[(int)expressionInPolishNotation.size() - 1].doubleValue = stod(cur -> value);
@@ -786,7 +790,7 @@ pair<int, vector<PToken> > expression() { //TODO FOR MAX: replace 'int' on 'pair
                 if (ans[i] -> value == "main")
                     throw err("Can't call function 'main'");
                 ptr = names.find(ans[i] -> value);
-                if (ptr -> second.empty() && !ptr -> second.top().isFunction)
+                if (ptr == nullptr || ptr -> second.empty() || !ptr -> second.top().isFunction)
                     throw err("Function '" + ans[i] -> value + "' is not declared");
                 counter = ptr -> second.top().args.size() - 1;
                 while (counter >= 0 && !exec.empty()) {
@@ -801,7 +805,7 @@ pair<int, vector<PToken> > expression() { //TODO FOR MAX: replace 'int' on 'pair
                 exec.push(new expressionElement(ptr -> second.top().type));
             } else {
                 ptr = names.find(ans[i] -> value);
-                if (ptr -> second.empty())
+                if (ptr == nullptr || ptr -> second.empty())
                     throw err("Variable '" + ans[i] -> value + "' is not declared");
                 else if (ptr -> second.top().isFunction)
                     throw err("Name '" + ans[i] -> value + "' is already engaged by function.");

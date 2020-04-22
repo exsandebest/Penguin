@@ -1,0 +1,13 @@
+null main(){
+int a1;
+int b1;
+int c1;
+int a2;
+int b2;
+int c2;
+read(a1, b1, c1, a2, b2, c2);
+int t1 = c1 + b1*60 + a1*3600;
+int t2 = c2 + b2*60 + a2*3600;
+int ans = t2-t1;
+write(ans);
+}

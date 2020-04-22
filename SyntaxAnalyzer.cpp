@@ -368,6 +368,8 @@ void _operator() {
         operator_main();
     } else if (cur->type == variableType){
         operator_variable_declaration();
+    } else if (cur->type == closingBrace) {
+        return;
     } else {
         throw err();
     }

@@ -2,7 +2,6 @@ null main(){
     int n;
     read(n);
     for(int i = 0; i < n; ++i){
-
         int a = readInt();
         w(a);
     }

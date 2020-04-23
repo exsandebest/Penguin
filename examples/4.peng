@@ -12,7 +12,6 @@ int test(int a) {
 }
 
 int euclid(int a, int b) {
-
     while(a > 0 and b > 0) {
         if (a < b) {
             b = b % a;

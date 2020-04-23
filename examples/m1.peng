@@ -12,30 +12,30 @@ int absi(int a) {
     return a;
 }
 
-double ln(double a) {    
+double ln(double a) {
     double EPS = 0.00000001;
     double ECONST = 2.7182818284;
     double res = 0.0;
- 
+
     double xpt = (a - 1.0) / (a + 1.0);
     double intermediateRes = -1.0;
     double numerator = xpt;
     double denominator = 1.0;
     xpt = xpt ** 2.0;
-    
+
     while (abs(res - intermediateRes) > EPS) {
         intermediateRes = res;
-        res = res + numerator / pipika;
+        res = res + numerator / denominator;
         numerator = numerator * xpt;
         denominator = denominator + 2.0;
     }
-    
+
     return 2.0 * res;
 }
 
 double log(double a, double b) {
     double EPS = 0.00000001;
-    
+
     if (a <= 0.0 or b <= 0.0 or abs(a - 1.0) <= EPS) {
         return 0.0;
     }
@@ -49,7 +49,7 @@ double exp(double a) {
     double numerator = 1.0;
     double denominator = 1.0;
     double cnt = 1.0;
-    
+
     while (abs(res - intermediateRes) > EPS) {
        intermediateRes = res;
        res = res + numerator/denominator;
@@ -79,7 +79,7 @@ null main() {
     write(log(2.0, 256.0));
     write(combination(10, 2));
     write(factorial(5));
-    
+
 
     return;
 }

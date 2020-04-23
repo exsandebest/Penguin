@@ -994,12 +994,24 @@ void operator_variable_declaration() {
         polizMap[CurrentFunction].second.push_back(PToken(PType, typeToString(curVarType)));
         operator_assignment(curVarType, curName);
         if (!names[curName].empty() &&  (names[curName].top().level == nestingLevel || names[curName].top().isFunction)) throw err("Name '" + curName + "' is already used");
-        names[curName].push(TokenType(curVarType, nestingLevel));
-        lastNames.push({curName, nestingLevel});
+        if (stateSet.count(inFor1)){
+            names[curName].push(TokenType(curVarType, nestingLevel + 1));
+            lastNames.push({curName, nestingLevel + 1});
+        } else {
+            names[curName].push(TokenType(curVarType, nestingLevel));
+            lastNames.push({curName, nestingLevel});
+        }
+
     } else if (cur->type == semicolon){
         if (!names[curName].empty() && (names[curName].top().level == nestingLevel || names[curName].top().isFunction)) throw err("Name '" + curName + "' is already used");
-        names[curName].push(TokenType(curVarType, nestingLevel));
-        lastNames.push({curName, nestingLevel});
+        if (stateSet.count(inFor1)){
+            names[curName].push(TokenType(curVarType, nestingLevel + 1));
+            lastNames.push({curName, nestingLevel + 1});
+        } else {
+            names[curName].push(TokenType(curVarType, nestingLevel));
+            lastNames.push({curName, nestingLevel});
+        }
+
         if (stateSet.count(inFor1) == 0) nextToken();
         polizMap[CurrentFunction].second.push_back(PToken(PVariable, curName));
         polizMap[CurrentFunction].second.push_back(PToken(PType, typeToString(curVarType)));

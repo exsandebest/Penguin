@@ -110,13 +110,46 @@ int parseNumber(int i) {
                 resValue += s[i];
                 ++i;
             }
-            addToken(doubleNumber,resValue);
+            if (s[i] == 'e' || s[i] == 'E'){
+                ++i;
+                resValue += "e";
+                if (s[i] == '-'){
+                    resValue += "-";
+                    ++i;
+                }
+                if (isdigit(s[i])){
+                    while (isdigit(s[i])){
+                        resValue += s[i];
+                        ++i;
+                    }
+                    addToken(doubleNumber, resValue);
+                    return i;
+                } else {
+                    throw std::string("Incorrect number constant");
+                }
+            }
+        } else {
+            throw std::string("Incorrect number constant");
+        }
+    } else if (s[i] == 'e' || s[i] == 'E'){
+        ++i;
+        resValue += "e";
+        if (s[i] == '-'){
+            resValue += "-";
+            ++i;
+        }
+        if (isdigit(s[i])){
+            while (isdigit(s[i])){
+                resValue += s[i];
+                ++i;
+            }
+            addToken(doubleNumber, resValue);
             return i;
         } else {
             throw std::string("Incorrect number constant");
         }
     } else {
-        addToken(integerNumber,resValue);
+        addToken(integerNumber, resValue);
         return i;
     }
 }

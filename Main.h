@@ -1,18 +1,16 @@
 #include <string>
+#include <utility>
 
 class TokenType {
 public:
-    int type,
-        level;
+    int type, level;
     bool isFunction;
     std::vector<int> args;
-    TokenType(int type, int level, bool isFunction = 0): type(type), level(level), isFunction(isFunction) {
-
-    }
+    TokenType(int type, int level, bool isFunction = false)
+            : type(type), level(level), isFunction(isFunction) {}
 };
 
-
-enum { //Types
+enum {  // Types
     TypeBool = 1,
     TypeString = 2,
     TypeInt = 3,
@@ -21,8 +19,7 @@ enum { //Types
     TypeSpecial = 6
 };
 
-
-enum { // P - Poliz
+enum {  // P - Poliz
     POperator = 1,
     PVariable = 2,
     PSpecial = 3,
@@ -35,53 +32,57 @@ enum { // P - Poliz
     PStringValue = 10,
     PBoolValue = 11,
     PNull = 12,
-    PIO = 13 // Input/output
+    PIO = 13  // Input/output
 };
-
-
 
 class PToken {
 public:
     int type;
-    std :: string value = "";
-    std :: vector <int> args;
+    std::string value;
+    std::vector<int> args;
     int intValue = 0;
-    std :: string stringValue = "";
+    std::string stringValue;
     double doubleValue = 0.0;
     bool boolValue = false;
-    PToken(int t, std :: string s): type(t), value(s){}
-    PToken(): type(PNull){}
+    PToken(int t, std::string s) : type(t), value(std::move(s)) {}
+    PToken() : type(PNull) {}
 };
 
 class Variable {
 public:
     int type;
     int intValue = 0;
-    std :: string stringValue = "";
+    std::string stringValue;
     double doubleValue = 0.0;
     bool boolValue = false;
-    Variable(int t): type(t){};
+    explicit Variable(int t) : type(t){};
 };
 
 class Token {
 public:
     int type;
-    std :: string value;
+    std::string value;
     int size;
     int line;
     bool isFunction;
     bool isSimpleVariable;
-    Token(int type, std :: string value, int line): type(type), value(value), size(value.size()), line(line), isFunction(false), isSimpleVariable(false) {}
+    Token(int type, const std::string &value, int line)
+            : type(type),
+              value(value),
+              size(int(value.size())),
+              line(line),
+              isFunction(false),
+              isSimpleVariable(false) {}
 };
 
 class expressionElement {
 public:
     int type;
     bool isSimpleVariable;
-    expressionElement(int tp): type(tp), isSimpleVariable(false) {}
+    explicit expressionElement(int tp) : type(tp), isSimpleVariable(false) {}
 };
 
-enum { //Token's types
+enum {  // Token's types
     integerNumber = 1,
     doubleNumber = 2,
     stringConstant = 3,
@@ -91,7 +92,7 @@ enum { //Token's types
     sOperator = 7,
     logicalOperator = 8,
     assignmentOperator = 9,
-    comparsionOperator = 10,
+    comparisonOperator = 10,
     binaryMathOperator = 11,
     unaryMathOperator = 12,
     semicolon = 13,
@@ -103,12 +104,12 @@ enum { //Token's types
     readwriteOperator = 19,
     openingSquareBracket = 20,
     closingSquareBracket = 21,
-    importOperator = 22,
+//    importOperator = 22,
     logicalConstant = 23
 };
 
-enum { //States
+enum {  // States
     inCycle = 1,
-    inFor1 = 3, //for (_________; i < n; ++i){}
+    inFor1 = 3,  // for (_________; i < n; ++i){}
     inFunction = 6
 };

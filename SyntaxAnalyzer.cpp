@@ -10,7 +10,7 @@
 
 using namespace std;
 
-bool debug = true;
+const bool debug = false;
 
 int nestingLevel = 0;
 int currentFunctionType = -1;

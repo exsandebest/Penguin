@@ -1,18 +1,15 @@
-null main(){
+null main() {
     int n;
     read(n);
-    for(int i = 0; i < n; ++i){
+    for (int i = 0; i < n; ++i) {
         int a = readInt();
         w(a);
     }
 }
 
-null w(int a){
-    write(a);
-}
+null w(int a) { write(a); }
 
-
-int readInt(){
+int readInt() {
     int a;
     read(a);
     return a;

@@ -1,12 +1,12 @@
-null main (){
+null main() {
     int a;
     read(a);
-    if (a > 2){
+    if (a > 2) {
         string a = "str";
         write(a);
     } else {
         bool a = true;
         write(a);
     }
-    write(a+2);
+    write(a + 2);
 }

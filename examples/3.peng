@@ -3,16 +3,14 @@ null main() {
     read(n);
     if (n < 2) {
         write("x < 2");
-    } else if ( n >= 2 and n <= 5) {
+    } else if (n >= 2 and n <= 5) {
         write("between 2 and 5");
-    } else if (n > 5 and n < 100){
-        write ("grater than 5");
+    } else if (n > 5 and n < 100) {
+        write("grater than 5");
     } else {
         write("Infinity");
     }
     write(n, " is even: ", check2(n));
 }
 
-bool check2 (int k) {
-    return k%2==0;
-}
+bool check2(int k) { return k % 2 == 0; }

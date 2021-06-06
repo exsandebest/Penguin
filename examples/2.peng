@@ -1,13 +1,13 @@
-null main(){
+null main() {
     int n;
     read(n);
-    for (int i = 0; i < n; ++i){
-        write("2^", i, " = ",  2**i);
+    for (int i = 0; i < n; ++i) {
+        write("2^", i, " = ", 2 ** i);
     }
     write();
     int i = 0;
-    while (i < n){
-        write("2^", i, " = ",  2**i);
+    while (i < n) {
+        write("2^", i, " = ", 2 ** i);
         ++i;
     }
 }

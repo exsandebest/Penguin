@@ -1,16 +1,16 @@
-null main (){
-int n;
-int a;
-int b;
-int c;
-int res=0;
-read(n);
-for (a = 0; a <= (n / 10); ++a) {
-    for (b = 0; b <= ((n - 10*a)/5); ++b){
-        for (c = 0; c <= ((n-(10*a + 5*b))/2); ++c) {
-            ++res;
+null main() {
+    int n;
+    int a;
+    int b;
+    int c;
+    int res = 0;
+    read(n);
+    for (a = 0; a <= (n / 10); ++a) {
+        for (b = 0; b <= ((n - 10 * a) / 5); ++b) {
+            for (c = 0; c <= ((n - (10 * a + 5 * b)) / 2); ++c) {
+                ++res;
+            }
         }
     }
-}
-write(res);
+    write(res);
 }

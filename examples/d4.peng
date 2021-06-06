@@ -1,22 +1,21 @@
 null main() {
-int s;
-int n;
-int k;
-int a;
-int b;
-int x=0;
-int y=0;
-read(s,n,k,a,b);
-x = n;
-int ost = s - (a*n);
-int ost2 = ost/b;
-if (ost2 >= k){
-    y = k;
-    x = x + (ost-k*b)/a;
-} else {
-    y = y + ost2;
-    x = x + (ost%b)/a;
-}
-
-write (x, " ", y);
+    int s;
+    int n;
+    int k;
+    int a;
+    int b;
+    int x = 0;
+    int y = 0;
+    read(s, n, k, a, b);
+    x = n;
+    int ost = s - (a * n);
+    int ost2 = ost / b;
+    if (ost2 >= k) {
+        y = k;
+        x = x + (ost - k * b) / a;
+    } else {
+        y = y + ost2;
+        x = x + (ost % b) / a;
+    }
+    write(x, " ", y);
 }

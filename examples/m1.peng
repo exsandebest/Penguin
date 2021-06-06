@@ -1,6 +1,6 @@
 double abs(double a) {
     if (a < 0.0) {
-       return -a;
+        return -a;
     }
     return a;
 }
@@ -39,7 +39,7 @@ double log(double a, double b) {
     if (a <= 0.0 or b <= 0.0 or abs(a - 1.0) <= EPS) {
         return 0.0;
     }
-    return ln(b)/ln(a);
+    return ln(b) / ln(a);
 }
 
 double exp(double a) {
@@ -51,11 +51,11 @@ double exp(double a) {
     double cnt = 1.0;
 
     while (abs(res - intermediateRes) > EPS) {
-       intermediateRes = res;
-       res = res + numerator/denominator;
-       numerator = numerator * a;
-       denominator = denominator * cnt;
-       cnt = cnt + 1.0;
+        intermediateRes = res;
+        res = res + numerator / denominator;
+        numerator = numerator * a;
+        denominator = denominator * cnt;
+        cnt = cnt + 1.0;
     }
     return res;
 }
@@ -79,7 +79,5 @@ null main() {
     write(log(2.0, 256.0));
     write(combination(10, 2));
     write(factorial(5));
-
-
     return;
 }

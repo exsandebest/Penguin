@@ -71,10 +71,11 @@ void operator_io_read();
 void operator_io_write();
 int arguments_to_call(string functionName);
 void operator_variable_declaration();
-void debugRpn(string fun);
-PToken exec(string functionName, vector<PToken> arguments, int nestLvl);
+void debugRpn(const string& fun);
+PToken exec(string functionName, vector<PToken> args, int nestLvl);
 
-string err(const string& errString = "", bool showLine = 1) {
+// Returns an error message string, includes unexpected token or a custom error message, and optionally the line number
+string err(const string& errString = "", bool showLine = true) {
     if (errString.empty()) {
         string s;
         s += "Unexpected token: (" + to_string(cur->type) + ") '" + cur->value +
@@ -86,12 +87,14 @@ string err(const string& errString = "", bool showLine = 1) {
     }
 }
 
+// Converts the current token to a string for debugging, including type, value, and line number
 string tokenToString(Token*) {  // Token TO String
     return "Debug: (" + to_string(cur->type) + ") '" + cur->value + "' (line " +
            to_string(cur->line) + ")\n";
 }
 
-void debugRpn(string fun) {
+// Prints the Reverse Polish Notation (RPN) for debugging, including the function name and its tokens
+void debugRpn(const string& fun) {
     cout << "RPN DEBUG: '" << fun << "'\n";
     vector<PToken> v = rpnMap[fun].second;
     for (int i = 0; i < v.size(); ++i) {
@@ -122,6 +125,7 @@ void debugRpn(string fun) {
     cout << "END OF RPN DEBUG\n";
 }
 
+// Converts a string representation of a type to its corresponding integer constant
 int stringToType(const string& s) {
     if (s == "int") return TypeInt;
     if (s == "bool") return TypeBool;
@@ -131,6 +135,7 @@ int stringToType(const string& s) {
     return -1;
 }
 
+// Converts an integer constant representing a type to its string representation
 string typeToString(int type) {
     if (type == TypeInt) return "int";
     if (type == TypeBool) return "bool";
@@ -140,6 +145,7 @@ string typeToString(int type) {
     return "~typeToString converting error~";
 }
 
+// Returns an error message string for type mismatch, includes current and expected types, and optionally the line number
 string errType(int currentType, int expectedType, bool showLine = true) {
     return string("Incorrect Type: '" + typeToString(currentType) +
                   "', expected '" + typeToString(expectedType) + "'" +
@@ -147,15 +153,19 @@ string errType(int currentType, int expectedType, bool showLine = true) {
                   "\n");
 }
 
+// Adds a state to the state stack and state set for tracking the current state during parsing
 void addState(int state) {
     stateStack.push(state);
     stateSet.insert(state);
 }
+
+// Removes a state from the state stack and state set
 void delState(int state) {
     stateStack.pop();
     stateSet.erase(state);
 }
 
+// Entry point of the program, handles file input, token parsing, and executes the main function, handles exceptions and errors
 int main(int argc, char const* argv[]) {
     try {
         if (argc != 2) {
@@ -208,6 +218,7 @@ int main(int argc, char const* argv[]) {
     }
 }
 
+// Handles the preprocessing of global variables and functions, checks for the existence of the main function with correct signature
 void preprocessing() {
     if (debug) cout << "F: preproccesing\n";
     globals();
@@ -221,6 +232,7 @@ void preprocessing() {
         throw err("Function 'main' must have type 'null'", false);
 }
 
+// Parses a function, including its return type, name, arguments, and body, handles nested states and return statement requirement
 void function() {
     if (debug) cout << "F: function\n";
     if (!(cur->type == variableType || cur->type == functionType)) throw err();
@@ -250,6 +262,7 @@ void function() {
     currentFunctionType = -1;
 }
 
+// Parses global import statements
 void globals() {
     if (debug) cout << "F: globals\n";
     while (cur->value == "import") {
@@ -261,6 +274,7 @@ void globals() {
     }
 }
 
+// Advances to the next token in the token vector, returns 0 if the end is reached
 int nextToken() {
     ++curPos;
     if (curPos >= v.size()) return 0;
@@ -269,12 +283,14 @@ int nextToken() {
     return 1;
 }
 
+// Initiates the parsing of the program, including global imports and functions
 void program() {
     if (debug) cout << "F: program\n";
     globals();
     functions();
 }
 
+// Parses multiple functions until the end of tokens is reached
 void functions() {
     if (debug) cout << "F: functions\n";
     do {
@@ -282,6 +298,7 @@ void functions() {
     } while (nextToken());
 }
 
+// Preprocesses a function, checks for redeclaration and parses its signature and body
 void preprocessingFunction() {
     if (debug) cout << "F: preprocessingFunction\n";
     if (!(cur->type == variableType || cur->type == functionType)) throw err();
@@ -314,6 +331,7 @@ void preprocessingFunction() {
     preprocessingCurrentFunctionType = -1;
 }
 
+// Parses the arguments of a function, checks for duplicate names and adds them to the names map
 void arguments(const string& functionName, bool check) {
     set<string> tmpSet;
     if (debug) cout << "F: arguments\n";
@@ -347,6 +365,7 @@ void arguments(const string& functionName, bool check) {
     }
 }
 
+// Parses a block of statements, handles nesting levels and cleans up names at the end of the block
 void block() {
     ++nestingLevel;
     if (debug) cout << "F: block\n";
@@ -362,6 +381,7 @@ void block() {
     }
 }
 
+// Parses a single operator or statement, handles different types of operators and statements
 void operator_() {
     if (debug) cout << "F: operator_\n";
     if (cur->type == name || cur->type == unaryMathOperator) {
@@ -384,6 +404,7 @@ void operator_() {
     }
 }
 
+// Parses main operators like while, for, if, return, continue, and break, directs to specific parsing functions
 void operator_main() {
     if (debug) cout << "F: operator_main\n";
     if (cur->value == "while") {
@@ -406,6 +427,7 @@ void operator_main() {
     }
 }
 
+// Handles the 'continue' operator within a loop
 void operator_continue() {
     if (debug) cout << "F: operator_continue\n";
     if (stateSet.count(inCycle) == 0)
@@ -417,6 +439,7 @@ void operator_continue() {
     nextToken();
 }
 
+// Handles the 'break' operator within a loop
 void operator_break() {
     if (debug) cout << "F: operator_break\n";
     if (stateSet.count(inCycle) == 0)
@@ -429,6 +452,7 @@ void operator_break() {
     nextToken();
 }
 
+// Parses and handles the 'while' loop
 void operator_while() {
     if (debug) cout << "F: operator_while\n";
     if (cur->type != openingBracket) throw err();
@@ -462,6 +486,7 @@ void operator_while() {
     nextToken();
 }
 
+// Parses and handles the 'for' loop
 void operator_for() {
     if (debug) cout << "F: operator_for\n";
     if (cur->type != openingBracket) throw err();
@@ -518,6 +543,7 @@ void operator_for() {
     nextToken();
 }
 
+// Parses and handles the 'if' conditional statement
 int operator_if(bool isRepeat) {
     if (debug) cout << "F: operator_if\n";
     if (cur->type != openingBracket) throw err();
@@ -574,6 +600,7 @@ int operator_if(bool isRepeat) {
     return answer;
 }
 
+// Handles the 'return' operator within a function
 void operator_return() {
     if (debug) cout << "F: operator_return\n";
     nextToken();
@@ -602,6 +629,7 @@ void operator_return() {
     nextToken();
 }
 
+// Handles input and output operations, directing to the appropriate function for handling 'read' or 'write' operations
 void operator_input_output() {
     if (debug) cout << "F: operator_input_output\n";
     if (cur->value == "read") {
@@ -613,6 +641,7 @@ void operator_input_output() {
     }
 }
 
+// Handles variable assignment operations
 void operator_assignment(int varType, const string& varName) {
     if (debug) cout << "F: operator_assignment\n";
     if (cur->type != assignmentOperator) throw err();
@@ -628,9 +657,8 @@ void operator_assignment(int varType, const string& varName) {
     rpnMap[CurrentFunction].second.emplace_back(PBinaryOperation, "=");
 }
 
-// max
-pair<int, vector<PToken>>
-expression() {  // TODO FOR MAX: replace 'int' on 'pair <int, vector<PToken> >'
+// Parses expressions, handling various operators
+pair<int, vector<PToken>> expression() {
     if (debug) cout << "F: expression\n";
     map<string, int> priority;
     stack<Token*> signs;
@@ -942,8 +970,8 @@ expression() {  // TODO FOR MAX: replace 'int' on 'pair <int, vector<PToken> >'
 
     return {q, expressionInPolishNotation};
 }
-// max
 
+// Counts and processes the arguments for a given function call
 int arguments_to_call(string functionName) {
     if (debug) cout << "F: arguments_to_call\n";
     int k = 0;
@@ -972,6 +1000,7 @@ int arguments_to_call(string functionName) {
     return k;
 }
 
+// Handles the "read" IO operation
 void operator_io_read() {
     if (debug) cout << "F: operator_io_read\n";
     if (cur->type != openingBracket) throw err();
@@ -988,6 +1017,7 @@ void operator_io_read() {
     nextToken();
 }
 
+// Handles the "write" IO operation
 void operator_io_write() {
     if (debug) cout << "F: operator_io_write\n";
     if (cur->type != openingBracket) throw err();
@@ -1001,6 +1031,7 @@ void operator_io_write() {
     nextToken();
 }
 
+// Handles variable declaration and optional initialization
 void operator_variable_declaration() {
     if (debug) cout << "F: operator_variable_declaration\n";
     if (cur->type != variableType) throw err();
@@ -1048,8 +1079,9 @@ void operator_variable_declaration() {
     }
 }
 
+// Executes a given function with specified arguments and nesting level
 PToken exec(string functionName, vector<PToken> args,
-            int nestLvl) {  // args contains ONLY VALUES (P...Value)!!!
+            int nestLvl) {  // args contains ONLY VALUES (P...Value)
     if (debug)
         cout << "exec: " << functionName << ", args.size = " << args.size() << "\n";
     int startLvl = nestLvl;

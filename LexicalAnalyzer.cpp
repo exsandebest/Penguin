@@ -10,11 +10,23 @@ int line = 1;
 std::string s;
 std::vector<Token *> v;
 
-const std::string reservedWords[] = {"break",  "continue", "if", "else",
-                                     "return", "while", "for"};
-const std::string reservedVariableTypes[] = {"bool", "string", "int", "double"};
+const std::string reservedWords[] = {
+        "break",
+        "continue",
+        "if",
+        "else",
+        "return",
+        "while",
+        "for"
+};
+const std::string reservedVariableTypes[] = {
+        "bool",
+        "string",
+        "int",
+        "double"
+};
 const std::string reservedFunctionTypes[] = {"null"};
-const std::string reservedOperators[] = {"and", "or", "xor"};
+const std::string reservedOperators[] = {"and", "or"};
 const std::string reservedFunctions[] = {"read", "write"};
 // const std::string reservedSpecialWords[] = {"import"};
 const std::string reservedLogicalWords[] = {"true", "false"};

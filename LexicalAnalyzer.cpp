@@ -27,14 +27,17 @@ int parseString(int i);
 void addToken(int type, const std::string& value);
 bool ld(char c);
 
+// Adds a token with specified type and value to the token vector
 void addToken(int type, const std::string& value) {
     v.push_back(new Token(type, value, line));
 }
 
+// Returns true if the character is a letter or digit, false otherwise
 bool ld(char c) {
     return isdigit(c) || isalpha(c);
 }
 
+// Checks if the substring from index i matches any reserved word, returns true if match found, false otherwise
 bool detectReserved(const std::string &str, int i) {
     std::string ts;
     for (int j = i; j < i + str.length(); ++j) {
@@ -47,6 +50,8 @@ bool detectReserved(const std::string &str, int i) {
     }
 }
 
+// Parses words from index i, identifies reserved words, variable types, or names, and adds them as tokens
+// Returns the index after the parsed word
 int parseWord(int i) {
     for (const std::string &word : reservedWords) {
         if (detectReserved(word, i)) {
@@ -93,6 +98,8 @@ int parseWord(int i) {
     return i;
 }
 
+// Parses and validates number constants from index i, adds them as tokens
+// Returns the index after the parsed number
 int parseNumber(int i) {
     std::string resValue;
     while (isdigit(s[i])) {
@@ -152,6 +159,8 @@ int parseNumber(int i) {
     return 0;
 }
 
+// Parses string constants from index i, adds them as tokens
+// Returns the index after the parsed string
 int parseString(int i) {
     std::string resValue;
     ++i;
@@ -164,6 +173,9 @@ int parseString(int i) {
     return i;
 }
 
+// Recursive function to parse tokens from index i
+// Handles various token types including operators, brackets, and constants
+// Returns -1 if end of string is reached
 int parse(int i) {
     if (i > s.length() - 1) return -1;
     std::string ts;
@@ -287,6 +299,8 @@ int parse(int i) {
     throw std::string("Incorrect symbol : '" + std::string(1, s[i]) + "'\n");
 }
 
+// Removes comment blocks from the input string and returns the cleaned string
+// Throws an exception if comment syntax is incorrect
 std::string deleteComments(std::string &str) {
     std::string res, ts;
     int i = 0;

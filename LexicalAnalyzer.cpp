@@ -6,9 +6,9 @@
 #include <iostream>
 #include "Main.h"
 
-int line = 1;
-std::string s;
-std::vector<Token *> v;
+int line = 1;  // Tracks the current line number within the source file
+std::string s;  // Holds the entire source code content
+std::vector<Token *> v;  // Stores the sequence of tokens extracted from the source code
 
 const std::string reservedWords[] = {
         "break",

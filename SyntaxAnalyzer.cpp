@@ -11,33 +11,33 @@
 using namespace std;
 
 // Constants
-const bool debug = false;
+const bool debug = false;  // Debug mode flag
 
 // Global Variables
-int nestingLevel = 0;
-int currentFunctionType = -1;
-int curPos = -1;
-string CurrentFunction;
+int nestingLevel = 0;  // Current code nesting level
+int currentFunctionType = -1;  // Type ID of the current function
+int curPos = -1;  // Current index in the token vector
+string CurrentFunction;  // Name of the current function
 
-vector<Token*> v;
-Token *cur;
-stack<int> stateStack;
-multiset<int> stateSet;
+vector<Token*> v;  // Vector of parsed tokens
+Token *cur;  // Current token being processed
+stack<int> stateStack;  // Stack for parsing states
+multiset<int> stateSet;  // Set for handling multiple parsing states
 
-map<string, stack<TokenType>> names;
-stack<pair<string, int>> lastNames;
-map<string, pair<int, bool>> functionHasReturn;
+map<string, stack<TokenType>> names;  // Map of variable names to types with scope handling
+stack<pair<string, int>> lastNames;  // Stack of variable names with their nesting levels
+map<string, pair<int, bool>> functionHasReturn;  // Map of functions, their return types, and return status
 
-// Reverse Polish Notation - RPN
-map<string, pair<vector<pair<int, string>>, vector<PToken>>> rpnMap;
-map<string, stack<Variable>> rpnNames;
-stack<pair<string, int>> rpnLastNames;
+// RPN (Reverse Polish Notation) related
+map<string, pair<vector<pair<int, string>>, vector<PToken>>> rpnMap;  // Map of functions to their RPN expressions and arguments
+map<string, stack<Variable>> rpnNames;  // Scoped variable names for RPN expressions
+stack<pair<string, int>> rpnLastNames;  // Stack of RPN variable names with nesting levels
 
-vector<int> posOfStart;
-vector<int> posOfEnd;
-vector<int> posOfEndCnt;
-vector<int> posOfEndIf;
-vector<int> posOfEndCntIf;
+vector<int> posOfStart;  // Start positions of loops in RPN
+vector<int> posOfEnd;  // End positions of loops in RPN
+vector<int> posOfEndCnt;  // Counters for loop end positions
+vector<int> posOfEndIf;  // End positions of if statements in RPN
+vector<int> posOfEndCntIf;  // Counters for if statement end positions
 
 // Function Declarations
 string err(const string& errString, bool showLine);

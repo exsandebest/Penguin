@@ -295,7 +295,7 @@ int parse(int i) {
         return parse(i + 1);
     }
     if (s[i] == ',') {
-        addToken(18, ",");
+        addToken(comma, ",");
         return parse(i + 1);
     }
     if (s[i] == '!') {

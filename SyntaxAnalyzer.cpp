@@ -709,7 +709,6 @@ pair<int, vector<PToken>> expression() {
                 nextToken();
             } else {
                 afterVariable = true;
-                q->isSimpleVariable = true;
                 ans.push_back(q);
             }
         } else if (cur->type == comma) {
@@ -833,7 +832,6 @@ pair<int, vector<PToken>> expression() {
     for (int i = 0; i < (int)ans.size(); ++i) {
         if (ans[i]->type == name) {
             if (ans[i]->isFunction) {
-                ans[i]->isSimpleVariable = false;
                 if (ans[i]->value == "main") throw err("Can't call function 'main'");
                 ptr = names.find(ans[i]->value);
                 if (ptr == names.end() || ptr->second.empty() ||

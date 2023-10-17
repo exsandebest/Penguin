@@ -10,36 +10,36 @@
 
 using namespace std;
 
+// Constants
 const bool debug = false;
 
+// Global Variables
 int nestingLevel = 0;
 int currentFunctionType = -1;
-
-map<string, stack<TokenType>> names;
-stack<pair<string, int>> lastNames;
-map<string, pair<int, bool>> functionHasReturn;
+int curPos = -1;
+string CurrentFunction;
 
 vector<Token*> v;
 Token *cur;
 stack<int> stateStack;
 multiset<int> stateSet;
 
-// Reverse Polish Notation - RPN
-vector<int> posOfStart;  // Position of start of cycle (before condition)
-vector<int> posOfEnd;    // Position of those elements, which need end position
-vector<int>
-        posOfEndCnt;  // Elements requiring an end positions
+map<string, stack<TokenType>> names;
+stack<pair<string, int>> lastNames;
+map<string, pair<int, bool>> functionHasReturn;
 
-vector<int> posOfEndIf;  // Position of those elements, which need end position
-vector<int> posOfEndCntIf;  // Elements requiring an end positions
-string CurrentFunction;
+// Reverse Polish Notation - RPN
 map<string, pair<vector<pair<int, string>>, vector<PToken>>> rpnMap;
-//   Name           args   argtype argname         function rpn
 map<string, stack<Variable>> rpnNames;
 stack<pair<string, int>> rpnLastNames;
 
-int curPos = -1;
+vector<int> posOfStart;
+vector<int> posOfEnd;
+vector<int> posOfEndCnt;
+vector<int> posOfEndIf;
+vector<int> posOfEndCntIf;
 
+// Function Declarations
 string err(const string& errString, bool showLine);
 string tokenToString(Token* t);  // Token TO String
 string errType(int currentType, int expectedType, bool showLine);
@@ -73,6 +73,7 @@ int arguments_to_call(string functionName);
 void operator_variable_declaration();
 void debugRpn(const string& fun);
 PToken exec(string functionName, vector<PToken> args, int nestLvl);
+
 
 // Returns an error message string, includes unexpected token or a custom error message, and optionally the line number
 string err(const string& errString = "", bool showLine = true) {

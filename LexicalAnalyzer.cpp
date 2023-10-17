@@ -318,46 +318,6 @@ std::string deleteComments(std::string &str) {
     return res;
 }
 
-void lexicalanalyze(int argc, char const *argv[]) {
-    bool fromFile = false;
-    try {
-        if (argc % 2 == 0) {
-            throw std::string("Incorrect arguments");
-        }
-        for (int i = 1; i < argc; i += 2) {
-            if (strcmp(argv[i], "-i") == 0) {
-                fromFile = true;
-                std::ifstream inputFile(argv[i + 1]);
-                if (!inputFile) {
-                    throw std::string("Incorrect input file name");
-                } else {
-                    s.assign((std::istreambuf_iterator<char>(inputFile)),
-                             (std::istreambuf_iterator<char>()));
-                }
-            } else if (strcmp(argv[i], "-o") == 0) {
-                if (!std::freopen(argv[i + 1], "w", stdout)) {
-                    throw std::string("Something wrong with the output file");
-                }
-            } else {
-                throw std::string("Incorrect arguments");
-            }
-        }
-        if (!fromFile) {
-            getline(std::cin, s);
-        }
-        s = deleteComments(s);
-        parse(0);
-    } catch (std::string err) {
-        std::cout << err;
-        exit(1);
-    }
-    std::cout << v.size() << "\n";
-    for (auto &token : v) {
-        std::cout << token->line << "\n" << token->type << "\n" << token->size << "\n"
-                  << token->value << "\n";
-    }
-}
-
 int main(int argc, char const *argv[]) {
     bool fromFile = false;
     try {

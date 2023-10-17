@@ -24,24 +24,23 @@ Token *cur;
 stack<int> stateStack;
 multiset<int> stateSet;
 
-// Poliz
+// Reverse Polish Notation - RPN
 vector<int> posOfStart;  // Position of start of cycle (before condition)
 vector<int> posOfEnd;    // Position of those elements, which need end position
 vector<int>
-        posOfEndCnt;  // Количество элементов, которым я должен отдать позицию конца
+        posOfEndCnt;  // Elements requiring an end positions
 
 vector<int> posOfEndIf;  // Position of those elements, which need end position
-vector<int> posOfEndCntIf;  // Количество элементов, которым я должен отдать
-// позицию конца
+vector<int> posOfEndCntIf;  // Elements requiring an end positions
 string CurrentFunction;
-map<string, pair<vector<pair<int, string>>, vector<PToken>>> polizMap;
-//   Name           args       argtype argname          function poliz
-map<string, stack<Variable>> polizNames;
-stack<pair<string, int>> polizLastNames;
+map<string, pair<vector<pair<int, string>>, vector<PToken>>> rpnMap;
+//   Name           args   argtype argname         function rpn
+map<string, stack<Variable>> rpnNames;
+stack<pair<string, int>> rpnLastNames;
 
 int curPos = -1;
 
-string err(string errString, bool showLine);
+string err(const string& errString, bool showLine);
 string tokenToString(Token* t);  // Token TO String
 string errType(int currentType, int expectedType, bool showLine);
 
@@ -55,10 +54,10 @@ void program();
 void functions();
 void function();
 void globals();
-void arguments(string functionName, bool check = true);
+void arguments(const string& functionName, bool check = true);
 void block();
 void operator_();
-void operator_assignment(int varType, string varName);
+void operator_assignment(int varType, const string& varName);
 void operator_input_output();
 void operator_main();
 void operator_while();
@@ -72,12 +71,12 @@ void operator_io_read();
 void operator_io_write();
 int arguments_to_call(string functionName);
 void operator_variable_declaration();
-void debugPoliz(string fun);
+void debugRpn(string fun);
 PToken exec(string functionName, vector<PToken> arguments, int nestLvl);
 
-string err(string errString = "", bool showLine = 1) {
-    if (errString == "") {
-        string s = "";
+string err(const string& errString = "", bool showLine = 1) {
+    if (errString.empty()) {
+        string s;
         s += "Unexpected token: (" + to_string(cur->type) + ") '" + cur->value +
              "'" + (showLine ? " (line " + to_string(cur->line) + ")" : "") + "\n";
         return s;
@@ -92,9 +91,9 @@ string tokenToString(Token*) {  // Token TO String
            to_string(cur->line) + ")\n";
 }
 
-void debugPoliz(string fun) {
-    cout << "POLIZ DEBUG: '" << fun << "'\n";
-    vector<PToken> v = polizMap[fun].second;
+void debugRpn(string fun) {
+    cout << "RPN DEBUG: '" << fun << "'\n";
+    vector<PToken> v = rpnMap[fun].second;
     for (int i = 0; i < v.size(); ++i) {
         PToken t = v[i];
         cout << i << "\t";
@@ -120,7 +119,7 @@ void debugPoliz(string fun) {
         }
         cout << "\n";
     }
-    cout << "END OF POLIZ DEBUG\n";
+    cout << "END OF RPN DEBUG\n";
 }
 
 int stringToType(const string& s) {
@@ -199,7 +198,7 @@ int main(int argc, char const* argv[]) {
         curPos = -1;
         nextToken();
         program();
-        cout << "STATUS : OK\n";
+        if (debug) cout << "STATUS : OK\n";
         vector<PToken> tmp;
         string startFunction = "main";
         exec(startFunction, tmp, 0);
@@ -315,7 +314,7 @@ void preprocessingFunction() {
     preprocessingCurrentFunctionType = -1;
 }
 
-void arguments(string functionName, bool check) {
+void arguments(const string& functionName, bool check) {
     set<string> tmpSet;
     if (debug) cout << "F: arguments\n";
     while (cur->type != closingBracket) {
@@ -335,9 +334,9 @@ void arguments(string functionName, bool check) {
         if (!check) {
             if (!names[curName].empty() && names[curName].top().isFunction)
                 throw err("'" + curName + "' is a Function");
-            names[curName].push(TokenType(curType, nestingLevel + 1));
-            lastNames.push({curName, nestingLevel + 1});
-            polizMap[functionName].first.emplace_back(curType, curName);
+            names[curName].emplace(curType, nestingLevel + 1);
+            lastNames.emplace(curName, nestingLevel + 1);
+            rpnMap[functionName].first.emplace_back(curType, curName);
         }
         nextToken();
         if (cur->type == closingBracket) {
@@ -351,12 +350,12 @@ void arguments(string functionName, bool check) {
 void block() {
     ++nestingLevel;
     if (debug) cout << "F: block\n";
-    polizMap[CurrentFunction].second.emplace_back(PSpecial, "levelup");
+    rpnMap[CurrentFunction].second.emplace_back(PSpecial, "levelup");
     do {
         operator_();
     } while (cur->type != closingBrace);
     --nestingLevel;
-    polizMap[CurrentFunction].second.emplace_back(PSpecial, "leveldown");
+    rpnMap[CurrentFunction].second.emplace_back(PSpecial, "leveldown");
     while (!lastNames.empty() && lastNames.top().second > nestingLevel) {
         names[lastNames.top().first].pop();
         lastNames.pop();
@@ -367,8 +366,8 @@ void operator_() {
     if (debug) cout << "F: operator_\n";
     if (cur->type == name || cur->type == unaryMathOperator) {
         pair<int, vector<PToken>> p = expression();
-        polizMap[CurrentFunction].second.insert(
-                polizMap[CurrentFunction].second.end(), p.second.begin(),
+        rpnMap[CurrentFunction].second.insert(
+                rpnMap[CurrentFunction].second.end(), p.second.begin(),
                 p.second.end());
         if (cur->type != semicolon) throw err();
         nextToken();
@@ -413,8 +412,8 @@ void operator_continue() {
         throw err("Operator 'continue' is not in cycle");
     nextToken();
     if (cur->type != semicolon) throw err();
-    polizMap[CurrentFunction].second.emplace_back(POperator, "goto");
-    polizMap[CurrentFunction].second.back().args.push_back(posOfStart.back());
+    rpnMap[CurrentFunction].second.emplace_back(POperator, "goto");
+    rpnMap[CurrentFunction].second.back().args.push_back(posOfStart.back());
     nextToken();
 }
 
@@ -424,8 +423,8 @@ void operator_break() {
         throw err("Operator 'break' is not in cycle");
     nextToken();
     if (cur->type != semicolon) throw err();
-    polizMap[CurrentFunction].second.emplace_back(POperator, "goto");
-    posOfEnd.push_back(polizMap[CurrentFunction].second.size() - 1);
+    rpnMap[CurrentFunction].second.emplace_back(POperator, "goto");
+    posOfEnd.push_back(rpnMap[CurrentFunction].second.size() - 1);
     ++posOfEndCnt.back();
     nextToken();
 }
@@ -437,11 +436,11 @@ void operator_while() {
     pair<int, vector<PToken>> p = expression();
     int curType = p.first;
     if (curType != TypeBool) throw errType(curType, TypeBool);
-    posOfStart.push_back(int(polizMap[CurrentFunction].second.size()));
-    polizMap[CurrentFunction].second.insert(
-            polizMap[CurrentFunction].second.end(), p.second.begin(), p.second.end());
-    polizMap[CurrentFunction].second.emplace_back(POperator, "if");
-    posOfEnd.push_back(int(polizMap[CurrentFunction].second.size()) - 1);
+    posOfStart.push_back(int(rpnMap[CurrentFunction].second.size()));
+    rpnMap[CurrentFunction].second.insert(
+            rpnMap[CurrentFunction].second.end(), p.second.begin(), p.second.end());
+    rpnMap[CurrentFunction].second.emplace_back(POperator, "if");
+    posOfEnd.push_back(int(rpnMap[CurrentFunction].second.size()) - 1);
     posOfEndCnt.push_back(1);
     if (cur->type != closingBracket) throw err();
     nextToken();
@@ -451,12 +450,12 @@ void operator_while() {
     block();
     delState(inCycle);
     if (cur->type != closingBrace) throw err();
-    polizMap[CurrentFunction].second.emplace_back(POperator, "goto");
-    polizMap[CurrentFunction].second.back().args.push_back(posOfStart.back());
+    rpnMap[CurrentFunction].second.emplace_back(POperator, "goto");
+    rpnMap[CurrentFunction].second.back().args.push_back(posOfStart.back());
     posOfStart.pop_back();
     for (int i = 0; i < posOfEndCnt.back(); ++i) {
-        polizMap[CurrentFunction].second[posOfEnd.back()].args.push_back(
-                int(polizMap[CurrentFunction].second.size()));
+        rpnMap[CurrentFunction].second[posOfEnd.back()].args.push_back(
+                int(rpnMap[CurrentFunction].second.size()));
         posOfEnd.pop_back();
     }
     posOfEndCnt.pop_back();
@@ -472,8 +471,8 @@ void operator_for() {
         operator_variable_declaration();
     } else {
         pair<int, vector<PToken>> p = expression();
-        polizMap[CurrentFunction].second.insert(
-                polizMap[CurrentFunction].second.end(), p.second.begin(),
+        rpnMap[CurrentFunction].second.insert(
+                rpnMap[CurrentFunction].second.end(), p.second.begin(),
                 p.second.end());
     }
     delState(inFor1);
@@ -482,22 +481,22 @@ void operator_for() {
     pair<int, vector<PToken>> cycleCondition = expression();
     int curType = cycleCondition.first;
     if (curType != TypeBool) throw errType(curType, TypeBool);
-    polizMap[CurrentFunction].second.emplace_back(POperator, "goto");
-    int posOfGoto = int(polizMap[CurrentFunction].second.size()) - 1;
+    rpnMap[CurrentFunction].second.emplace_back(POperator, "goto");
+    int posOfGoto = int(rpnMap[CurrentFunction].second.size()) - 1;
     if (cur->type != semicolon) throw err();
     nextToken();
     pair<int, vector<PToken>> cycleStep = expression();
-    posOfStart.push_back(int(polizMap[CurrentFunction].second.size()));
-    polizMap[CurrentFunction].second.insert(
-            polizMap[CurrentFunction].second.end(), cycleStep.second.begin(),
+    posOfStart.push_back(int(rpnMap[CurrentFunction].second.size()));
+    rpnMap[CurrentFunction].second.insert(
+            rpnMap[CurrentFunction].second.end(), cycleStep.second.begin(),
             cycleStep.second.end());
-    polizMap[CurrentFunction].second[posOfGoto].args.push_back(
-            int(polizMap[CurrentFunction].second.size()));
-    polizMap[CurrentFunction].second.insert(
-            polizMap[CurrentFunction].second.end(), cycleCondition.second.begin(),
+    rpnMap[CurrentFunction].second[posOfGoto].args.push_back(
+            int(rpnMap[CurrentFunction].second.size()));
+    rpnMap[CurrentFunction].second.insert(
+            rpnMap[CurrentFunction].second.end(), cycleCondition.second.begin(),
             cycleCondition.second.end());
-    polizMap[CurrentFunction].second.emplace_back(POperator, "if");
-    posOfEnd.push_back(int(polizMap[CurrentFunction].second.size()) - 1);
+    rpnMap[CurrentFunction].second.emplace_back(POperator, "if");
+    posOfEnd.push_back(int(rpnMap[CurrentFunction].second.size()) - 1);
     posOfEndCnt.push_back(1);
     if (cur->type != closingBracket) throw err();
     nextToken();
@@ -507,12 +506,12 @@ void operator_for() {
     block();
     delState(inCycle);
     if (cur->type != closingBrace) throw err();
-    polizMap[CurrentFunction].second.emplace_back(POperator, "goto");
-    polizMap[CurrentFunction].second.back().args.push_back(posOfStart.back());
+    rpnMap[CurrentFunction].second.emplace_back(POperator, "goto");
+    rpnMap[CurrentFunction].second.back().args.push_back(posOfStart.back());
     posOfStart.pop_back();
     for (int i = 0; i < posOfEndCnt.back(); ++i) {
-        polizMap[CurrentFunction].second[posOfEnd.back()].args.push_back(
-                int(polizMap[CurrentFunction].second.size()));
+        rpnMap[CurrentFunction].second[posOfEnd.back()].args.push_back(
+                int(rpnMap[CurrentFunction].second.size()));
         posOfEnd.pop_back();
     }
     posOfEndCnt.pop_back();
@@ -527,27 +526,27 @@ int operator_if(bool isRepeat) {
     int curType = p.first;
     if (curType != TypeBool) throw errType(curType, TypeBool);
     if (!isRepeat) posOfEndCntIf.push_back(0);
-    int answer = int(polizMap[CurrentFunction].second.size());
-    polizMap[CurrentFunction].second.insert(
-            polizMap[CurrentFunction].second.end(), p.second.begin(), p.second.end());
-    polizMap[CurrentFunction].second.emplace_back(POperator, "if");
-    int putHereEnd = int(polizMap[CurrentFunction].second.size()) - 1;
+    int answer = int(rpnMap[CurrentFunction].second.size());
+    rpnMap[CurrentFunction].second.insert(
+            rpnMap[CurrentFunction].second.end(), p.second.begin(), p.second.end());
+    rpnMap[CurrentFunction].second.emplace_back(POperator, "if");
+    int putHereEnd = int(rpnMap[CurrentFunction].second.size()) - 1;
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != openingBrace) throw err();
     nextToken();
     block();
-    polizMap[CurrentFunction].second.emplace_back(POperator, "goto");
+    rpnMap[CurrentFunction].second.emplace_back(POperator, "goto");
     ++posOfEndCntIf.back();
-    posOfEndIf.push_back(int(polizMap[CurrentFunction].second.size()) - 1);
+    posOfEndIf.push_back(int(rpnMap[CurrentFunction].second.size()) - 1);
     if (cur->type != closingBrace) throw err();
     nextToken();
     if (cur->value != "else") {
-        polizMap[CurrentFunction].second[putHereEnd].args.push_back(
-                int(polizMap[CurrentFunction].second.size()));
-        int sz = int(polizMap[CurrentFunction].second.size());
+        rpnMap[CurrentFunction].second[putHereEnd].args.push_back(
+                int(rpnMap[CurrentFunction].second.size()));
+        int sz = int(rpnMap[CurrentFunction].second.size());
         for (int i = 0; i < posOfEndCntIf.back(); ++i) {
-            polizMap[CurrentFunction].second[posOfEndIf.back()].args.push_back(sz);
+            rpnMap[CurrentFunction].second[posOfEndIf.back()].args.push_back(sz);
             posOfEndIf.pop_back();
         }
         posOfEndCntIf.pop_back();
@@ -557,16 +556,16 @@ int operator_if(bool isRepeat) {
     if (cur->value == "if") {
         nextToken();
         int position = operator_if(true);
-        polizMap[CurrentFunction].second[putHereEnd].args.push_back(position);
+        rpnMap[CurrentFunction].second[putHereEnd].args.push_back(position);
     } else if (cur->value == "{") {
-        polizMap[CurrentFunction].second[putHereEnd].args.push_back(
-                int(polizMap[CurrentFunction].second.size()));
+        rpnMap[CurrentFunction].second[putHereEnd].args.push_back(
+                int(rpnMap[CurrentFunction].second.size()));
         nextToken();
         block();
         if (cur->type != closingBrace) throw err();
-        int sz = int(polizMap[CurrentFunction].second.size());
+        int sz = int(rpnMap[CurrentFunction].second.size());
         for (int i = 0; i < posOfEndCntIf.back(); ++i) {
-            polizMap[CurrentFunction].second[posOfEndIf.back()].args.push_back(sz);
+            rpnMap[CurrentFunction].second[posOfEndIf.back()].args.push_back(sz);
             posOfEndIf.pop_back();
         }
         posOfEndCntIf.pop_back();
@@ -587,16 +586,16 @@ void operator_return() {
         if (curType != currentFunctionType)
             throw errType(curType, currentFunctionType);
         if (cur->type != semicolon) throw err();
-        polizMap[CurrentFunction].second.insert(
-                polizMap[CurrentFunction].second.end(), p.second.begin(),
+        rpnMap[CurrentFunction].second.insert(
+                rpnMap[CurrentFunction].second.end(), p.second.begin(),
                 p.second.end());
     } else {
         if (currentFunctionType != TypeNull) {
             throw errType(TypeNull, currentFunctionType);
         }
     }
-    polizMap[CurrentFunction].second.emplace_back(POperator, "return");
-    polizMap[CurrentFunction].second.back().args.push_back(returnHasArgs);
+    rpnMap[CurrentFunction].second.emplace_back(POperator, "return");
+    rpnMap[CurrentFunction].second.back().args.push_back(returnHasArgs);
     if (nestingLevel == 1) {
         functionHasReturn[CurrentFunction].second = true;
     }
@@ -614,7 +613,7 @@ void operator_input_output() {
     }
 }
 
-void operator_assignment(int varType, string varName) {
+void operator_assignment(int varType, const string& varName) {
     if (debug) cout << "F: operator_assignment\n";
     if (cur->type != assignmentOperator) throw err();
     nextToken();
@@ -623,10 +622,10 @@ void operator_assignment(int varType, string varName) {
     if (curExpType != varType) throw errType(curExpType, varType);
     if (cur->type != semicolon) throw err();
     if (stateSet.count(inFor1) == 0) nextToken();
-    polizMap[CurrentFunction].second.emplace_back(PVariable, varName);
-    polizMap[CurrentFunction].second.insert(
-            polizMap[CurrentFunction].second.end(), p.second.begin(), p.second.end());
-    polizMap[CurrentFunction].second.emplace_back(PBinaryOperation, "=");
+    rpnMap[CurrentFunction].second.emplace_back(PVariable, varName);
+    rpnMap[CurrentFunction].second.insert(
+            rpnMap[CurrentFunction].second.end(), p.second.begin(), p.second.end());
+    rpnMap[CurrentFunction].second.emplace_back(PBinaryOperation, "=");
 }
 
 // max
@@ -869,7 +868,7 @@ expression() {  // TODO FOR MAX: replace 'int' on 'pair <int, vector<PToken> >'
             fir = exec.top();
             if (sec->type != TypeBool || fir->type != TypeBool) {
                 throw err("Logic operations cannot be applied to non-bool types");
-                //несоответствие типов в логическом выражении
+                // type mismatch in a boolean expression
             }
             exec.top()->isSimpleVariable = false;
             delete sec;
@@ -887,13 +886,12 @@ expression() {  // TODO FOR MAX: replace 'int' on 'pair <int, vector<PToken> >'
                       (sec->type == TypeString && fir->type == TypeString)))
                     throw err(
                             "Operation '+' can be applied only to similar integer, double or "
-                            "string types");  //несоответствие типов в
-                //математическом/строковом выражении
+                            "string types");  // type mismatch in mathematical/string expression
             } else if (!((sec->type == TypeInt && fir->type == TypeInt) ||
                          (sec->type == TypeDouble && fir->type == TypeDouble))) {
                 throw err(
                         "Arithmetic operations can be applied only to similar integer or "
-                        "double types");  //несоответствие типов в математическом выражении
+                        "double types");  // type mismatch in mathematical expression
             }
             exec.top()->isSimpleVariable = false;
             delete sec;
@@ -912,16 +910,14 @@ expression() {  // TODO FOR MAX: replace 'int' on 'pair <int, vector<PToken> >'
                       (sec->type == TypeBool && fir->type == TypeBool))) {
                     throw err(
                             "Equqal/Not Equal operations can be applied only to similar "
-                            "non-null types");  //несоответствие типов в
-                    //математическом/строковом выражении
+                            "non-null types");  // type mismatch in mathematical/string expression
                 }
             } else if (!((sec->type == TypeInt && fir->type == TypeInt) ||
                          (sec->type == TypeDouble && fir->type == TypeDouble) ||
                          (sec->type == TypeString && fir->type == TypeString))) {
                 throw err(
                         "Comparsion operations can be applied only to similar non-null, "
-                        "non-bool types");  //несоответствие типов в
-                //математическом/строковом выражении
+                        "non-bool types");  // type mismatch in mathematical/string expression
             }
             delete sec;
             exec.top()->isSimpleVariable = false;
@@ -959,14 +955,14 @@ int arguments_to_call(string functionName) {
                 throw err("Variable '" + cur->value + "' is not declarated");
             if (names[cur->value].top().isFunction)
                 throw err("'" + cur->value + "' is a Function");
-            polizMap[CurrentFunction].second.emplace_back(PVariable, cur->value);
+            rpnMap[CurrentFunction].second.emplace_back(PVariable, cur->value);
             nextToken();
         } else {
             pair<int, vector<PToken>> p = expression();
             int curType = p.first;
             if (curType == TypeNull) throw err("Cannot write NULL");
-            polizMap[CurrentFunction].second.insert(
-                    polizMap[CurrentFunction].second.end(), p.second.begin(),
+            rpnMap[CurrentFunction].second.insert(
+                    rpnMap[CurrentFunction].second.end(), p.second.begin(),
                     p.second.end());
         }
         if (cur->type == closingBracket) break;
@@ -984,8 +980,8 @@ void operator_io_read() {
     if (argsCnt == 0) {
         throw err("Function 'read' must have at least one argument");
     }
-    polizMap[CurrentFunction].second.emplace_back(PIO, "read");
-    polizMap[CurrentFunction].second.back().args.push_back(argsCnt);
+    rpnMap[CurrentFunction].second.emplace_back(PIO, "read");
+    rpnMap[CurrentFunction].second.back().args.push_back(argsCnt);
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != semicolon) throw err();
@@ -997,8 +993,8 @@ void operator_io_write() {
     if (cur->type != openingBracket) throw err();
     nextToken();
     int argsCnt = arguments_to_call("write");
-    polizMap[CurrentFunction].second.emplace_back(PIO, "write");
-    polizMap[CurrentFunction].second.back().args.push_back(argsCnt);
+    rpnMap[CurrentFunction].second.emplace_back(PIO, "write");
+    rpnMap[CurrentFunction].second.back().args.push_back(argsCnt);
     if (cur->type != closingBracket) throw err();
     nextToken();
     if (cur->type != semicolon) throw err();
@@ -1014,8 +1010,8 @@ void operator_variable_declaration() {
     string curName = cur->value;
     nextToken();
     if (cur->type == assignmentOperator) {
-        polizMap[CurrentFunction].second.emplace_back(PVariable, curName);
-        polizMap[CurrentFunction].second.emplace_back(PType,
+        rpnMap[CurrentFunction].second.emplace_back(PVariable, curName);
+        rpnMap[CurrentFunction].second.emplace_back(PType,
                                                       typeToString(curVarType));
         operator_assignment(curVarType, curName);
         if (!names[curName].empty() &&
@@ -1023,11 +1019,11 @@ void operator_variable_declaration() {
              names[curName].top().isFunction))
             throw err("Name '" + curName + "' is already used");
         if (stateSet.count(inFor1)) {
-            names[curName].push(TokenType(curVarType, nestingLevel + 1));
-            lastNames.push({curName, nestingLevel + 1});
+            names[curName].emplace(curVarType, nestingLevel + 1);
+            lastNames.emplace(curName, nestingLevel + 1);
         } else {
-            names[curName].push(TokenType(curVarType, nestingLevel));
-            lastNames.push({curName, nestingLevel});
+            names[curName].emplace(curVarType, nestingLevel);
+            lastNames.emplace(curName, nestingLevel);
         }
 
     } else if (cur->type == semicolon) {
@@ -1036,16 +1032,16 @@ void operator_variable_declaration() {
              names[curName].top().isFunction))
             throw err("Name '" + curName + "' is already used");
         if (stateSet.count(inFor1)) {
-            names[curName].push(TokenType(curVarType, nestingLevel + 1));
-            lastNames.push({curName, nestingLevel + 1});
+            names[curName].emplace(curVarType, nestingLevel + 1);
+            lastNames.emplace(curName, nestingLevel + 1);
         } else {
-            names[curName].push(TokenType(curVarType, nestingLevel));
-            lastNames.push({curName, nestingLevel});
+            names[curName].emplace(curVarType, nestingLevel);
+            lastNames.emplace(curName, nestingLevel);
         }
 
         if (stateSet.count(inFor1) == 0) nextToken();
-        polizMap[CurrentFunction].second.emplace_back(PVariable, curName);
-        polizMap[CurrentFunction].second.emplace_back(PType,
+        rpnMap[CurrentFunction].second.emplace_back(PVariable, curName);
+        rpnMap[CurrentFunction].second.emplace_back(PType,
                                                       typeToString(curVarType));
     } else {
         throw err();
@@ -1058,31 +1054,30 @@ PToken exec(string functionName, vector<PToken> args,
         cout << "exec: " << functionName << ", args.size = " << args.size() << "\n";
     int startLvl = nestLvl;
     for (int i = 0; i < args.size(); ++i) {
-        polizNames[polizMap[functionName].first[i].second].push(
-                Variable(polizMap[functionName].first[i].first));
-        polizLastNames.push({polizMap[functionName].first[i].second, nestLvl});
+        rpnNames[rpnMap[functionName].first[i].second].emplace(rpnMap[functionName].first[i].first);
+        rpnLastNames.emplace(rpnMap[functionName].first[i].second, nestLvl);
         if (args[i].type == PIntValue) {
-            polizNames[polizMap[functionName].first[i].second].top().intValue =
+            rpnNames[rpnMap[functionName].first[i].second].top().intValue =
                     args[i].intValue;
         } else if (args[i].type == PDoubleValue) {
-            polizNames[polizMap[functionName].first[i].second].top().doubleValue =
+            rpnNames[rpnMap[functionName].first[i].second].top().doubleValue =
                     args[i].doubleValue;
         } else if (args[i].type == PStringValue) {
-            polizNames[polizMap[functionName].first[i].second].top().stringValue =
+            rpnNames[rpnMap[functionName].first[i].second].top().stringValue =
                     args[i].stringValue;
         } else if (args[i].type == PBoolValue) {
-            polizNames[polizMap[functionName].first[i].second].top().boolValue =
+            rpnNames[rpnMap[functionName].first[i].second].top().boolValue =
                     args[i].boolValue;
         }
     }
     if (debug) cout << "Args: ok\n";
-    if (debug) debugPoliz(functionName);
-    vector<PToken> curPoliz = polizMap[functionName].second;
+    if (debug) debugRpn(functionName);
+    vector<PToken> curRpn = rpnMap[functionName].second;
     stack<PToken> s;
     int i = 0;
-    while (i < curPoliz.size()) {
+    while (i < curRpn.size()) {
         if (debug) cout << "CURRENT NESTLVL: " << nestLvl << "\n";
-        PToken tkn = curPoliz[i];
+        PToken tkn = curRpn[i];
         if (tkn.type == PVariable || tkn.type == PIntValue ||
             tkn.type == PDoubleValue || tkn.type == PStringValue ||
             tkn.type == PBoolValue) {
@@ -1092,16 +1087,16 @@ PToken exec(string functionName, vector<PToken> args,
             if (debug) cout << "PType: " << tkn.value << "\n";
             PToken t = s.top();
             s.pop();
-            polizNames[t.value].push(Variable(stringToType(tkn.value)));
-            polizLastNames.push({t.value, nestLvl});
+            rpnNames[t.value].emplace(stringToType(tkn.value));
+            rpnLastNames.emplace(t.value, nestLvl);
         } else if (tkn.type == PSpecial) {
             if (tkn.value == "levelup") {
                 ++nestLvl;
             } else if (tkn.value == "leveldown") {
-                while (!polizLastNames.empty() &&
-                       polizLastNames.top().second >= nestLvl) {
-                    polizNames[polizLastNames.top().first].pop();
-                    polizLastNames.pop();
+                while (!rpnLastNames.empty() &&
+                       rpnLastNames.top().second >= nestLvl) {
+                    rpnNames[rpnLastNames.top().first].pop();
+                    rpnLastNames.pop();
                 }
                 --nestLvl;
             }
@@ -1124,7 +1119,7 @@ PToken exec(string functionName, vector<PToken> args,
                     PToken t = s.top();
                     s.pop();
                     if (t.type == PVariable) {
-                        Variable curVariable = polizNames[t.value].top();
+                        Variable curVariable = rpnNames[t.value].top();
                         int varType = curVariable.type;
                         if (varType == TypeInt) {
                             t.type = PIntValue;
@@ -1140,19 +1135,19 @@ PToken exec(string functionName, vector<PToken> args,
                             t.boolValue = curVariable.boolValue;
                         }
                     }
-                    while (!polizLastNames.empty() &&
-                           polizLastNames.top().second >= startLvl) {
-                        polizNames[polizLastNames.top().first].pop();
-                        polizLastNames.pop();
+                    while (!rpnLastNames.empty() &&
+                           rpnLastNames.top().second >= startLvl) {
+                        rpnNames[rpnLastNames.top().first].pop();
+                        rpnLastNames.pop();
                     }
                     return t;
                 } else {
-                    while (!polizLastNames.empty() &&
-                           polizLastNames.top().second >= startLvl) {
-                        polizNames[polizLastNames.top().first].pop();
-                        polizLastNames.pop();
+                    while (!rpnLastNames.empty() &&
+                           rpnLastNames.top().second >= startLvl) {
+                        rpnNames[rpnLastNames.top().first].pop();
+                        rpnLastNames.pop();
                     }
-                    return PToken();
+                    return {};
                 }
             }
         } else if (tkn.type == PUnaryOperation) {
@@ -1163,19 +1158,19 @@ PToken exec(string functionName, vector<PToken> args,
             if (tkn.value == "!") {
                 newT.type = PBoolValue;
                 if (t.type == PVariable) {
-                    newT.boolValue = !polizNames[t.value].top().boolValue;
+                    newT.boolValue = !rpnNames[t.value].top().boolValue;
                 } else if (t.type == PBoolValue) {
                     newT.boolValue = !t.boolValue;
                 }
                 s.push(newT);
             } else if (tkn.value == "-") {
                 if (t.type == PVariable) {
-                    if (polizNames[t.value].top().type == TypeDouble) {
+                    if (rpnNames[t.value].top().type == TypeDouble) {
                         newT.type = PDoubleValue;
-                        newT.doubleValue = -polizNames[t.value].top().doubleValue;
-                    } else if (polizNames[t.value].top().type == TypeInt) {
+                        newT.doubleValue = -rpnNames[t.value].top().doubleValue;
+                    } else if (rpnNames[t.value].top().type == TypeInt) {
                         newT.type = PIntValue;
-                        newT.intValue = -polizNames[t.value].top().intValue;
+                        newT.intValue = -rpnNames[t.value].top().intValue;
                     }
                 } else if (t.type == PDoubleValue) {
                     newT.type = PDoubleValue;
@@ -1187,26 +1182,26 @@ PToken exec(string functionName, vector<PToken> args,
                 s.push(newT);
             } else if (tkn.value == "++") {
                 // PVariable
-                if (polizNames[t.value].top().type == TypeDouble) {
+                if (rpnNames[t.value].top().type == TypeDouble) {
                     newT.type = PDoubleValue;
-                    newT.doubleValue = polizNames[t.value].top().doubleValue =
-                            polizNames[t.value].top().doubleValue + 1;
-                } else if (polizNames[t.value].top().type == TypeInt) {
+                    newT.doubleValue = rpnNames[t.value].top().doubleValue =
+                            rpnNames[t.value].top().doubleValue + 1;
+                } else if (rpnNames[t.value].top().type == TypeInt) {
                     newT.type = PIntValue;
-                    newT.intValue = polizNames[t.value].top().intValue =
-                            polizNames[t.value].top().intValue + 1;
+                    newT.intValue = rpnNames[t.value].top().intValue =
+                            rpnNames[t.value].top().intValue + 1;
                 }
                 s.push(newT);
             } else if (tkn.value == "--") {
                 // PVariable
-                if (polizNames[t.value].top().type == TypeDouble) {
+                if (rpnNames[t.value].top().type == TypeDouble) {
                     newT.type = PDoubleValue;
-                    newT.doubleValue = polizNames[t.value].top().doubleValue =
-                            polizNames[t.value].top().doubleValue - 1;
-                } else if (polizNames[t.value].top().type == TypeInt) {
+                    newT.doubleValue = rpnNames[t.value].top().doubleValue =
+                            rpnNames[t.value].top().doubleValue - 1;
+                } else if (rpnNames[t.value].top().type == TypeInt) {
                     newT.type = PIntValue;
-                    newT.intValue = polizNames[t.value].top().intValue =
-                            polizNames[t.value].top().intValue - 1;
+                    newT.intValue = rpnNames[t.value].top().intValue =
+                            rpnNames[t.value].top().intValue - 1;
                 }
                 s.push(newT);
             }
@@ -1220,346 +1215,346 @@ PToken exec(string functionName, vector<PToken> args,
             if (tkn.value == "=") {
                 // PVariable
                 // P...Value or PVariable
-                if (polizNames[t1.value].top().type == TypeInt) {
+                if (rpnNames[t1.value].top().type == TypeInt) {
                     newT.type = PIntValue;
-                    newT.intValue = polizNames[t1.value].top().intValue =
-                            (t2.type == PVariable ? polizNames[t2.value].top().intValue
+                    newT.intValue = rpnNames[t1.value].top().intValue =
+                            (t2.type == PVariable ? rpnNames[t2.value].top().intValue
                                                   : t2.intValue);
-                } else if (polizNames[t1.value].top().type == TypeDouble) {
+                } else if (rpnNames[t1.value].top().type == TypeDouble) {
                     newT.type = PDoubleValue;
-                    newT.doubleValue = polizNames[t1.value].top().doubleValue =
-                            (t2.type == PVariable ? polizNames[t2.value].top().doubleValue
+                    newT.doubleValue = rpnNames[t1.value].top().doubleValue =
+                            (t2.type == PVariable ? rpnNames[t2.value].top().doubleValue
                                                   : t2.doubleValue);
-                } else if (polizNames[t1.value].top().type == TypeString) {
+                } else if (rpnNames[t1.value].top().type == TypeString) {
                     newT.type = PStringValue;
-                    newT.stringValue = polizNames[t1.value].top().stringValue =
-                            (t2.type == PVariable ? polizNames[t2.value].top().stringValue
+                    newT.stringValue = rpnNames[t1.value].top().stringValue =
+                            (t2.type == PVariable ? rpnNames[t2.value].top().stringValue
                                                   : t2.stringValue);
-                } else if (polizNames[t1.value].top().type == TypeBool) {
+                } else if (rpnNames[t1.value].top().type == TypeBool) {
                     newT.type = PBoolValue;
-                    newT.boolValue = polizNames[t1.value].top().boolValue =
-                            (t2.type == PVariable ? polizNames[t2.value].top().boolValue
+                    newT.boolValue = rpnNames[t1.value].top().boolValue =
+                            (t2.type == PVariable ? rpnNames[t2.value].top().boolValue
                                                   : t2.boolValue);
                 }
             } else if (tkn.value == "+") {
                 if ((t1.type == PIntValue) ||
                     (t1.type == PVariable &&
-                     polizNames[t1.value].top().type == TypeInt)) {
+                     rpnNames[t1.value].top().type == TypeInt)) {
                     newT.type = PIntValue;
                     int v1 = (t1.type == PIntValue ? t1.intValue
-                                                   : polizNames[t1.value].top().intValue);
+                                                   : rpnNames[t1.value].top().intValue);
                     int v2 = (t2.type == PIntValue ? t2.intValue
-                                                   : polizNames[t2.value].top().intValue);
+                                                   : rpnNames[t2.value].top().intValue);
                     newT.intValue = v1 + v2;
                 } else if (t1.type == PDoubleValue ||
                            (t1.type == PVariable &&
-                            polizNames[t1.value].top().type == TypeDouble)) {
+                            rpnNames[t1.value].top().type == TypeDouble)) {
                     newT.type = PDoubleValue;
                     double v1 = (t1.type == PDoubleValue
                                  ? t1.doubleValue
-                                 : polizNames[t1.value].top().doubleValue);
+                                 : rpnNames[t1.value].top().doubleValue);
                     double v2 = (t2.type == PDoubleValue
                                  ? t2.doubleValue
-                                 : polizNames[t2.value].top().doubleValue);
+                                 : rpnNames[t2.value].top().doubleValue);
                     newT.doubleValue = v1 + v2;
                 } else if (t1.type == PStringValue ||
                            (t1.type == PVariable &&
-                            polizNames[t1.value].top().type == TypeString)) {
+                            rpnNames[t1.value].top().type == TypeString)) {
                     newT.type = PStringValue;
                     string v1 = (t1.type == PStringValue
                                  ? t1.stringValue
-                                 : polizNames[t1.value].top().stringValue);
+                                 : rpnNames[t1.value].top().stringValue);
                     string v2 = (t2.type == PStringValue
                                  ? t2.stringValue
-                                 : polizNames[t2.value].top().stringValue);
+                                 : rpnNames[t2.value].top().stringValue);
                     newT.stringValue = v1 + v2;
                 }
             } else if (tkn.value == "-") {
                 if (t1.type == PIntValue ||
                     (t1.type == PVariable &&
-                     polizNames[t1.value].top().type == TypeInt)) {
+                     rpnNames[t1.value].top().type == TypeInt)) {
                     newT.type = PIntValue;
                     int v1 = (t1.type == PIntValue ? t1.intValue
-                                                   : polizNames[t1.value].top().intValue);
+                                                   : rpnNames[t1.value].top().intValue);
                     int v2 = (t2.type == PIntValue ? t2.intValue
-                                                   : polizNames[t2.value].top().intValue);
+                                                   : rpnNames[t2.value].top().intValue);
                     newT.intValue = v1 - v2;
                 } else if (t1.type == PDoubleValue ||
                            (t1.type == PVariable &&
-                            polizNames[t1.value].top().type == TypeDouble)) {
+                            rpnNames[t1.value].top().type == TypeDouble)) {
                     newT.type = PDoubleValue;
                     double v1 = (t1.type == PDoubleValue
                                  ? t1.doubleValue
-                                 : polizNames[t1.value].top().doubleValue);
+                                 : rpnNames[t1.value].top().doubleValue);
                     double v2 = (t2.type == PDoubleValue
                                  ? t2.doubleValue
-                                 : polizNames[t2.value].top().doubleValue);
+                                 : rpnNames[t2.value].top().doubleValue);
                     newT.doubleValue = v1 - v2;
                 }
             } else if (tkn.value == "**") {
                 if (t1.type == PIntValue ||
                     (t1.type == PVariable &&
-                     polizNames[t1.value].top().type == TypeInt)) {
+                     rpnNames[t1.value].top().type == TypeInt)) {
                     newT.type = PIntValue;
                     int v1 = (t1.type == PIntValue ? t1.intValue
-                                                   : polizNames[t1.value].top().intValue);
+                                                   : rpnNames[t1.value].top().intValue);
                     int v2 = (t2.type == PIntValue ? t2.intValue
-                                                   : polizNames[t2.value].top().intValue);
+                                                   : rpnNames[t2.value].top().intValue);
                     newT.intValue = peng_pow(v1, v2);
                 } else if (t1.type == PDoubleValue ||
                            (t1.type == PVariable &&
-                            polizNames[t1.value].top().type == TypeDouble)) {
+                            rpnNames[t1.value].top().type == TypeDouble)) {
                     newT.type = PDoubleValue;
                     double v1 = (t1.type == PDoubleValue
                                  ? t1.doubleValue
-                                 : polizNames[t1.value].top().doubleValue);
+                                 : rpnNames[t1.value].top().doubleValue);
                     double v2 = (t2.type == PDoubleValue
                                  ? t2.doubleValue
-                                 : polizNames[t2.value].top().doubleValue);
+                                 : rpnNames[t2.value].top().doubleValue);
                     newT.doubleValue = peng_pow(v1, v2);
                 }
             } else if (tkn.value == "and") {
                 newT.type = PBoolValue;
                 bool v1 =
                         (t1.type == PBoolValue ? t1.boolValue
-                                               : polizNames[t1.value].top().boolValue);
+                                               : rpnNames[t1.value].top().boolValue);
                 bool v2 =
                         (t2.type == PBoolValue ? t2.boolValue
-                                               : polizNames[t2.value].top().boolValue);
+                                               : rpnNames[t2.value].top().boolValue);
                 newT.boolValue = v1 && v2;
             } else if (tkn.value == "or") {
                 newT.type = PBoolValue;
                 bool v1 =
                         (t1.type == PBoolValue ? t1.boolValue
-                                               : polizNames[t1.value].top().boolValue);
+                                               : rpnNames[t1.value].top().boolValue);
                 bool v2 =
                         (t2.type == PBoolValue ? t2.boolValue
-                                               : polizNames[t2.value].top().boolValue);
+                                               : rpnNames[t2.value].top().boolValue);
                 newT.boolValue = v1 || v2;
             } else if (tkn.value == "%") {
                 newT.type = PIntValue;
                 int v1 = (t1.type == PIntValue ? t1.intValue
-                                               : polizNames[t1.value].top().intValue);
+                                               : rpnNames[t1.value].top().intValue);
                 int v2 = (t2.type == PIntValue ? t2.intValue
-                                               : polizNames[t2.value].top().intValue);
+                                               : rpnNames[t2.value].top().intValue);
                 newT.intValue = v1 % v2;
             } else if (tkn.value == "/") {
                 if (t1.type == PIntValue ||
                     (t1.type == PVariable &&
-                     polizNames[t1.value].top().type == TypeInt)) {
+                     rpnNames[t1.value].top().type == TypeInt)) {
                     newT.type = PIntValue;
                     int v1 = (t1.type == PIntValue ? t1.intValue
-                                                   : polizNames[t1.value].top().intValue);
+                                                   : rpnNames[t1.value].top().intValue);
                     int v2 = (t2.type == PIntValue ? t2.intValue
-                                                   : polizNames[t2.value].top().intValue);
+                                                   : rpnNames[t2.value].top().intValue);
                     if (v2 == 0) throw string("Division by zero");
                     newT.intValue = v1 / v2;
                 } else if (t1.type == PDoubleValue ||
                            (t1.type == PVariable &&
-                            polizNames[t1.value].top().type == TypeDouble)) {
+                            rpnNames[t1.value].top().type == TypeDouble)) {
                     newT.type = PDoubleValue;
                     double v1 = (t1.type == PDoubleValue
                                  ? t1.doubleValue
-                                 : polizNames[t1.value].top().doubleValue);
+                                 : rpnNames[t1.value].top().doubleValue);
                     double v2 = (t2.type == PDoubleValue
                                  ? t2.doubleValue
-                                 : polizNames[t2.value].top().doubleValue);
+                                 : rpnNames[t2.value].top().doubleValue);
                     if (v2 == 0) throw string("Division by zero");
                     newT.doubleValue = v1 / v2;
                 }
             } else if (tkn.value == "*") {
                 if (t1.type == PIntValue ||
                     (t1.type == PVariable &&
-                     polizNames[t1.value].top().type == TypeInt)) {
+                     rpnNames[t1.value].top().type == TypeInt)) {
                     newT.type = PIntValue;
                     int v1 = (t1.type == PIntValue ? t1.intValue
-                                                   : polizNames[t1.value].top().intValue);
+                                                   : rpnNames[t1.value].top().intValue);
                     int v2 = (t2.type == PIntValue ? t2.intValue
-                                                   : polizNames[t2.value].top().intValue);
+                                                   : rpnNames[t2.value].top().intValue);
                     newT.intValue = v1 * v2;
                 } else if (t1.type == PDoubleValue ||
                            (t1.type == PVariable &&
-                            polizNames[t1.value].top().type == TypeDouble)) {
+                            rpnNames[t1.value].top().type == TypeDouble)) {
                     newT.type = PDoubleValue;
                     double v1 = (t1.type == PDoubleValue
                                  ? t1.doubleValue
-                                 : polizNames[t1.value].top().doubleValue);
+                                 : rpnNames[t1.value].top().doubleValue);
                     double v2 = (t2.type == PDoubleValue
                                  ? t2.doubleValue
-                                 : polizNames[t2.value].top().doubleValue);
+                                 : rpnNames[t2.value].top().doubleValue);
                     newT.doubleValue = v1 * v2;
                 }
             } else if (tkn.value == "<") {
                 newT.type = PBoolValue;
                 if (t1.type == PIntValue ||
                     (t1.type == PVariable &&
-                     polizNames[t1.value].top().type == TypeInt)) {
+                     rpnNames[t1.value].top().type == TypeInt)) {
                     int v1 = (t1.type == PIntValue ? t1.intValue
-                                                   : polizNames[t1.value].top().intValue);
+                                                   : rpnNames[t1.value].top().intValue);
                     int v2 = (t2.type == PIntValue ? t2.intValue
-                                                   : polizNames[t2.value].top().intValue);
+                                                   : rpnNames[t2.value].top().intValue);
                     newT.boolValue = v1 < v2;
                 } else if (t1.type == PDoubleValue ||
                            (t1.type == PVariable &&
-                            polizNames[t1.value].top().type == TypeDouble)) {
+                            rpnNames[t1.value].top().type == TypeDouble)) {
                     double v1 = (t1.type == PDoubleValue
                                  ? t1.doubleValue
-                                 : polizNames[t1.value].top().doubleValue);
+                                 : rpnNames[t1.value].top().doubleValue);
                     double v2 = (t2.type == PDoubleValue
                                  ? t2.doubleValue
-                                 : polizNames[t2.value].top().doubleValue);
+                                 : rpnNames[t2.value].top().doubleValue);
                     newT.boolValue = v1 < v2;
                 }
             } else if (tkn.value == ">") {
                 newT.type = PBoolValue;
                 if (t1.type == PIntValue ||
                     (t1.type == PVariable &&
-                     polizNames[t1.value].top().type == TypeInt)) {
+                     rpnNames[t1.value].top().type == TypeInt)) {
                     int v1 = (t1.type == PIntValue ? t1.intValue
-                                                   : polizNames[t1.value].top().intValue);
+                                                   : rpnNames[t1.value].top().intValue);
                     int v2 = (t2.type == PIntValue ? t2.intValue
-                                                   : polizNames[t2.value].top().intValue);
+                                                   : rpnNames[t2.value].top().intValue);
                     newT.boolValue = v1 > v2;
                 } else if (t1.type == PDoubleValue ||
                            (t1.type == PVariable &&
-                            polizNames[t1.value].top().type == TypeDouble)) {
+                            rpnNames[t1.value].top().type == TypeDouble)) {
                     double v1 = (t1.type == PDoubleValue
                                  ? t1.doubleValue
-                                 : polizNames[t1.value].top().doubleValue);
+                                 : rpnNames[t1.value].top().doubleValue);
                     double v2 = (t2.type == PDoubleValue
                                  ? t2.doubleValue
-                                 : polizNames[t2.value].top().doubleValue);
+                                 : rpnNames[t2.value].top().doubleValue);
                     newT.boolValue = v1 > v2;
                 }
             } else if (tkn.value == ">=") {
                 newT.type = PBoolValue;
                 if (t1.type == PIntValue ||
                     (t1.type == PVariable &&
-                     polizNames[t1.value].top().type == TypeInt)) {
+                     rpnNames[t1.value].top().type == TypeInt)) {
                     int v1 = (t1.type == PIntValue ? t1.intValue
-                                                   : polizNames[t1.value].top().intValue);
+                                                   : rpnNames[t1.value].top().intValue);
                     int v2 = (t2.type == PIntValue ? t2.intValue
-                                                   : polizNames[t2.value].top().intValue);
+                                                   : rpnNames[t2.value].top().intValue);
                     newT.boolValue = v1 >= v2;
                 } else if (t1.type == PDoubleValue ||
                            (t1.type == PVariable &&
-                            polizNames[t1.value].top().type == TypeDouble)) {
+                            rpnNames[t1.value].top().type == TypeDouble)) {
                     double v1 = (t1.type == PDoubleValue
                                  ? t1.doubleValue
-                                 : polizNames[t1.value].top().doubleValue);
+                                 : rpnNames[t1.value].top().doubleValue);
                     double v2 = (t2.type == PDoubleValue
                                  ? t2.doubleValue
-                                 : polizNames[t2.value].top().doubleValue);
+                                 : rpnNames[t2.value].top().doubleValue);
                     newT.boolValue = v1 >= v2;
                 }
             } else if (tkn.value == "<=") {
                 newT.type = PBoolValue;
                 if (t1.type == PIntValue ||
                     (t1.type == PVariable &&
-                     polizNames[t1.value].top().type == TypeInt)) {
+                     rpnNames[t1.value].top().type == TypeInt)) {
                     int v1 = (t1.type == PIntValue ? t1.intValue
-                                                   : polizNames[t1.value].top().intValue);
+                                                   : rpnNames[t1.value].top().intValue);
                     int v2 = (t2.type == PIntValue ? t2.intValue
-                                                   : polizNames[t2.value].top().intValue);
+                                                   : rpnNames[t2.value].top().intValue);
                     newT.boolValue = v1 <= v2;
                 } else if (t1.type == PDoubleValue ||
                            (t1.type == PVariable &&
-                            polizNames[t1.value].top().type == TypeDouble)) {
+                            rpnNames[t1.value].top().type == TypeDouble)) {
                     double v1 = (t1.type == PDoubleValue
                                  ? t1.doubleValue
-                                 : polizNames[t1.value].top().doubleValue);
+                                 : rpnNames[t1.value].top().doubleValue);
                     double v2 = (t2.type == PDoubleValue
                                  ? t2.doubleValue
-                                 : polizNames[t2.value].top().doubleValue);
+                                 : rpnNames[t2.value].top().doubleValue);
                     newT.boolValue = v1 <= v2;
                 }
             } else if (tkn.value == "==") {
                 newT.type = PBoolValue;
                 if (t1.type == PIntValue ||
                     (t1.type == PVariable &&
-                     polizNames[t1.value].top().type == TypeInt)) {
+                     rpnNames[t1.value].top().type == TypeInt)) {
                     int v1 = (t1.type == PIntValue ? t1.intValue
-                                                   : polizNames[t1.value].top().intValue);
+                                                   : rpnNames[t1.value].top().intValue);
                     int v2 = (t2.type == PIntValue ? t2.intValue
-                                                   : polizNames[t2.value].top().intValue);
+                                                   : rpnNames[t2.value].top().intValue);
                     newT.boolValue = v1 == v2;
                 } else if (t1.type == PDoubleValue ||
                            (t1.type == PVariable &&
-                            polizNames[t1.value].top().type == TypeDouble)) {
+                            rpnNames[t1.value].top().type == TypeDouble)) {
                     double v1 = (t1.type == PDoubleValue
                                  ? t1.doubleValue
-                                 : polizNames[t1.value].top().doubleValue);
+                                 : rpnNames[t1.value].top().doubleValue);
                     double v2 = (t2.type == PDoubleValue
                                  ? t2.doubleValue
-                                 : polizNames[t2.value].top().doubleValue);
+                                 : rpnNames[t2.value].top().doubleValue);
                     newT.boolValue = v1 == v2;
                 } else if (t1.type == PStringValue ||
                            (t1.type == PVariable &&
-                            polizNames[t1.value].top().type == TypeString)) {
+                            rpnNames[t1.value].top().type == TypeString)) {
                     string v1 = (t1.type == PStringValue
                                  ? t1.stringValue
-                                 : polizNames[t1.value].top().stringValue);
+                                 : rpnNames[t1.value].top().stringValue);
                     string v2 = (t2.type == PStringValue
                                  ? t2.stringValue
-                                 : polizNames[t2.value].top().stringValue);
+                                 : rpnNames[t2.value].top().stringValue);
                     newT.boolValue = v1 == v2;
                 } else if (t1.type == PBoolValue ||
                            (t1.type == PVariable &&
-                            polizNames[t1.value].top().type == TypeBool)) {
+                            rpnNames[t1.value].top().type == TypeBool)) {
                     bool v1 =
                             (t1.type == PBoolValue ? t1.boolValue
-                                                   : polizNames[t1.value].top().boolValue);
+                                                   : rpnNames[t1.value].top().boolValue);
                     bool v2 =
                             (t2.type == PBoolValue ? t2.boolValue
-                                                   : polizNames[t2.value].top().boolValue);
+                                                   : rpnNames[t2.value].top().boolValue);
                     newT.boolValue = v1 == v2;
                 }
             } else if (tkn.value == "!=") {
                 newT.type = PBoolValue;
                 if (t1.type == PIntValue ||
                     (t1.type == PVariable &&
-                     polizNames[t1.value].top().type == TypeInt)) {
+                     rpnNames[t1.value].top().type == TypeInt)) {
                     int v1 = (t1.type == PIntValue ? t1.intValue
-                                                   : polizNames[t1.value].top().intValue);
+                                                   : rpnNames[t1.value].top().intValue);
                     int v2 = (t2.type == PIntValue ? t2.intValue
-                                                   : polizNames[t2.value].top().intValue);
+                                                   : rpnNames[t2.value].top().intValue);
                     newT.boolValue = v1 != v2;
                 } else if (t1.type == PDoubleValue ||
                            (t1.type == PVariable &&
-                            polizNames[t1.value].top().type == TypeDouble)) {
+                            rpnNames[t1.value].top().type == TypeDouble)) {
                     double v1 = (t1.type == PDoubleValue
                                  ? t1.doubleValue
-                                 : polizNames[t1.value].top().doubleValue);
+                                 : rpnNames[t1.value].top().doubleValue);
                     double v2 = (t2.type == PDoubleValue
                                  ? t2.doubleValue
-                                 : polizNames[t2.value].top().doubleValue);
+                                 : rpnNames[t2.value].top().doubleValue);
                     newT.boolValue = v1 != v2;
                 } else if (t1.type == PStringValue ||
                            (t1.type == PVariable &&
-                            polizNames[t1.value].top().type == TypeString)) {
+                            rpnNames[t1.value].top().type == TypeString)) {
                     string v1 = (t1.type == PStringValue
                                  ? t1.stringValue
-                                 : polizNames[t1.value].top().stringValue);
+                                 : rpnNames[t1.value].top().stringValue);
                     string v2 = (t2.type == PStringValue
                                  ? t2.stringValue
-                                 : polizNames[t2.value].top().stringValue);
+                                 : rpnNames[t2.value].top().stringValue);
                     newT.boolValue = v1 != v2;
                 } else if (t1.type == PBoolValue ||
                            (t1.type == PVariable &&
-                            polizNames[t1.value].top().type == TypeBool)) {
+                            rpnNames[t1.value].top().type == TypeBool)) {
                     bool v1 =
                             (t1.type == PBoolValue ? t1.boolValue
-                                                   : polizNames[t1.value].top().boolValue);
+                                                   : rpnNames[t1.value].top().boolValue);
                     bool v2 =
                             (t2.type == PBoolValue ? t2.boolValue
-                                                   : polizNames[t2.value].top().boolValue);
+                                                   : rpnNames[t2.value].top().boolValue);
                     newT.boolValue = v1 != v2;
                 }
             }
             s.push(newT);
         } else if (tkn.type == PFunction) {
             if (debug) cout << "PFunction\n";
-            int argsCnt = int(polizMap[tkn.value].first.size());
+            int argsCnt = int(rpnMap[tkn.value].first.size());
             vector<PToken> newArgs;
             vector<PToken> tmpVec;
             for (int j = 0; j < argsCnt; ++j) {
@@ -1571,7 +1566,7 @@ PToken exec(string functionName, vector<PToken> args,
                 PToken oneArg = tmpVec[j];
                 if (oneArg.type == PVariable) {
                     PToken newOneArg = PToken();
-                    Variable curVariable = polizNames[oneArg.value].top();
+                    Variable curVariable = rpnNames[oneArg.value].top();
                     int oneArgType = curVariable.type;
                     if (oneArgType == TypeInt) {
                         newOneArg.type = PIntValue;
@@ -1611,7 +1606,7 @@ PToken exec(string functionName, vector<PToken> args,
                 for (int j = argsCnt - 1; j >= 0; --j) {
                     PToken t = tmpVec[j];
                     if (t.type == PVariable) {
-                        Variable curArg = polizNames[t.value].top();
+                        Variable curArg = rpnNames[t.value].top();
                         int curArgType = curArg.type;
                         if (curArgType == TypeInt) {
                             cout << curArg.intValue;
@@ -1645,17 +1640,17 @@ PToken exec(string functionName, vector<PToken> args,
                 for (int j = argsCnt - 1; j >= 0; --j) {
                     PToken t = tmpVec[j];
                     if (t.type == PVariable) {
-                        int curVarType = polizNames[t.value].top().type;
+                        int curVarType = rpnNames[t.value].top().type;
                         if (curVarType == TypeInt) {
-                            cin >> polizNames[t.value].top().intValue;
+                            cin >> rpnNames[t.value].top().intValue;
                         } else if (curVarType == TypeDouble) {
-                            cin >> polizNames[t.value].top().doubleValue;
+                            cin >> rpnNames[t.value].top().doubleValue;
                         } else if (curVarType == TypeString) {
-                            cin >> polizNames[t.value].top().stringValue;
+                            cin >> rpnNames[t.value].top().stringValue;
                         } else if (curVarType == TypeBool) {
                             string tmpS;
                             cin >> tmpS;
-                            polizNames[t.value].top().boolValue = (tmpS == "true" ? 1 : 0);
+                            rpnNames[t.value].top().boolValue = (tmpS == "true" ? 1 : 0);
                         }
                     }
                 }
@@ -1663,9 +1658,9 @@ PToken exec(string functionName, vector<PToken> args,
         }
         ++i;
     }
-    while (!polizLastNames.empty() && polizLastNames.top().second >= nestLvl) {
-        polizNames[polizLastNames.top().first].pop();
-        polizLastNames.pop();
+    while (!rpnLastNames.empty() && rpnLastNames.top().second >= nestLvl) {
+        rpnNames[rpnLastNames.top().first].pop();
+        rpnLastNames.pop();
     }
-    return PToken();
+    return {};
 }

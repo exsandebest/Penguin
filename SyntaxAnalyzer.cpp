@@ -681,7 +681,8 @@ pair<int, vector<PToken>> expression() {
     priority["+"] = priority["-"] = 6;
     priority["<"] = priority[">"] = priority["<="] = priority[">="] = 8;
     priority["=="] = priority["!="] = 9;
-    priority["and"] = 13;
+    priority["and"] = 12;
+    priority["xor"] = 13;
     priority["or"] = 14;
     priority["**"] = 4;
     priority["="] = priority["+="] = priority["-="] = priority["*="] =
@@ -1353,6 +1354,15 @@ PToken exec(string functionName, vector<PToken> args,
                         (t2.type == PBoolValue ? t2.boolValue
                                                : rpnNames[t2.value].top().boolValue);
                 newT.boolValue = v1 && v2;
+            } else if (tkn.value == "xor") {
+                newT.type = PBoolValue;
+                bool v1 =
+                        (t1.type == PBoolValue ? t1.boolValue
+                                               : rpnNames[t1.value].top().boolValue);
+                bool v2 =
+                        (t2.type == PBoolValue ? t2.boolValue
+                                               : rpnNames[t2.value].top().boolValue);
+                newT.boolValue = v1 != v2;
             } else if (tkn.value == "or") {
                 newT.type = PBoolValue;
                 bool v1 =

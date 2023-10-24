@@ -1,0 +1,9 @@
+null main() {
+    bool a;
+    bool b;
+    bool c;
+    read(a);
+    read(b);
+    c = a xor b;
+    write(a, " xor ", b, " = ", c);
+}

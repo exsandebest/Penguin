@@ -7,7 +7,7 @@ int max(int a, int b) {
     return 0;
 }
 
-int test(int a) { a = a + a; }
+int test(int a) { return a + a; }
 
 int euclid(int a, int b) {
     while (a > 0 and b > 0) {

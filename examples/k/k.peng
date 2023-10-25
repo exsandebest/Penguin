@@ -76,8 +76,43 @@ int factorial(int n) {
 }
 
 null main() {
-    write(log(2.0, 256.0));
-    write(combination(10, 2));
-    write(factorial(5));
+    string command;
+    read(command);
+
+    if (command == "combination") {
+        int n;
+        int k;
+        read(n);
+        read(k);
+        write(combination(n, k));
+    } else if (command == "factorial") {
+        int a;
+        read(a);
+        write(factorial(a));
+    } else if (command == "log") {
+        double a;
+        double b;
+        read(a);
+        read(b);
+        write(log(a, b));
+    } else if (command == "ln") {
+        double a;
+        read(a);
+        write(ln(a));
+    } else if (command == "exp") {
+        double a;
+        read(a);
+        write(exp(a));
+    } else if (command == "abs") {
+        double a;
+        read(a);
+        write(abs(a));
+    } else if (command == "absi") {
+        int a;
+        read(a);
+        write(absi(a));
+    } else {
+        write("Invalid command");
+    }
     return;
 }

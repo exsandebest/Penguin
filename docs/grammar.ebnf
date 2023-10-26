@@ -33,7 +33,7 @@ function type = variable type | "null" ;
 
 (* Operators *)
 
-assignment operator = "+=" | "-=" | "*=" | "/=" | "%=" ;
+assignment operator = "=" ;
 binary math operator = "*" | "/" | "-" | "+" | "%" | "**" ;
 unary math operator = "-" | "--" | "++" ;
 unary logical operator = "!" ;

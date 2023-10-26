@@ -1,14 +1,19 @@
 # Penguin
 Penguin programming language
 ## Getting started
-**You have to compile all files from ``src/``:**  
-**You can run ``make.cmd`` (for Windows) or ``make.sh`` (for Linux) to do that**  
-**After that you can use ``./Penguin path/to/program.peng`` to start**
+**You have to compile all files from ``src/``**  
+
+**You can run ``make.cmd`` (for Windows) or ``make.sh`` (for Linux) to do that or use ``CMakeLists.txt``**
+## Usage
+``./Penguin path/to/program.peng``  
 ## Examples
-See examples at [`examples/`](https://github.com/exsandebest/Penguin/tree/master/examples)  
-``./Penguin examples/a/a.peng``
+See examples at [`examples/`](https://github.com/exsandebest/Penguin/tree/master/examples)
+
+Usage:
+  - ``./Penguin examples/a/a.peng``  
+  - ``./Penguin examples/b/b.peng < examples/b/in/1.in``
 ## Tests
-** You can run tests with ``tests.bat`` or ``tests.sh``**
+**You can run tests with ``tests.bat`` or ``tests.sh``**  
 ## Documents about language
 * [Grammar](https://docs.google.com/document/d/1y9UAdCVIHkVw3AbSU_anU4KZSvI54mrA7OSpKjKvKgw)  
 * [Types of tokens](https://docs.google.com/spreadsheets/d/1OBjwfQxot8h_A8aIbHIXjujbpoGofYAS0elkgWege0g)  

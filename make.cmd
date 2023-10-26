@@ -1,3 +1,1 @@
-g++ LexicalAnalyzer.cpp -o LexicalAnalyzer.exe
-g++ SyntaxAnalyzer.cpp -o SyntaxAnalyzer.exe
-g++ Penguin.cpp -o Penguin.exe
+g++ .\Penguin.cpp .\LexicalAnalyzer.cpp .\SyntaxAnalyzer.cpp .\LexicalAnalyzer.h .\SyntaxAnalyzer.h .\Main.h .\Math.h -o .\Penguin

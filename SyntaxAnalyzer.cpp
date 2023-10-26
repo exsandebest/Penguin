@@ -1,5 +1,6 @@
 #include <string>
 #include <iostream>
+#include <utility>
 #include <vector>
 #include <fstream>
 #include <stack>
@@ -7,6 +8,7 @@
 #include <map>
 #include "Main.h"
 #include "Math.h"
+#include "SyntaxAnalyzer.h"
 
 using namespace std;
 
@@ -39,39 +41,7 @@ vector<int> posOfEndIf;  // End positions of if statements in RPN
 vector<int> posOfEndCntIf;  // Counters for if statement end positions
 
 // Function Declarations
-string err(const string& errString, bool showLine);
-string tokenToString(Token* t);  // Token TO String
-string errType(int currentType, int expectedType, bool showLine);
 
-void addState(int state);
-void delState(int state);
-
-int nextToken();
-void preprocessing();
-void preprocessingFunction();
-void program();
-void functions();
-void function();
-void globals();
-void arguments(const string& functionName, bool check = true);
-void block();
-void operator_();
-void operator_assignment(int varType, const string& varName);
-void operator_input_output();
-void operator_main();
-void operator_while();
-void operator_for();
-void operator_return();
-pair<int, vector<PToken>> expression();
-int operator_if(bool isRepeat = false);
-void operator_continue();
-void operator_break();
-void operator_io_read();
-void operator_io_write();
-int arguments_to_call(string functionName);
-void operator_variable_declaration();
-void debugRpn(const string& fun);
-PToken exec(string functionName, vector<PToken> args, int nestLvl);
 
 
 // Returns an error message string, includes unexpected token or a custom error message, and optionally the line number
@@ -165,60 +135,23 @@ void delState(int state) {
     stateSet.erase(state);
 }
 
-// Entry point of the program, handles file input, token parsing, and executes the main function, handles exceptions and errors
-int main(int argc, char const* argv[]) {
-    try {
-        if (argc < 2 | argc > 3) {
-            throw std::string("Incorrect arguments (SyntaxAnalyzer)");
-        }
-    } catch (string& err) {
-        cout << err << "\n";
-        return 0;
-    }
-    try {
-        if (argc == 3 && argv[2] == "--debug") {
-            debug = true;
-        }
-        ifstream fin(argv[1]);
-        int n, line, type, size;
-        string tmp;
-        string value;
-        getline(fin, tmp);
-        n = stoi(tmp);
-        for (int i = 0; i < n; ++i) {
-            getline(fin, tmp);
-            line = stoi(tmp);
-            getline(fin, tmp);
-            type = stoi(tmp);
-            getline(fin, tmp);
-            size = stoi(tmp);
-            getline(fin, value);
-            value = value.substr(0, size);
-            v.push_back(new Token(type, value, line));
-        }
-        fin.close();
-        remove(argv[1]);
-    } catch (...) {
-        ifstream fin(argv[1]);
-        string err;
-        getline(fin, err);
-        cout << err << "\n";
-        return 0;
-    }
-    try {
-        nextToken();
-        preprocessing();
-        curPos = -1;
-        nextToken();
-        program();
-        if (debug) cout << "STATUS : OK\n";
-        vector<PToken> tmp;
-        string startFunction = "main";
-        exec(startFunction, tmp, 0);
-    } catch (std::string& err) {
-        cout << err;
-        return 0;
-    }
+// Runs Syntax Analysis and execution
+int runLexicalAnalysis(vector<Token *> tokens, bool debugFlag = false) {
+    debug = debugFlag;
+    v = std::move(tokens);
+
+    nextToken();
+    preprocessing();
+    curPos = -1;
+    nextToken();
+    program();
+    if (debug) cout << "STATUS : OK\n";
+
+    vector<PToken> tmp;
+    string startFunction = "main";
+    exec(startFunction, tmp, 0);
+
+    return 0;
 }
 
 // Handles the preprocessing of global variables and functions, checks for the existence of the main function with correct signature
@@ -1082,7 +1015,7 @@ void operator_variable_declaration() {
 }
 
 // Executes a given function with specified arguments and nesting level
-PToken exec(string functionName, vector<PToken> args,
+PToken exec(const string& functionName, vector<PToken> args,
             int nestLvl) {  // args contains ONLY VALUES (P...Value)
     if (debug)
         cout << "exec: " << functionName << ", args.size = " << args.size() << "\n";
@@ -1390,7 +1323,7 @@ PToken exec(string functionName, vector<PToken> args,
                                                    : rpnNames[t1.value].top().intValue);
                     int v2 = (t2.type == PIntValue ? t2.intValue
                                                    : rpnNames[t2.value].top().intValue);
-                    if (v2 == 0) throw string("Division by zero");
+                    if (v2 == 0) throw err("Division by zero");
                     newT.intValue = v1 / v2;
                 } else if (t1.type == PDoubleValue ||
                            (t1.type == PVariable &&
@@ -1402,7 +1335,7 @@ PToken exec(string functionName, vector<PToken> args,
                     double v2 = (t2.type == PDoubleValue
                                  ? t2.doubleValue
                                  : rpnNames[t2.value].top().doubleValue);
-                    if (v2 == 0) throw string("Division by zero");
+                    if (v2 == 0) throw err("Division by zero");
                     newT.doubleValue = v1 / v2;
                 }
             } else if (tkn.value == "*") {

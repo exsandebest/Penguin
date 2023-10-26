@@ -1,4 +1,8 @@
+#ifndef PENGUIN_MAIN_H
+#define PENGUIN_MAIN_H
+
 #include <string>
+#include <vector>
 #include <utility>
 
 // Lexical Analyzer token types
@@ -117,3 +121,5 @@ enum {
     inFor1 = 3,  // for (_________; i < n; ++i){}
     inFunction = 6
 };
+
+#endif //PENGUIN_MAIN_H

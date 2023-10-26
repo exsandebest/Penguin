@@ -4,6 +4,7 @@
 #include <string>
 #include "Main.h"
 #include <vector>
+#include <stdexcept>
 
 std::runtime_error err(const std::string& errString, bool showLine);
 std::string tokenToString(Token* t);

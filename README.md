@@ -5,13 +5,13 @@ Penguin programming language
 
 **You can run ``make.cmd`` (for Windows) or ``make.sh`` (for Linux) to do that or use ``CMakeLists.txt``**
 ## Usage
-``./Penguin path/to/program.peng``  
+``Penguin path/to/program.peng``  
 ## Examples
 See examples at [`examples/`](https://github.com/exsandebest/Penguin/tree/master/examples)
 
 Usage:
-  - ``./Penguin examples/a/a.peng``  
-  - ``./Penguin examples/b/b.peng < examples/b/in/1.in``
+  - ``Penguin examples/a/a.peng``  
+  - ``Penguin examples/b/b.peng < examples/b/in/1.in``
 ## Tests
 **You can run tests with ``tests.bat`` or ``tests.sh``**  
 ## Documents about language

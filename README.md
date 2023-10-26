@@ -14,10 +14,10 @@ Usage:
   - ``Penguin examples/b/b.peng < examples/b/in/1.in``
 ## Tests
 **You can run tests with ``tests.bat`` or ``tests.sh``**  
-## Documents about language
-* [Grammar](https://docs.google.com/document/d/1y9UAdCVIHkVw3AbSU_anU4KZSvI54mrA7OSpKjKvKgw)  
-* [Types of tokens](https://docs.google.com/spreadsheets/d/1OBjwfQxot8h_A8aIbHIXjujbpoGofYAS0elkgWege0g)  
-* [Priority of operations](https://docs.google.com/spreadsheets/d/13oeLWDSUfdM0VBEn_MVFWN4l8zxK8_NX0-rdQLC79vI)  
+## Docs
+* [Grammar (Google Docs)](https://docs.google.com/document/d/1y9UAdCVIHkVw3AbSU_anU4KZSvI54mrA7OSpKjKvKgw) / [Grammar (Repo docs)](https://github.com/exsandebest/Penguin/tree/master/docs/grammar.ebnf)
+* [Types of tokens (Google Sheets)](https://docs.google.com/spreadsheets/d/1OBjwfQxot8h_A8aIbHIXjujbpoGofYAS0elkgWege0g) / [Types of tokens (Repo docs)](https://github.com/exsandebest/Penguin/tree/master/docs/token_types.md)
+* [Priority of operations (Google Sheets)](https://docs.google.com/spreadsheets/d/13oeLWDSUfdM0VBEn_MVFWN4l8zxK8_NX0-rdQLC79vI) / [Priority of operations (Repo docs)](https://github.com/exsandebest/Penguin/tree/master/docs/priority_table.md)
 ## Description
 * Variable types
     * `int`: `1`, `-5`, `0` - `int a = 7;`

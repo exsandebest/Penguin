@@ -20,7 +20,7 @@ int currentFunctionType = -1;  // Type ID of the current function
 int curPos = -1;  // Current index in the token vector
 string CurrentFunction;  // Name of the current function
 
-vector<Token*> v;  // Vector of parsed tokens
+vector<Token *> v;  // Vector of parsed tokens
 Token *cur;  // Current token being processed
 stack<int> stateStack;  // Stack for parsing states
 multiset<int> stateSet;  // Set for handling multiple parsing states
@@ -45,30 +45,30 @@ vector<int> posOfEndCntIf;  // Counters for if statement end positions
 
 
 // Returns an error message string, includes unexpected token or a custom error message, and optionally the line number
-string err(const string& errString = "", bool showLine = true) {
+std::runtime_error err(const string &errString = "", bool showLine = true) {
     if (errString.empty()) {
         string s;
         s += "Unexpected token: (" + to_string(cur->type) + ") '" + cur->value +
              "'" + (showLine ? " (line " + to_string(cur->line) + ")" : "") + "\n";
-        return s;
+        return std::runtime_error(s);
     } else {
-        return "Error: " + errString +
-               (showLine ? " (line " + to_string(cur->line) + ")" : "") + "\n";
+        return std::runtime_error("Error: " + errString +
+                                  (showLine ? " (line " + to_string(cur->line) + ")" : "") + "\n");
     }
 }
 
 // Converts the current token to a string for debugging, including type, value, and line number
-string tokenToString(Token*) {  // Token TO String
+string tokenToString(Token *) {  // Token TO String
     return "Debug: (" + to_string(cur->type) + ") '" + cur->value + "' (line " +
            to_string(cur->line) + ")\n";
 }
 
 // Prints the Reverse Polish Notation (RPN) for debugging, including the function name and its tokens
-void debugRpn(const string& fun) {
+void debugRpn(const string &fun) {
     cout << "RPN DEBUG: '" << fun << "'\n";
-    vector<PToken> v = rpnMap[fun].second;
-    for (int i = 0; i < v.size(); ++i) {
-        PToken t = v[i];
+    vector<PToken> tv = rpnMap[fun].second;
+    for (int i = 0; i < tv.size(); ++i) {
+        PToken t = tv[i];
         cout << i << "\t";
         if (t.type == PVariable || t.type == PFunction || t.type == PIO ||
             t.type == PType || t.type == PBinaryOperation ||
@@ -96,7 +96,7 @@ void debugRpn(const string& fun) {
 }
 
 // Converts a string representation of a type to its corresponding integer constant
-int stringToType(const string& s) {
+int stringToType(const string &s) {
     if (s == "int") return TypeInt;
     if (s == "bool") return TypeBool;
     if (s == "string") return TypeString;
@@ -116,11 +116,11 @@ string typeToString(int type) {
 }
 
 // Returns an error message string for type mismatch, includes current and expected types, and optionally the line number
-string errType(int currentType, int expectedType, bool showLine = true) {
-    return string("Incorrect Type: '" + typeToString(currentType) +
-                  "', expected '" + typeToString(expectedType) + "'" +
-                  (showLine ? " (line " + to_string(cur->line) + ")" : "") +
-                  "\n");
+std::runtime_error errType(int currentType, int expectedType, bool showLine = true) {
+    return std::runtime_error("Incorrect Type: '" + typeToString(currentType) +
+                              "', expected '" + typeToString(expectedType) + "'" +
+                              (showLine ? " (line " + to_string(cur->line) + ")" : "") +
+                              "\n");
 }
 
 // Adds a state to the state stack and state set for tracking the current state during parsing
@@ -156,7 +156,7 @@ int runLexicalAnalysis(vector<Token *> tokens, bool debugFlag = false) {
 
 // Handles the preprocessing of global variables and functions, checks for the existence of the main function with correct signature
 void preprocessing() {
-    if (debug) cout << "F: preproccesing\n";
+    if (debug) cout << "F: preprocessing\n";
     globals();
     do {
         preprocessingFunction();
@@ -244,8 +244,8 @@ void preprocessingFunction() {
     string curName = cur->value;
     if (!names[curName].empty())
         throw err("Redeclaration function '" + curName + "'");
-    names[curName].push(TokenType(preprocessingCurrentFunctionType, -1, true));
-    lastNames.push({curName, -1});
+    names[curName].emplace(preprocessingCurrentFunctionType, -1, true);
+    lastNames.emplace(curName, -1);
     nextToken();
     if (cur->type != openingBracket) throw err();
     nextToken();
@@ -268,7 +268,7 @@ void preprocessingFunction() {
 }
 
 // Parses the arguments of a function, checks for duplicate names and adds them to the names map
-void arguments(const string& functionName, bool check) {
+void arguments(const string &functionName, bool check) {
     set<string> tmpSet;
     if (debug) cout << "F: arguments\n";
     while (cur->type != closingBracket) {
@@ -383,7 +383,7 @@ void operator_break() {
     nextToken();
     if (cur->type != semicolon) throw err();
     rpnMap[CurrentFunction].second.emplace_back(POperator, "goto");
-    posOfEnd.push_back(rpnMap[CurrentFunction].second.size() - 1);
+    posOfEnd.push_back(int(rpnMap[CurrentFunction].second.size()) - 1);
     ++posOfEndCnt.back();
     nextToken();
 }
@@ -578,7 +578,7 @@ void operator_input_output() {
 }
 
 // Handles variable assignment operations
-void operator_assignment(int varType, const string& varName) {
+void operator_assignment(int varType, const string &varName) {
     if (debug) cout << "F: operator_assignment\n";
     if (cur->type != assignmentOperator) throw err();
     nextToken();
@@ -597,9 +597,9 @@ void operator_assignment(int varType, const string& varName) {
 pair<int, vector<PToken>> expression() {
     if (debug) cout << "F: expression\n";
     map<string, int> priority;
-    stack<Token*> signs;
+    stack<Token *> signs;
 
-    vector<Token*> ans;
+    vector<Token *> ans;
     vector<PToken> expressionInPolishNotation;
 
     bool afterOpeningBracket = false;
@@ -610,7 +610,6 @@ pair<int, vector<PToken>> expression() {
 
     int inFunction = 0;
 
-    priority["."] = 2;
     priority["++"] = priority["!"] = 3;
     priority["*"] = priority["/"] = priority["%"] = 5;
     priority["+"] = priority["-"] = 6;
@@ -718,61 +717,61 @@ pair<int, vector<PToken>> expression() {
         ans.push_back(signs.top());
         signs.pop();
     }
-    for (auto cur : ans) {
-        if (cur->type == integerNumber) {
-            expressionInPolishNotation.emplace_back(PIntValue, cur->value);
+    for (auto tkn: ans) {
+        if (tkn->type == integerNumber) {
+            expressionInPolishNotation.emplace_back(PIntValue, tkn->value);
             try {
-                expressionInPolishNotation[(int)expressionInPolishNotation.size() - 1]
-                        .intValue = stoi(cur->value);
+                expressionInPolishNotation[(int) expressionInPolishNotation.size() - 1]
+                        .intValue = stoi(tkn->value);
             } catch (...) {
-                throw string("ERROR : number in input is too big");
+                throw err("Number in input is too big");
             }
-        } else if (cur->type == doubleNumber) {
-            expressionInPolishNotation.emplace_back(PDoubleValue, cur->value);
-            expressionInPolishNotation[(int)expressionInPolishNotation.size() - 1]
-                    .doubleValue = stod(cur->value);
-        } else if (cur->type == stringConstant) {
-            expressionInPolishNotation.emplace_back(PStringValue, cur->value);
-            expressionInPolishNotation[(int)expressionInPolishNotation.size() - 1]
-                    .stringValue = cur->value;
-        } else if (cur->type == logicalConstant) {
-            expressionInPolishNotation.emplace_back(PBoolValue, cur->value);
-            expressionInPolishNotation[(int)expressionInPolishNotation.size() - 1]
-                    .boolValue = (cur->value == "true");
-        } else if (cur->type == name && cur->isFunction) {
-            expressionInPolishNotation.emplace_back(PFunction, cur->value);
-        } else if (cur->type == name) {
-            expressionInPolishNotation.emplace_back(PVariable, cur->value);
-        } else if (cur->type == unaryMathOperator ||
-                   (cur->type == logicalOperator && cur->value == "!")) {
-            expressionInPolishNotation.emplace_back(PUnaryOperation, cur->value);
-        } else if (cur->type == binaryMathOperator ||
-                   cur->type == logicalOperator ||
-                   cur->type == comparisonOperator ||
-                   cur->type == assignmentOperator) {
-            expressionInPolishNotation.emplace_back(PBinaryOperation, cur->value);
+        } else if (tkn->type == doubleNumber) {
+            expressionInPolishNotation.emplace_back(PDoubleValue, tkn->value);
+            expressionInPolishNotation[(int) expressionInPolishNotation.size() - 1]
+                    .doubleValue = stod(tkn->value);
+        } else if (tkn->type == stringConstant) {
+            expressionInPolishNotation.emplace_back(PStringValue, tkn->value);
+            expressionInPolishNotation[(int) expressionInPolishNotation.size() - 1]
+                    .stringValue = tkn->value;
+        } else if (tkn->type == logicalConstant) {
+            expressionInPolishNotation.emplace_back(PBoolValue, tkn->value);
+            expressionInPolishNotation[(int) expressionInPolishNotation.size() - 1]
+                    .boolValue = (tkn->value == "true");
+        } else if (tkn->type == name && tkn->isFunction) {
+            expressionInPolishNotation.emplace_back(PFunction, tkn->value);
+        } else if (tkn->type == name) {
+            expressionInPolishNotation.emplace_back(PVariable, tkn->value);
+        } else if (tkn->type == unaryMathOperator ||
+                   (tkn->type == logicalOperator && tkn->value == "!")) {
+            expressionInPolishNotation.emplace_back(PUnaryOperation, tkn->value);
+        } else if (tkn->type == binaryMathOperator ||
+                   tkn->type == logicalOperator ||
+                   tkn->type == comparisonOperator ||
+                   tkn->type == assignmentOperator) {
+            expressionInPolishNotation.emplace_back(PBinaryOperation, tkn->value);
         } else
             throw err();
     }
     if (ans.empty()) return {TypeNull, expressionInPolishNotation};
 
-    stack<expressionElement*> exec;
+    stack<expressionElement *> exec;
     map<string, stack<TokenType>>::iterator ptr;
     int counter = 0;
     if (debug) {
-        for (auto & tkn : ans) {
+        for (auto &tkn: ans) {
             cout << tkn->type << " " << tkn->value << " " << endl;
         }
     }
 
-    for (int i = 0; i < (int)ans.size(); ++i) {
-        if (ans[i]->type == name) {
-            if (ans[i]->isFunction) {
-                if (ans[i]->value == "main") throw err("Can't call function 'main'");
-                ptr = names.find(ans[i]->value);
+    for (auto &an: ans) {
+        if (an->type == name) {
+            if (an->isFunction) {
+                if (an->value == "main") throw err("Can't call function 'main'");
+                ptr = names.find(an->value);
                 if (ptr == names.end() || ptr->second.empty() ||
                     !ptr->second.top().isFunction)
-                    throw err("Function '" + ans[i]->value + "' is not declared");
+                    throw err("Function '" + an->value + "' is not declared");
                 counter = int(ptr->second.top().args.size()) - 1;
                 while (counter >= 0 && !exec.empty()) {
                     if (exec.top()->type != ptr->second.top().args[counter])
@@ -785,26 +784,26 @@ pair<int, vector<PToken>> expression() {
                     throw err("Incorrect number of arguments of function");
                 exec.push(new expressionElement(ptr->second.top().type));
             } else {
-                ptr = names.find(ans[i]->value);
+                ptr = names.find(an->value);
                 if (ptr == names.end() || ptr->second.empty())
-                    throw err("Variable '" + ans[i]->value + "' is not declared");
+                    throw err("Variable '" + an->value + "' is not declared");
                 else if (ptr->second.top().isFunction)
-                    throw err("Name '" + ans[i]->value +
+                    throw err("Name '" + an->value +
                               "' is already engaged by function.");
                 exec.push(new expressionElement(ptr->second.top().type));
                 exec.top()->isSimpleVariable = true;
             }
-        } else if (ans[i]->type == integerNumber) {
+        } else if (an->type == integerNumber) {
             exec.push(new expressionElement(3));
-        } else if (ans[i]->type == doubleNumber) {
+        } else if (an->type == doubleNumber) {
             exec.push(new expressionElement(4));
-        } else if (ans[i]->type == stringConstant) {
+        } else if (an->type == stringConstant) {
             exec.push(new expressionElement(2));
-        } else if (ans[i]->type == logicalConstant) {
+        } else if (an->type == logicalConstant) {
             exec.push(new expressionElement(1));
-        } else if (ans[i]->type == unaryMathOperator) {
+        } else if (an->type == unaryMathOperator) {
             if (exec.empty()) throw err("Syntax error");
-            if (ans[i]->value == "++" || ans[i]->value == "--") {
+            if (an->value == "++" || an->value == "--") {
                 if (!exec.top()->isSimpleVariable)
                     throw err(
                             "Increment/decrement operations cannot be applied to "
@@ -816,13 +815,13 @@ pair<int, vector<PToken>> expression() {
             }
             exec.top()->isSimpleVariable = false;
 
-        } else if (ans[i]->type == logicalOperator && ans[i]->value == "!") {
+        } else if (an->type == logicalOperator && an->value == "!") {
             if (exec.empty()) throw err("Syntax error");
             if (exec.top()->type != TypeBool) {
                 throw err("Logic operations cannot be applied to non-bool types");
             }
             exec.top()->isSimpleVariable = false;
-        } else if (ans[i]->type == logicalOperator) {
+        } else if (an->type == logicalOperator) {
             expressionElement *sec, *fir;
             if (exec.empty()) throw err("Syntax error");
             sec = exec.top();
@@ -836,14 +835,14 @@ pair<int, vector<PToken>> expression() {
             exec.top()->isSimpleVariable = false;
             delete sec;
 
-        } else if (ans[i]->type == binaryMathOperator) {
+        } else if (an->type == binaryMathOperator) {
             expressionElement *sec, *fir;
             if (exec.empty()) throw err("Syntax error");
             sec = exec.top();
             exec.pop();
             if (exec.empty()) throw err("Syntax error");
             fir = exec.top();
-            if (ans[i]->value == "+") {
+            if (an->value == "+") {
                 if (!((sec->type == TypeInt && fir->type == TypeInt) ||
                       (sec->type == TypeDouble && fir->type == TypeDouble) ||
                       (sec->type == TypeString && fir->type == TypeString)))
@@ -858,7 +857,7 @@ pair<int, vector<PToken>> expression() {
             }
             exec.top()->isSimpleVariable = false;
             delete sec;
-        } else if (ans[i]->type == comparisonOperator) {
+        } else if (an->type == comparisonOperator) {
             expressionElement *sec, *fir;
             if (exec.empty()) throw err("Syntax error");
             sec = exec.top();
@@ -866,26 +865,26 @@ pair<int, vector<PToken>> expression() {
             if (exec.empty()) throw err("Syntax error");
             fir = exec.top();
             if (debug) cout << fir->type << " " << sec->type << endl;
-            if (ans[i]->value == "==" || ans[i]->value == "!=") {
+            if (an->value == "==" || an->value == "!=") {
                 if (!((sec->type == TypeInt && fir->type == TypeInt) ||
                       (sec->type == TypeDouble && fir->type == TypeDouble) ||
                       (sec->type == TypeString && fir->type == TypeString) ||
                       (sec->type == TypeBool && fir->type == TypeBool))) {
                     throw err(
-                            "Equqal/Not Equal operations can be applied only to similar "
+                            "Equal/Not Equal operations can be applied only to similar "
                             "non-null types");  // type mismatch in mathematical/string expression
                 }
             } else if (!((sec->type == TypeInt && fir->type == TypeInt) ||
                          (sec->type == TypeDouble && fir->type == TypeDouble) ||
                          (sec->type == TypeString && fir->type == TypeString))) {
                 throw err(
-                        "Comparsion operations can be applied only to similar non-null, "
+                        "Comparison operations can be applied only to similar non-null, "
                         "non-bool types");  // type mismatch in mathematical/string expression
             }
             delete sec;
             exec.top()->isSimpleVariable = false;
             exec.top()->type = TypeBool;
-        } else if (ans[i]->type == assignmentOperator) {
+        } else if (an->type == assignmentOperator) {
             expressionElement *sec, *fir;
             if (exec.empty()) throw err("Syntax error");
             sec = exec.top();
@@ -897,7 +896,7 @@ pair<int, vector<PToken>> expression() {
             delete sec;
             fir->isSimpleVariable = false;
         } else
-            throw err("Trolling accured...");
+            throw err("Trolling occurred...");
     }
     if (exec.size() != 1) throw err("Syntax error");
     int q = exec.top()->type;
@@ -907,7 +906,7 @@ pair<int, vector<PToken>> expression() {
 }
 
 // Counts and processes the arguments for a given function call
-int arguments_to_call(string functionName) {
+int arguments_to_call(const string &functionName) {
     if (debug) cout << "F: arguments_to_call\n";
     int k = 0;
     while (cur->type != closingBracket) {
@@ -915,7 +914,7 @@ int arguments_to_call(string functionName) {
         if (functionName == "read") {
             if (cur->type != name) throw err();
             if (names[cur->value].empty())
-                throw err("Variable '" + cur->value + "' is not declarated");
+                throw err("Variable '" + cur->value + "' is not declared");
             if (names[cur->value].top().isFunction)
                 throw err("'" + cur->value + "' is a Function");
             rpnMap[CurrentFunction].second.emplace_back(PVariable, cur->value);
@@ -978,7 +977,7 @@ void operator_variable_declaration() {
     if (cur->type == assignmentOperator) {
         rpnMap[CurrentFunction].second.emplace_back(PVariable, curName);
         rpnMap[CurrentFunction].second.emplace_back(PType,
-                                                      typeToString(curVarType));
+                                                    typeToString(curVarType));
         operator_assignment(curVarType, curName);
         if (!names[curName].empty() &&
             (names[curName].top().level == nestingLevel ||
@@ -1008,14 +1007,14 @@ void operator_variable_declaration() {
         if (stateSet.count(inFor1) == 0) nextToken();
         rpnMap[CurrentFunction].second.emplace_back(PVariable, curName);
         rpnMap[CurrentFunction].second.emplace_back(PType,
-                                                      typeToString(curVarType));
+                                                    typeToString(curVarType));
     } else {
         throw err();
     }
 }
 
 // Executes a given function with specified arguments and nesting level
-PToken exec(const string& functionName, vector<PToken> args,
+PToken exec(const string &functionName, vector<PToken> args,
             int nestLvl) {  // args contains ONLY VALUES (P...Value)
     if (debug)
         cout << "exec: " << functionName << ", args.size = " << args.size() << "\n";

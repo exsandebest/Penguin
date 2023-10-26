@@ -5,9 +5,9 @@
 #include "Main.h"
 #include <vector>
 
-std::string err(const std::string& errString, bool showLine);
+std::runtime_error err(const std::string& errString, bool showLine);
 std::string tokenToString(Token* t);
-std::string errType(int currentType, int expectedType, bool showLine);
+std::runtime_error errType(int currentType, int expectedType, bool showLine);
 
 void addState(int state);
 void delState(int state);
@@ -34,7 +34,7 @@ void operator_continue();
 void operator_break();
 void operator_io_read();
 void operator_io_write();
-int arguments_to_call(std::string functionName);
+int arguments_to_call(const std::string& functionName);
 void operator_variable_declaration();
 void debugRpn(const std::string& fun);
 PToken exec(const std::string& functionName, std::vector<PToken> args, int nestLvl);

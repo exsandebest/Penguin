@@ -21,14 +21,14 @@ Usage:
 ## Description
 * Variable types
     * `int`: `1`, `-5`, `0` - `int a = 7;`
-    * `double`: `0.2`, `.4`, `2.5e2`, `7.3E-5` - `doule b = 1.0e-3;`
+    * `double`: `0.2`, `.4`, `.5e2`, `7.3E-5` - `doule b = 1.0e-3;`
     * `string`: `"Hello World!"` - `string c = "teststring";`
     * `bool`: `true`, `false` - `bool d = true;`
 * Operators
     * Logical operators: `and`, `or`, `xor`
     * Comparison operators: `>`, `<`, `>=`, `<=`, `==`, `!=`
     * Mathematical operators: `+`, `-`, `*`, `/`, `%`, `**` (power), `++` (prefix), `--` (prefix)
-    * Assignments operators: `=`, `+=`, `-=`, `/=`, `%=`
+    * Assignments operators: `=`
 * Comments
     * `/* ... */`
 * Functions

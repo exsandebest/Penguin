@@ -5,13 +5,6 @@ double abs(double a) {
     return a;
 }
 
-int absi(int a) {
-    if (a < 0) {
-        return -a;
-    }
-    return a;
-}
-
 double ln(double a) {
     double EPS = 0.00000001;
     double ECONST = 2.7182818284;
@@ -40,24 +33,6 @@ double log(double a, double b) {
         return 0.0;
     }
     return ln(b) / ln(a);
-}
-
-double exp(double a) {
-    double EPS = 0.00000001;
-    double res = 0.0;
-    double intermediateRes = -1.0;
-    double numerator = 1.0;
-    double denominator = 1.0;
-    double cnt = 1.0;
-
-    while (abs(res - intermediateRes) > EPS) {
-        intermediateRes = res;
-        res = res + numerator / denominator;
-        numerator = numerator * a;
-        denominator = denominator * cnt;
-        cnt = cnt + 1.0;
-    }
-    return res;
 }
 
 int combination(int n, int k) {
@@ -99,18 +74,10 @@ null main() {
         double a;
         read(a);
         write(ln(a));
-    } else if (command == "exp") {
-        double a;
-        read(a);
-        write(exp(a));
     } else if (command == "abs") {
         double a;
         read(a);
         write(abs(a));
-    } else if (command == "absi") {
-        int a;
-        read(a);
-        write(absi(a));
     } else {
         write("Invalid command");
     }

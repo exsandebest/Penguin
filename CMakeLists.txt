@@ -11,4 +11,5 @@ add_executable(Penguin
         src/Math.h
         src/Penguin.cpp
         src/LexicalAnalyzer.h
-        src/SyntaxAnalyzer.cpp)
+        src/SyntaxAnalyzer.cpp
+        src/SyntaxAnalyzer.h)

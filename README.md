@@ -33,7 +33,7 @@ See examples at [`examples/`](https://github.com/exsandebest/Penguin/tree/master
       ```c++
       null main() { write(isEven(10)); }
       bool isEven(int a) { return a % 2 == 0; }
-      /* No need to put a function before its usage */
+      /* No need to place a function before its usage */
       ```
 * Cycles
     * `for`: `for (int i = 0; i < 10; ++i) { ... }`

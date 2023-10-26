@@ -1,75 +1,82 @@
 (* Base *)
 
-letter = “a” | “b” | ... | “z” | “A” | “B” | ... | “Z” | “_” ;
+letter = "A" | "B" | "C" | "D" | "E" | "F" | "G"
+        | "H" | "I" | "J" | "K" | "L" | "M" | "N"
+        | "O" | "P" | "Q" | "R" | "S" | "T" | "U"
+        | "V" | "W" | "X" | "Y" | "Z" | "a" | "b"
+        | "c" | "d" | "e" | "f" | "g" | "h" | "i"
+        | "j" | "k" | "l" | "m" | "n" | "o" | "p"
+        | "q" | "r" | "s" | "t" | "u" | "v" | "w"
+        | "x" | "y" | "z" | "_" ;
 
-digit = “0” | “1” | ... | “9” ;
+digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
 
 name = letter, { letter | digit } ;
 
 
 integer constant = [ "-" ], digit, { digit } ;
 
-double constant = { <digit> }, [ . ], {<digit>}, [ (“e” | “E”)], [ - ], <digit>, { <digit> } ] ;
-(* typical and exponential form, can start with just “.” *)
+double constant = { digit }, [ "." ], { digit }, [ ("e" | "E"), [ "-" ], digit, { digit } ] ;
+(* typical and exponential form, can start with just "." *)
 
 string constant = "{ch}" ;
 (* ch denotes any printable ASCII character (as specified by isprint()) other than " (double quotes) and the newline character *)
 
-boolean constant = “true” | “false” ;
+boolean constant = "true" | "false" ;
 
 
-variable type = “int” | “bool” | “double” | “string” ;
+variable type = "int" | "bool" | "double" | "string" ;
 
-function type = variable type | “null” ;
+function type = variable type | "null" ;
 
 (* Comments a sequence of characters preceded by /* and followed by */, and not containing any occurrence of */. *)
 
 (* Operators *)
 
-assignment operator = “+=” | “-=” | “*=” | “/=” | “%=” ;
-binary math operator = “*” | “/” | “-” | “+” | “%” | “**” ;
-unary math operator = “-” | “--” | “++” ;
-unary logical operator = “!” ;
-binary logical operator = “and” | “or” | “xor” ;
-comparison operator =  “>” | “<” | “>=” | “<=” | “!=”  | “==” ;
+assignment operator = "+=" | "-=" | "*=" | "/=" | "%=" ;
+binary math operator = "*" | "/" | "-" | "+" | "%" | "**" ;
+unary math operator = "-" | "--" | "++" ;
+unary logical operator = "!" ;
+binary logical operator = "and" | "or" | "xor" ;
+comparison operator =  ">" | "<" | ">=" | "<=" | "!="  | "==" ;
 binary operator = binary math operator | binary logical operator | comparison operator ;
 unary operator = unary logical operator | unary math operator ;
 
 cycle operator = operator for | operator while ;
-operator for = “for”, “(“, [expression], “;”, [expression], “;”, [expression], “)”, block ;
-operator while = “while”, “(“, expression, “)”, block ;
+operator for = "for", "(", [expression], ";", [expression], ";", [expression], ")", block ;
+operator while = "while", "(", expression, ")", block ;
 
-operator return = “return”, [ expression ], “;” ;
-operator break = “break”, “;” ;
-operator continue = “continue”, “;” ;
+operator return = "return", [ expression ], ";" ;
+operator break = "break", ";" ;
+operator continue = "continue", ";" ;
 
-operator declaration = variable type, name, [ “=“, expression ], “;” ;
-operator assignment = name, assignment operator, expression, “;” ;
-operator import = “import”, string constant, “;” ;
+operator declaration = variable type, name, [ "=", expression ], ";" ;
+operator assignment = name, assignment operator, expression, ";" ;
+operator import = "import", string constant, ";" ;
 
-operator call function = name, “(”, call arguments, “)”;
-call arguments = expression, {“,”, expression} ;
+operator call function = name, "(", call arguments, ")";
+call arguments = expression, {",", expression} ;
 
-operator input/output = operator read | operator write ;
-operator read = “read”, “(“, name, [“,”, name] “)”, “;” ;
-operator write = “write”, “(“, [ expression, {“,”, expression }], “)” , “;” ;
+operator io = operator read | operator write ;
+operator read = "read", "(", name, [",", name], ")", ";" ;
+operator write = "write", "(", [ expression, {",", expression }], ")" , ";" ;
 
 conditional operator = operator if, { operator else if}, [ operator else ] ;
-operator if = “if”, “(“, expression, “)”, block ;
-operator else if = “else if”, “(“, expression, “)”, block ;
-operator else = “else”, block ;
+operator if = "if", "(", expression, ")", block ;
+operator else if = "else if", "(", expression, ")", block ;
+operator else = "else", block ;
 
 (* Expressions *)
 
-expression = name | constant | operator call function | “(“ expression ”)” | unary operator, expression | expression, binary operator, expression ;
+expression = name | constant | operator call function | "(", expression, ")" | unary operator, expression | expression, binary operator, expression ;
 constant = integer constant | double constant | string constant | boolean constant ;
 
 (* Main *)
 
-function = function type, name, ”(“, [ arguments ], “)”, block ;
-arguments = variable type, name, [ “,”, variable type, name ] ;
-block = “{“, { operation }, “}” ;
-operation = expression “;” | operator ;
-operator = cycle operator | conditional operator | operator call function | operator declaration | operator assignment | operator return | operator input/output | operator break | operator continue ;
+function = function type, name, "(", [ arguments ], ")", block ;
+arguments = variable type, name, [ ",", variable type, name ] ;
+block = "{", { operation }, "}" ;
+operation = expression, ";" | operator ;
+operator = cycle operator | conditional operator | operator call function | operator declaration | operator assignment | operator return | operator io | operator break | operator continue ;
 program = [ globals ], function, { function };
 globals = { operator import }, { operator declaration } ;

@@ -52,8 +52,9 @@ bool ld(char c) {
 // Checks if the substring from index i matches any reserved word, returns true if match found, false otherwise
 bool detectReserved(const std::string &str, int i) {
     std::string ts;
-    for (int j = i; j < i + str.length(); ++j) {
+    for (int j = i; j < i + str.length() && j < s.length(); ++j) {
         ts += s[j];
+        if (s[j] != str[j - i]) return false;
     }
     if (ts == str && !ld(s[i + str.length()])) {
         return true;
@@ -143,6 +144,9 @@ int parseNumber(int i) {
                 } else {
                     throw std::string("Incorrect number constant");
                 }
+            } else {
+                addToken(doubleNumber, resValue);
+                return i;
             }
         } else {
             throw std::string("Incorrect number constant");

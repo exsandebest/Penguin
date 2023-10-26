@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PENGUIN_EXE="./Penguin.exe"
+PENGUIN_EXE="./Penguin"
 EXAMPLES_DIR="examples"
 
 for dir in $EXAMPLES_DIR/*; do

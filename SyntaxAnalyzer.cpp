@@ -10,8 +10,7 @@
 
 using namespace std;
 
-// Constants
-const bool debug = false;  // Debug mode flag
+bool debug = false;  // Debug mode flag
 
 // Global Variables
 int nestingLevel = 0;  // Current code nesting level
@@ -169,14 +168,17 @@ void delState(int state) {
 // Entry point of the program, handles file input, token parsing, and executes the main function, handles exceptions and errors
 int main(int argc, char const* argv[]) {
     try {
-        if (argc != 2) {
-            throw string("Incorrect arguments (SyntaxAnalyzer)");
+        if (argc < 2 | argc > 3) {
+            throw std::string("Incorrect arguments (SyntaxAnalyzer)");
         }
     } catch (string& err) {
         cout << err << "\n";
         return 0;
     }
     try {
+        if (argc == 3 && argv[2] == "--debug") {
+            debug = true;
+        }
         ifstream fin(argv[1]);
         int n, line, type, size;
         string tmp;
@@ -213,7 +215,7 @@ int main(int argc, char const* argv[]) {
         vector<PToken> tmp;
         string startFunction = "main";
         exec(startFunction, tmp, 0);
-    } catch (string err) {
+    } catch (std::string& err) {
         cout << err;
         return 0;
     }

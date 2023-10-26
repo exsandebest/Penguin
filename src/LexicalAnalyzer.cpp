@@ -1,6 +1,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <stdexcept>
 #include "Main.h"
 #include "LexicalAnalyzer.h"
 
@@ -111,14 +112,14 @@ int parseNumber(int i) {
                     addToken(doubleNumber, resValue);
                     return i;
                 } else {
-                    throw std::string("Incorrect number constant");
+                    throw std::runtime_error("Incorrect number constant");
                 }
             } else {
                 addToken(doubleNumber, resValue);
                 return i;
             }
         } else {
-            throw std::string("Incorrect number constant");
+            throw std::runtime_error("Incorrect number constant");
         }
     } else if (s[i] == 'e' || s[i] == 'E') {
         ++i;
@@ -135,13 +136,12 @@ int parseNumber(int i) {
             addToken(doubleNumber, resValue);
             return i;
         } else {
-            throw std::string("Incorrect number constant");
+            throw std::runtime_error("Incorrect number constant");
         }
     } else {
         addToken(integerNumber, resValue);
         return i;
     }
-    return 0;
 }
 
 // Parses string constants from index i, adds them as tokens
@@ -264,7 +264,7 @@ int parse() {
         } else if (s[i] == ' ' || s[i] == '\r' || s[i] == '\t') {
             ++i;
         } else {
-            throw std::string("Incorrect symbol : '" + std::string(1, s[i]) + "'\n");
+            throw std::runtime_error("Incorrect symbol : '" + std::string(1, s[i]) + "'\n");
         }
     }
     return 0;
@@ -278,7 +278,7 @@ std::string deleteComments(std::string &str) {
     bool flag = true;
     while (i < str.length()) {
         if (i + 1 < s.length() && ts + str[i] + str[i + 1] == "*/" && flag) {
-            throw std::string("Incorrect comments");
+            throw std::runtime_error("Incorrect comments");
         }
         if (i + 1 < s.length() && ts + str[i] + str[i + 1] == "/*" && flag) {
             flag = false;
@@ -299,7 +299,7 @@ std::string deleteComments(std::string &str) {
         }
         ++i;
     }
-    if (!flag) throw std::string("Incorrect comments");
+    if (!flag) throw std::runtime_error("Incorrect comments");
     return res;
 }
 

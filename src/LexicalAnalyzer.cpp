@@ -223,7 +223,7 @@ int parse() {
                 }
             }
             ++i;
-        } else if (isdigit(s[i])) {
+        } else if (isdigit(s[i]) || s[i] == '.') {
             i = parseNumber(i);
         } else if (s[i] == '"') {
             i = parseString(i);

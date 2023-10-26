@@ -16,9 +16,9 @@ for /D %%d in (%EXAMPLES_DIR%\*) do (
 
             fc "!TEMP_OUT!" "!OUT_FILE!" >nul
             if errorlevel 1 (
-                echo Test %%i for !PENG_FILE! failed.
+                echo Test %%i for !PENG_FILE! failed
             ) else (
-                echo Test %%i for !PENG_FILE! passed.
+                echo Test %%i for !PENG_FILE! passed
             )
 
             del "!TEMP_OUT!"

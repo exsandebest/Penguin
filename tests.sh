@@ -16,9 +16,9 @@ for dir in $EXAMPLES_DIR/*; do
                 $PENGUIN_EXE "$PENG_FILE" < "$in_file" > "$TEMP_OUT"
 
                 if diff "$TEMP_OUT" "$OUT_FILE" &>/dev/null; then
-                    echo "Test $in_file for $PENG_FILE passed."
+                    echo "Test $in_file for $PENG_FILE passed"
                 else
-                    echo "Test $in_file for $PENG_FILE failed."
+                    echo "Test $in_file for $PENG_FILE failed"
                 fi
 
                 rm "$TEMP_OUT"

@@ -1,47 +1,16 @@
 #include <string>
+#include <utility>
 #include <vector>
-#include <fstream>
-#include <cstdio>
-#include <cstring>
-#include <iostream>
 #include "Main.h"
+#include "LexicalAnalyzer.h"
 
 int line = 1;  // Tracks the current line number within the source file
 std::string s;  // Holds the entire source code content
-std::vector<Token *> v;  // Stores the sequence of tokens extracted from the source code
-
-const std::string reservedWords[] = {
-        "break",
-        "continue",
-        "if",
-        "else",
-        "return",
-        "while",
-        "for"
-};
-const std::string reservedVariableTypes[] = {
-        "bool",
-        "string",
-        "int",
-        "double"
-};
-const std::string reservedFunctionTypes[] = {"null"};
-const std::string reservedOperators[] = {"and", "or", "xor"};
-const std::string reservedFunctions[] = {"read", "write"};
-// const std::string reservedSpecialWords[] = {"import"};
-const std::string reservedLogicalWords[] = {"true", "false"};
-
-std::string deleteComments(std::string &str);
-bool detectReserved(const std::string &str, int i);
-int parseWord(int i);
-int parseNumber(int i);
-int parseString(int i);
-void addToken(int type, const std::string& value);
-bool ld(char c);
+std::vector<Token *> tokens;  // Stores the sequence of tokens extracted from the source code
 
 // Adds a token with specified type and value to the token vector
 void addToken(int type, const std::string& value) {
-    v.push_back(new Token(type, value, line));
+    tokens.push_back(new Token(type, value, line));
 }
 
 // Returns true if the character is a letter or digit, false otherwise
@@ -233,10 +202,10 @@ int parse(int i) {
         return parse(i + 1);
     }
     if (s[i] == '-') {
-        if (v.empty()) {
+        if (tokens.empty()) {
             addToken(unaryMathOperator, "-");
         } else {
-            Token *t = v.back();
+            Token *t = tokens.back();
             if (t->type == name || t->type == stringConstant ||
                 t->type == doubleNumber || t->type == integerNumber ||
                 t->type == logicalConstant || t->type == closingBracket) {
@@ -248,10 +217,10 @@ int parse(int i) {
         return parse(i + 1);
     }
     if (s[i] == '+') {
-        if (v.empty()) {
+        if (tokens.empty()) {
             addToken(unaryMathOperator, "+");
         } else {
-            Token *t = v.back();
+            Token *t = tokens.back();
             if (t->type == name || t->type == stringConstant ||
                 t->type == doubleNumber || t->type == integerNumber ||
                 t->type == logicalConstant || t->type == closingBracket) {
@@ -348,43 +317,10 @@ std::string deleteComments(std::string &str) {
     return res;
 }
 
-int main(int argc, char const *argv[]) {
-    bool fromFile = false;
-    try {
-        if (argc % 2 == 0) {
-            throw std::string("Incorrect arguments");
-        }
-        for (int i = 1; i < argc; i += 2) {
-            if (strcmp(argv[i], "-i") == 0) {
-                fromFile = true;
-                std::ifstream inputFile(argv[i + 1]);
-                if (!inputFile) {
-                    throw std::string("Incorrect input file name");
-                } else {
-                    s.assign((std::istreambuf_iterator<char>(inputFile)),
-                             (std::istreambuf_iterator<char>()));
-                }
-            } else if (strcmp(argv[i], "-o") == 0) {
-                if (!std::freopen(argv[i + 1], "w", stdout)) {
-                    throw std::string("Something wrong with the output file");
-                }
-            } else {
-                throw std::string("Incorrect arguments");
-            }
-        }
-        if (!fromFile) {
-            getline(std::cin, s);
-        }
-        s = deleteComments(s);
-        parse(0);
-    } catch (std::string err) {
-        std::cout << err;
-        return 0;
-    }
-    std::cout << v.size() << "\n";
-    for (auto &token : v) {
-        std::cout << token->line << "\n" << token->type << "\n" << token->size << "\n"
-                  << token->value << "\n";
-    }
-    return 0;
+// Runs Lexical Analysis
+std::vector<Token *> runLexicalAnalysis(std::string input) {
+    s = std::move(input);
+    s = deleteComments(s);
+    parse(0);
+    return tokens;
 }

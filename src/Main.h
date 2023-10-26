@@ -32,6 +32,21 @@ enum {
     logicalConstant = 23
 };
 
+// Represents a token with type, value, and line number in Lexical Analyzer
+class Token {
+public:
+    int type;
+    std::string value;
+    int line;
+    bool isFunction;
+    Token(int type, std::string value, int line)
+            : type(type),
+              value(std::move(value)),
+              line(line),
+              isFunction(false) {}
+};
+
+// Represents type of token in Syntax Analyzer
 class TokenType {
 public:
     int type, level;
@@ -92,22 +107,6 @@ public:
     explicit Variable(int t) : type(t){};
 };
 
-// Represents a token with type, value, and line number (most in Lexical Analyzer)
-class Token {
-public:
-    int type;
-    std::string value;
-    int size;
-    int line;
-    bool isFunction;
-    Token(int type, const std::string &value, int line)
-            : type(type),
-              value(value),
-              size(int(value.size())),
-              line(line),
-              isFunction(false) {}
-};
-
 class expressionElement {
 public:
     int type;
@@ -118,8 +117,8 @@ public:
 // Special states in Syntax Analyzer
 enum {
     inCycle = 1,
-    inFor1 = 3,  // for (_________; i < n; ++i){}
-    inFunction = 6
+    inFor1 = 2,  // for (_________; i < n; ++i){}
+    inFunction = 3
 };
 
 #endif //PENGUIN_MAIN_H

@@ -5,9 +5,17 @@
 #include "Main.h"
 #include <vector>
 #include <stdexcept>
+#include <stack>
+#include <map>
+
+extern std::map<std::string, std::pair<std::vector<std::pair<int, std::string>>, std::vector<PToken>>> rpnMap;  // Map of functions to their RPN expressions and arguments
+extern std::map<std::string, std::stack<Variable>> rpnNames;  // Scoped variable names for RPN expressions
+extern std::stack<std::pair<std::string, int>> rpnLastNames;  // Stack of RPN variable names with nesting levels
+extern bool debug;
 
 std::runtime_error err(const std::string& errString, bool showLine);
 std::string tokenToString(Token* t);
+int stringToType(const std::string &s);
 std::runtime_error errType(int currentType, int expectedType, bool showLine);
 
 void addState(int state);

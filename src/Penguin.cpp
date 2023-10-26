@@ -5,11 +5,12 @@
 #include <vector>
 #include "LexicalAnalyzer.h"
 #include "SyntaxAnalyzer.h"
+#include "Executor.h"
 
 int main(int argc, char const *argv[]) {
     try {
         if (argc < 2 | argc > 3) {
-            throw std::string("Incorrect arguments\nUsage: Penguin program.peng [--debug]\n");
+            throw std::runtime_error("Incorrect arguments\nUsage: Penguin program.peng [--debug]\n");
         }
 
         bool debug = false;
@@ -18,12 +19,10 @@ int main(int argc, char const *argv[]) {
         }
 
         std::string fileName = argv[1];
-
         std::string input;
-
         std::ifstream inputFile(fileName);
         if (!inputFile) {
-            throw std::string("Incorrect input file name");
+            throw std::runtime_error("Incorrect input file name");
         }
         input.assign((std::istreambuf_iterator<char>(inputFile)),
                  (std::istreambuf_iterator<char>()));
@@ -39,11 +38,15 @@ int main(int argc, char const *argv[]) {
             }
         }
 
-        int status = runLexicalAnalysis(tokens, debug);
+        int LAStatus = runLexicalAnalysis(tokens, debug);
 
-        return status;
-    } catch (std::string err) {
-        std::cout << "Error: " << err << "\n";
+        std::vector<PToken> tmp;
+        std::string startFunction = "main";
+        PToken result = execute(startFunction, tmp, 0);
+
+        return 0;
+    } catch (std::runtime_error& err) {
+        std::cout << "Error: " << err.what() << "\n";
     }
     return 0;
 }

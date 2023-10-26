@@ -146,11 +146,6 @@ int runLexicalAnalysis(vector<Token *> tokens, bool debugFlag = false) {
     nextToken();
     program();
     if (debug) cout << "STATUS : OK\n";
-
-    vector<PToken> tmp;
-    string startFunction = "main";
-    exec(startFunction, tmp, 0);
-
     return 0;
 }
 
@@ -834,7 +829,6 @@ pair<int, vector<PToken>> expression() {
             }
             exec.top()->isSimpleVariable = false;
             delete sec;
-
         } else if (an->type == binaryMathOperator) {
             expressionElement *sec, *fir;
             if (exec.empty()) throw err("Syntax error");

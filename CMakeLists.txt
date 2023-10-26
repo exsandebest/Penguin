@@ -6,9 +6,9 @@ set(CMAKE_CXX_STANDARD 17)
 include_directories(.)
 
 add_executable(Penguin
-        LexicalAnalyzer.cpp
-        Main.h
-        Math.h
-        Penguin.cpp
-        LexicalAnalyzer.h
-        SyntaxAnalyzer.cpp)
+        src/LexicalAnalyzer.cpp
+        src/Main.h
+        src/Math.h
+        src/Penguin.cpp
+        src/LexicalAnalyzer.h
+        src/SyntaxAnalyzer.cpp)

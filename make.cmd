@@ -1,1 +1,1 @@
-g++ .\Penguin.cpp .\LexicalAnalyzer.cpp .\SyntaxAnalyzer.cpp .\LexicalAnalyzer.h .\SyntaxAnalyzer.h .\Main.h .\Math.h -o .\Penguin
+g++ src/*.cpp src/*.h -o .\Penguin

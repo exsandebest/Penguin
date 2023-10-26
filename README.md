@@ -33,9 +33,12 @@ See examples at [`examples/`](https://github.com/exsandebest/Penguin/tree/master
     * `/* ... */`
 * Functions
     * `bool isEven(int a) { return a % 2 == 0 }`
+    * Function operators: `return`
+    * All functions are in global scope by default
 * Cycles
     * `for`: `for (int i = 0; i < 10; ++i) { ... }`
     * `while`: `while (i < 5) { ... }`
+    * Cycle operators: `break`, `continue`
 * Conditional operators:
     * `if (x > 5) { ... }`
     * `else if (x < 2) { ... }`
@@ -43,3 +46,19 @@ See examples at [`examples/`](https://github.com/exsandebest/Penguin/tree/master
 * Built-in functions
     * `read(a, b)`
     * `write(x, " + ", y, " = ", x + y)`
+* Local scopes  
+    [`exsamples/a/a.peng`](https://github.com/exsandebest/Penguin/tree/master/examples/a/a.peng):
+    ```c++
+    null main() {
+        int a;
+        read(a);
+        if (a > 2) {
+            string a = "str";
+            write(a);
+        } else {
+            bool a = true;
+            write(a);
+        }
+        write(a + 2);
+    }
+    ```

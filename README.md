@@ -3,7 +3,7 @@ Penguin programming language
 ## Getting started
 **You have to compile all files from ``src/``**  
 
-**You can run ``make.cmd`` (for Windows) or ``make.sh`` (for Linux) to do that or use ``CMakeLists.txt``**
+**You can run ``scripts/make.cmd`` (for Windows) or ``scripts/make.sh`` (for Linux) to do that or use ``CMakeLists.txt``**
 ## Usage
 ``Penguin path/to/program.peng``  
 ## Examples
@@ -13,7 +13,7 @@ Usage:
   - ``Penguin examples/a/a.peng``  
   - ``Penguin examples/b/b.peng < examples/b/in/1.in``
 ## Tests
-**You can run tests with ``tests.bat`` or ``tests.sh``**  
+**You can run tests with ``scripts/tests.bat`` or ``scripts/tests.sh``**  
 ## Docs
 * [Grammar (Google Docs)](https://docs.google.com/document/d/1y9UAdCVIHkVw3AbSU_anU4KZSvI54mrA7OSpKjKvKgw) / [Grammar (Repo docs)](https://github.com/exsandebest/Penguin/tree/master/docs/grammar.ebnf)
 * [Types of tokens (Google Sheets)](https://docs.google.com/spreadsheets/d/1OBjwfQxot8h_A8aIbHIXjujbpoGofYAS0elkgWege0g) / [Types of tokens (Repo docs)](https://github.com/exsandebest/Penguin/tree/master/docs/token_types.md)

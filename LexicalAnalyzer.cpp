@@ -158,130 +158,116 @@ int parseString(int i) {
     return i;
 }
 
-// Recursive function to parse tokens from index i
+// Cycle function to parse tokens
 // Handles various token types including operators, brackets, and constants
-// Returns -1 if end of string is reached
-int parse(int i) {
-    if (i > s.length() - 1) return -1;
+int parse() {
+    int i = 0;
     std::string ts;
-
-    if (s[i] == ';') {
-        addToken(semicolon, ";");
-        ++i;
-        return parse(i);
-    }
-    if (ts + s[i] + s[i + 1] == "==" || ts + s[i] + s[i + 1] == "<=" ||
-        ts + s[i] + s[i + 1] == ">=" || ts + s[i] + s[i + 1] == "!=") {
-        addToken(comparisonOperator, ts + s[i] + s[i + 1]);
-        return parse(i + 2);
-    }
-    if (s[i] == '=') {
-        addToken(assignmentOperator, std::string(1, s[i]));
-        return parse(i + 1);
-    }
-    if (s[i] == '~') {
-        addToken(unaryMathOperator, std::string(1, s[i]));
-        return parse(i + 1);
-    }
-    if (ts + s[i] + s[i + 1] == ">>" || ts + s[i] + s[i + 1] == "<<" ||
-        ts + s[i] + s[i + 1] == "**") {
-        addToken(binaryMathOperator, ts + s[i] + s[i + 1]);
-        return parse(i + 2);
-    }
-    if (s[i] == '<' || s[i] == '>') {
-        addToken(comparisonOperator, std::string(1, s[i]));
-        return parse(i + 1);
-    }
-    if (ts + s[i] + s[i + 1] == "++" || ts + s[i] + s[i + 1] == "--") {
-        addToken(unaryMathOperator, ts + s[i] + s[i + 1]);
-        return parse(i + 2);
-    }
-    if (s[i] == '/' || s[i] == '*' || s[i] == '%' || s[i] == '^' || s[i] == '|' ||
-        s[i] == '&') {
-        addToken(binaryMathOperator, std::string(1, s[i]));
-        return parse(i + 1);
-    }
-    if (s[i] == '-') {
-        if (tokens.empty()) {
-            addToken(unaryMathOperator, "-");
-        } else {
-            Token *t = tokens.back();
-            if (t->type == name || t->type == stringConstant ||
-                t->type == doubleNumber || t->type == integerNumber ||
-                t->type == logicalConstant || t->type == closingBracket) {
-                addToken(binaryMathOperator, "-");
-            } else {
+    while (i < s.length()) {
+        if (s[i] == ';') {
+            addToken(semicolon, ";");
+            ++i;
+        } else if (
+            (i + 1 < s.length()) &&
+            (ts + s[i] + s[i + 1] == "==" || ts + s[i] + s[i + 1] == "<=" ||
+            ts + s[i] + s[i + 1] == ">=" || ts + s[i] + s[i + 1] == "!=")
+        ) {
+            addToken(comparisonOperator, ts + s[i] + s[i + 1]);
+            i += 2;
+        } else if (s[i] == '=') {
+            addToken(assignmentOperator, std::string(1, s[i]));
+            ++i;
+        } else if (s[i] == '~') {
+            addToken(unaryMathOperator, std::string(1, s[i]));
+            ++i;
+        } else if (
+            (i + 1 < s.length()) &&
+            (ts + s[i] + s[i + 1] == ">>" || ts + s[i] + s[i + 1] == "<<" ||
+            ts + s[i] + s[i + 1] == "**")
+        ) {
+            addToken(binaryMathOperator, ts + s[i] + s[i + 1]);
+            i += 2;
+        } else if (s[i] == '<' || s[i] == '>') {
+            addToken(comparisonOperator, std::string(1, s[i]));
+            ++i;
+        } else if (
+            (i + 1 < s.length()) &&
+            (ts + s[i] + s[i + 1] == "++" || ts + s[i] + s[i + 1] == "--")
+        ) {
+            addToken(unaryMathOperator, ts + s[i] + s[i + 1]);
+            i += 2;
+        } else if (s[i] == '/' || s[i] == '*' || s[i] == '%' || s[i] == '^' || s[i] == '|' ||
+                   s[i] == '&') {
+            addToken(binaryMathOperator, std::string(1, s[i]));
+            ++i;
+        } else if (s[i] == '-') {
+            if (tokens.empty()) {
                 addToken(unaryMathOperator, "-");
-            }
-        }
-        return parse(i + 1);
-    }
-    if (s[i] == '+') {
-        if (tokens.empty()) {
-            addToken(unaryMathOperator, "+");
-        } else {
-            Token *t = tokens.back();
-            if (t->type == name || t->type == stringConstant ||
-                t->type == doubleNumber || t->type == integerNumber ||
-                t->type == logicalConstant || t->type == closingBracket) {
-                addToken(binaryMathOperator, "+");
             } else {
-                addToken(unaryMathOperator, "+");
+                Token *t = tokens.back();
+                if (t->type == name || t->type == stringConstant ||
+                    t->type == doubleNumber || t->type == integerNumber ||
+                    t->type == logicalConstant || t->type == closingBracket) {
+                    addToken(binaryMathOperator, "-");
+                } else {
+                    addToken(unaryMathOperator, "-");
+                }
             }
+            ++i;
+        } else if (s[i] == '+') {
+            if (tokens.empty()) {
+                addToken(unaryMathOperator, "+");
+            } else {
+                Token *t = tokens.back();
+                if (t->type == name || t->type == stringConstant ||
+                    t->type == doubleNumber || t->type == integerNumber ||
+                    t->type == logicalConstant || t->type == closingBracket) {
+                    addToken(binaryMathOperator, "+");
+                } else {
+                    addToken(unaryMathOperator, "+");
+                }
+            }
+            ++i;
+        } else if (isdigit(s[i])) {
+            i = parseNumber(i);
+        } else if (s[i] == '"') {
+            i = parseString(i);
+        } else if (isalpha(s[i])) {
+            i = parseWord(i);
+        } else if (s[i] == '(') {
+            addToken(openingBracket, "(");
+            ++i;
+        } else if (s[i] == ')') {
+            addToken(closingBracket, ")");
+            ++i;
+        } else if (s[i] == '{') {
+            addToken(openingBrace, "{");
+            ++i;
+        } else if (s[i] == '}') {
+            addToken(closingBrace, "}");
+            ++i;
+        } else if (s[i] == '[') {
+            addToken(openingSquareBracket, "[");
+            ++i;
+        } else if (s[i] == ']') {
+            addToken(closingSquareBracket, "]");
+            ++i;
+        } else if (s[i] == ',') {
+            addToken(comma, ",");
+            ++i;
+        } else if (s[i] == '!') {
+            addToken(logicalOperator, "!");
+            ++i;
+        } else if (s[i] == '\n') {
+            ++line;
+            ++i;
+        } else if (s[i] == ' ' || s[i] == '\r' || s[i] == '\t') {
+            ++i;
+        } else {
+            throw std::string("Incorrect symbol : '" + std::string(1, s[i]) + "'\n");
         }
-        return parse(i + 1);
     }
-    if (isdigit(s[i])) {
-        i = parseNumber(i);
-        return parse(i);
-    }
-    if (s[i] == '"') {
-        i = parseString(i);
-        return parse(i);
-    }
-    if (isalpha(s[i])) {
-        i = parseWord(i);
-        return parse(i);
-    }
-    if (s[i] == '(') {
-        addToken(openingBracket, "(");
-        return parse(i + 1);
-    }
-    if (s[i] == ')') {
-        addToken(closingBracket, ")");
-        return parse(i + 1);
-    }
-    if (s[i] == '{') {
-        addToken(openingBrace, "{");
-        return parse(i + 1);
-    }
-    if (s[i] == '}') {
-        addToken(closingBrace, "}");
-        return parse(i + 1);
-    }
-    if (s[i] == '[') {
-        addToken(openingSquareBracket, "[");
-        return parse(i + 1);
-    }
-    if (s[i] == ']') {
-        addToken(closingSquareBracket, "]");
-        return parse(i + 1);
-    }
-    if (s[i] == ',') {
-        addToken(comma, ",");
-        return parse(i + 1);
-    }
-    if (s[i] == '!') {
-        addToken(logicalOperator, "!");
-        return parse(i + 1);
-    }
-    if (s[i] == '\n') {
-        ++line;
-        return parse(i + 1);
-    }
-    if (s[i] == ' ' || s[i] == '\r' || s[i] == '\t') return parse(i + 1);
-
-    throw std::string("Incorrect symbol : '" + std::string(1, s[i]) + "'\n");
+    return 0;
 }
 
 // Removes comment blocks from the input string and returns the cleaned string
@@ -291,15 +277,15 @@ std::string deleteComments(std::string &str) {
     int i = 0;
     bool flag = true;
     while (i < str.length()) {
-        if (ts + str[i] + str[i + 1] == "*/" && flag) {
+        if (i + 1 < s.length() && ts + str[i] + str[i + 1] == "*/" && flag) {
             throw std::string("Incorrect comments");
         }
-        if (ts + str[i] + str[i + 1] == "/*" && flag) {
+        if (i + 1 < s.length() && ts + str[i] + str[i + 1] == "/*" && flag) {
             flag = false;
             i += 2;
             continue;
         }
-        if (ts + str[i] + str[i + 1] == "*/" && !flag) {
+        if (i + 1 < s.length() && ts + str[i] + str[i + 1] == "*/" && !flag) {
             flag = true;
             i += 2;
             continue;
@@ -321,6 +307,6 @@ std::string deleteComments(std::string &str) {
 std::vector<Token *> runLexicalAnalysis(std::string input) {
     s = std::move(input);
     s = deleteComments(s);
-    parse(0);
+    parse();
     return tokens;
 }

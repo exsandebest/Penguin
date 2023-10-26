@@ -177,13 +177,9 @@ int parse() {
         } else if (s[i] == '=') {
             addToken(assignmentOperator, std::string(1, s[i]));
             ++i;
-        } else if (s[i] == '~') {
-            addToken(unaryMathOperator, std::string(1, s[i]));
-            ++i;
         } else if (
             (i + 1 < s.length()) &&
-            (ts + s[i] + s[i + 1] == ">>" || ts + s[i] + s[i + 1] == "<<" ||
-            ts + s[i] + s[i + 1] == "**")
+            (ts + s[i] + s[i + 1] == "**")
         ) {
             addToken(binaryMathOperator, ts + s[i] + s[i + 1]);
             i += 2;
@@ -196,8 +192,7 @@ int parse() {
         ) {
             addToken(unaryMathOperator, ts + s[i] + s[i + 1]);
             i += 2;
-        } else if (s[i] == '/' || s[i] == '*' || s[i] == '%' || s[i] == '^' || s[i] == '|' ||
-                   s[i] == '&') {
+        } else if (s[i] == '/' || s[i] == '*' || s[i] == '%') {
             addToken(binaryMathOperator, std::string(1, s[i]));
             ++i;
         } else if (s[i] == '-') {

@@ -5,8 +5,6 @@ Penguin programming language
 
 **You can run ``scripts/make.cmd`` (for Windows) or ``scripts/make.sh`` (for Linux) to do that or use ``CMakeLists.txt``**
 
-### Formatting
-Run ``make format`` to apply ``clang-format`` to the source files. Use ``make lint`` to check formatting without modifying files.
 ## Usage
 ``Penguin path/to/program.peng``  
 ## Examples

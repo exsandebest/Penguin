@@ -11,8 +11,8 @@ Penguin programming language
 See examples at [`examples/`](https://github.com/exsandebest/Penguin/tree/master/examples)
 
 Usage:
-  - ``Penguin examples/a/a.peng``  
-  - ``Penguin examples/b/b.peng < examples/b/in/1.in``
+  - ``Penguin examples/local-scopes/main.peng``  
+  - ``Penguin examples/power-of-two-loops/main.peng < examples/power-of-two-loops/in/1.in``
 ## Tests
 **You can run tests with ``scripts/tests.bat`` or ``scripts/tests.sh``**  
 ## Docs
@@ -53,7 +53,7 @@ Usage:
     * `read(a, b);`
     * `write(x, " + ", y, " = ", x + y);`
 * Local scopes  
-    [`exsamples/a/a.peng`](https://github.com/exsandebest/Penguin/tree/master/examples/a/a.peng):
+    [`examples/local-scopes/main.peng`](https://github.com/exsandebest/Penguin/tree/master/examples/local-scopes/main.peng):
     ```c++
     null main() {
         int a;

@@ -4,9 +4,9 @@ SET PENGUIN_EXE=Penguin.exe
 SET EXAMPLES_DIR=examples
 
 for /D %%d in (%EXAMPLES_DIR%\*) do (
-    SET PENG_FILE=%%d\%%~nd.peng
+    SET PENG_FILE=%%d\main.peng
 
-    if exist "%%d\%%~nd.peng" (
+    if exist "!PENG_FILE!" (
         for %%i in (%%d\in\*.in) do (
             SET BASE_NAME=%%~ni
             SET OUT_FILE=%%d\out\!BASE_NAME!.out

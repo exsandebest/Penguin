@@ -15,7 +15,7 @@ failures=0
 for dir in "$EXAMPLES_DIR"/*; do
     [[ -d "$dir" ]] || continue
 
-    PENG_FILE="$dir/$(basename "$dir").peng"
+    PENG_FILE="$dir/main.peng"
     [[ -f "$PENG_FILE" ]] || continue
 
     inputs=("$dir"/in/*.in)

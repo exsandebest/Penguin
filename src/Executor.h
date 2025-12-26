@@ -8,4 +8,4 @@
 PToken execute(const std::string &functionName, std::vector<PToken> args,
                int nestLvl);
 
-#endif //PENGUIN_EXECUTOR_H
+#endif // PENGUIN_EXECUTOR_H

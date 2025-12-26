@@ -4,21 +4,9 @@
 #include "Main.h"
 #include <vector>
 
-const std::string reservedWords[] = {
-        "break",
-        "continue",
-        "if",
-        "else",
-        "return",
-        "while",
-        "for"
-};
-const std::string reservedVariableTypes[] = {
-        "bool",
-        "string",
-        "int",
-        "double"
-};
+const std::string reservedWords[] = {"break",  "continue", "if", "else",
+                                     "return", "while",    "for"};
+const std::string reservedVariableTypes[] = {"bool", "string", "int", "double"};
 const std::string reservedFunctionTypes[] = {"null"};
 const std::string reservedOperators[] = {"and", "or", "xor"};
 const std::string reservedFunctions[] = {"read", "write"};
@@ -29,8 +17,8 @@ bool detectReserved(const std::string &str, int i);
 int parseWord(int i);
 int parseNumber(int i);
 int parseString(int i);
-void addToken(int type, const std::string& value);
+void addToken(int type, const std::string &value);
 bool ld(char c);
 std::vector<Token *> runLexicalAnalysis(std::string input);
 
-#endif //PENGUIN_LEXICALANALYZER_H
+#endif // PENGUIN_LEXICALANALYZER_H

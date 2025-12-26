@@ -101,7 +101,7 @@ public:
   std::string stringValue;
   double doubleValue = 0.0;
   bool boolValue = false;
-  explicit Variable(int t) : type(t) {};
+  explicit Variable(int t) : type(t) {}
 };
 
 class expressionElement {

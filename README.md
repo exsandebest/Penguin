@@ -4,6 +4,7 @@ Penguin programming language
 **You have to compile all files from ``src/``**  
 
 **You can run ``scripts/make.cmd`` (for Windows) or ``scripts/make.sh`` (for Linux) to do that or use ``CMakeLists.txt``**
+
 ## Usage
 ``Penguin path/to/program.peng``  
 ## Examples

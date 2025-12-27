@@ -2,22 +2,24 @@
 #define PENGUIN_SYNTAXANALYZER_H
 
 #include "Main.h"
-#include <map>
 #include <stack>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
-extern std::map<std::string, std::pair<std::vector<std::pair<int, std::string>>,
-                                       std::vector<PToken>>>
+extern std::unordered_map<
+    std::string,
+    std::pair<std::vector<std::pair<int, std::string>>, std::vector<PToken>>>
     rpnMap; // Map of functions to their RPN expressions and arguments
-extern std::map<std::string, std::stack<Variable>>
+extern std::unordered_map<std::string, std::stack<Variable>>
     rpnNames; // Scoped variable names for RPN expressions
 extern std::stack<std::pair<std::string, int>>
     rpnLastNames; // Stack of RPN variable names with nesting levels
 extern bool debug;
 
-std::runtime_error err(const std::string &errString, bool showLine);
+std::runtime_error err(const std::string &errString = "", bool showLine = true);
 std::string tokenToString(Token *t);
 int stringToType(const std::string &s);
 std::runtime_error errType(int currentType, int expectedType, bool showLine);
@@ -50,7 +52,7 @@ void operator_io_write();
 int arguments_to_call(const std::string &functionName);
 void operator_variable_declaration();
 void debugRpn(const std::string &fun);
-PToken exec(const std::string &functionName, std::vector<PToken> args,
+PToken exec(const std::string &functionName, const std::vector<PToken> &args,
             int nestLvl);
 int runLexicalAnalysis(std::vector<Token *> tokens, bool debugFlag);
 void resetSyntaxAnalyzerState();

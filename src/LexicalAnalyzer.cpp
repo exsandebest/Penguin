@@ -273,33 +273,34 @@ int parse() {
 // Removes comment blocks from the input string and returns the cleaned string
 // Throws an exception if comment syntax is incorrect
 std::string deleteComments(std::string &str) {
-  std::string res, ts;
-  int i = 0;
-  bool flag = true;
-  while (i < str.length()) {
-    if (i + 1 < s.length() && ts + str[i] + str[i + 1] == "*/" && flag) {
-      throw std::runtime_error("Incorrect comments");
-    }
-    if (i + 1 < s.length() && ts + str[i] + str[i + 1] == "/*" && flag) {
-      flag = false;
-      i += 2;
-      continue;
-    }
-    if (i + 1 < s.length() && ts + str[i] + str[i + 1] == "*/" && !flag) {
-      flag = true;
-      i += 2;
-      continue;
-    }
-    if (flag) {
-      res += str[i];
-    } else {
-      if (str[i] == '\n') {
-        res += str[i];
+  std::string res;
+  const size_t len = str.length();
+  bool outsideComment = true;
+  for (size_t i = 0; i < len; ++i) {
+    if (i + 1 < len) {
+      const char cur = str[i];
+      const char next = str[i + 1];
+      if (outsideComment && cur == '/' && next == '*') {
+        outsideComment = false;
+        ++i;
+        continue;
+      }
+      if (!outsideComment && cur == '*' && next == '/') {
+        outsideComment = true;
+        ++i;
+        continue;
+      }
+      if (outsideComment && cur == '*' && next == '/') {
+        throw std::runtime_error("Incorrect comments");
       }
     }
-    ++i;
+    if (outsideComment) {
+      res += str[i];
+    } else if (str[i] == '\n') {
+      res += '\n';
+    }
   }
-  if (!flag)
+  if (!outsideComment)
     throw std::runtime_error("Incorrect comments");
   return res;
 }

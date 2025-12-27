@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-PToken execute(const std::string &functionName, std::vector<PToken> args,
+PToken execute(const std::string &functionName, const std::vector<PToken> &args,
                int nestLvl);
 
 #endif // PENGUIN_EXECUTOR_H

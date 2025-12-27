@@ -19,7 +19,7 @@ extern std::stack<std::pair<std::string, int>>
     rpnLastNames; // Stack of RPN variable names with nesting levels
 extern bool debug;
 
-std::runtime_error err(const std::string &errString, bool showLine);
+std::runtime_error err(const std::string &errString = "", bool showLine = true);
 std::string tokenToString(Token *t);
 int stringToType(const std::string &s);
 std::runtime_error errType(int currentType, int expectedType, bool showLine);

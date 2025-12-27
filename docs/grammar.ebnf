@@ -14,13 +14,15 @@ digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
 name = letter, { letter | digit } ;
 
 
-integer constant = [ "-" ], digit, { digit } ;
+integer constant = digit, { digit } ;
 
-double constant = { digit }, [ "." ], { digit }, [ ("e" | "E"), [ "-" ], digit, { digit } ] ;
-(* typical and exponential form, can start with just "." *)
+double constant = digit, { digit }, ( ".", digit, { digit }, [ exponent ] | exponent )
+                | ".", digit, { digit }, [ exponent ] ;
+exponent = ("e" | "E"), [ "-" ], digit, { digit } ;
+(* fractional form always has at least one digit after ".", exponent accepts only "-" as a sign *)
 
-string constant = "{ch}" ;
-(* ch denotes any printable ASCII character (as specified by isprint()) other than " (double quotes) and the newline character *)
+string constant = "\"", { ch }, "\"" ;
+(* ch denotes any character except the closing double quote; there are no escape sequences *)
 
 boolean constant = "true" | "false" ;
 
@@ -35,15 +37,16 @@ function type = variable type | "null" ;
 
 assignment operator = "=" ;
 binary math operator = "*" | "/" | "-" | "+" | "%" | "**" ;
-unary math operator = "-" | "--" | "++" ;
+unary math operator = "-" | "+" | "--" | "++" ;
 unary logical operator = "!" ;
 binary logical operator = "and" | "or" | "xor" ;
 comparison operator =  ">" | "<" | ">=" | "<=" | "!="  | "==" ;
-binary operator = binary math operator | binary logical operator | comparison operator ;
-unary operator = unary logical operator | unary math operator ;
+binary operator = binary math operator | binary logical operator | comparison operator | assignment operator ;
+unary operator = unary logical operator | unary math operator ; (* prefix only; ++/-- are not allowed in postfix form *)
 
 cycle operator = operator for | operator while ;
-operator for = "for", "(", [expression], ";", [expression], ";", [expression], ")", block ;
+operator for = "for", "(", [ for initializer ], ";", expression, ";", [ expression ], ")", block ;
+for initializer = operator declaration | expression ;
 operator while = "while", "(", expression, ")", block ;
 
 operator return = "return", [ expression ], ";" ;
@@ -51,14 +54,13 @@ operator break = "break", ";" ;
 operator continue = "continue", ";" ;
 
 operator declaration = variable type, name, [ "=", expression ], ";" ;
-operator assignment = name, assignment operator, expression, ";" ;
-operator import = "import", string constant, ";" ;
+operator import = "import", string constant, ";" ; (* accepted at the top level, currently ignored by the interpreter *)
 
-operator call function = name, "(", call arguments, ")";
+operator call function = name, "(", [ call arguments ], ")";
 call arguments = expression, {",", expression} ;
 
 operator io = operator read | operator write ;
-operator read = "read", "(", name, [",", name], ")", ";" ;
+operator read = "read", "(", name, {",", name}, ")", ";" ;
 operator write = "write", "(", [ expression, {",", expression }], ")" , ";" ;
 
 conditional operator = operator if, { operator else if}, [ operator else ] ;
@@ -68,15 +70,20 @@ operator else = "else", block ;
 
 (* Expressions *)
 
-expression = name | constant | operator call function | "(", expression, ")" | unary operator, expression | expression, binary operator, expression ;
+expression = name
+           | constant
+           | operator call function
+           | "(", expression, ")"
+           | unary operator, expression
+           | expression, binary operator, expression ;
 constant = integer constant | double constant | string constant | boolean constant ;
 
 (* Main *)
 
 function = function type, name, "(", [ arguments ], ")", block ;
-arguments = variable type, name, [ ",", variable type, name ] ;
+arguments = variable type, name, { ",", variable type, name } ;
 block = "{", { operation }, "}" ;
-operation = expression, ";" | operator ;
-operator = cycle operator | conditional operator | operator call function | operator declaration | operator assignment | operator return | operator io | operator break | operator continue ;
+operation = expression, ";" | operator ; (* standalone expressions must start with a name or a prefix unary operator *)
+operator = cycle operator | conditional operator | operator call function | operator declaration | operator return | operator io | operator break | operator continue ;
 program = [ globals ], function, { function };
-globals = { operator import }, { operator declaration } ;
+globals = { operator import } ;

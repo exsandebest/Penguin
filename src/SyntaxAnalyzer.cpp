@@ -3,10 +3,11 @@
 #include "Math.h"
 #include <fstream>
 #include <iostream>
-#include <map>
 #include <set>
 #include <stack>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -22,21 +23,21 @@ string CurrentFunction;       // Name of the current function
 
 vector<Token *> v;      // Vector of parsed tokens
 Token *cur;             // Current token being processed
-stack<int> stateStack;  // Stack for parsing states
-multiset<int> stateSet; // Set for handling multiple parsing states
+stack<int> stateStack;         // Stack for parsing states
+unordered_set<int> stateSet;   // Set for handling multiple parsing states
 
-map<string, stack<TokenType>>
+unordered_map<string, stack<TokenType>>
     names; // Map of variable names to types with scope handling
 stack<pair<string, int>>
     lastNames; // Stack of variable names with their nesting levels
-map<string, pair<int, bool>>
+unordered_map<string, pair<int, bool>>
     functionHasReturn; // Map of functions, their return types, and return
                        // status
 
 // RPN (Reverse Polish Notation) related
-map<string, pair<vector<pair<int, string>>, vector<PToken>>>
+unordered_map<string, pair<vector<pair<int, string>>, vector<PToken>>>
     rpnMap; // Map of functions to their RPN expressions and arguments
-map<string, stack<Variable>>
+unordered_map<string, stack<Variable>>
     rpnNames; // Scoped variable names for RPN expressions
 stack<pair<string, int>>
     rpnLastNames; // Stack of RPN variable names with nesting levels
@@ -714,7 +715,15 @@ void operator_assignment(int varType, const string &varName) {
 pair<int, vector<PToken>> expression() {
   if (debug)
     cout << "F: expression\n";
-  map<string, int> priority;
+  static const unordered_map<string, int> priority = {
+      {"++", 3}, {"!", 3},    {"*", 5},   {"/", 5},  {"%", 5},
+      {"+", 6},  {"-", 6},    {"<", 8},   {">", 8},  {"<=", 8},
+      {">=", 8}, {"==", 9},   {"!=", 9},  {"and", 12},
+      {"xor", 13},{"or", 14}, {"**", 4},  {"=", 15}, {"+=", 15},
+      {"-=", 15},{"*=", 15},  {"/=", 15}, {"%=", 15}};
+  const auto priorityOf = [&](const string &op) {
+    return priority.at(op);
+  };
   stack<Token *> signs;
 
   vector<Token *> ans;
@@ -727,18 +736,6 @@ pair<int, vector<PToken>> expression() {
   bool afterVariable = false;
 
   int inFunction = 0;
-
-  priority["++"] = priority["!"] = 3;
-  priority["*"] = priority["/"] = priority["%"] = 5;
-  priority["+"] = priority["-"] = 6;
-  priority["<"] = priority[">"] = priority["<="] = priority[">="] = 8;
-  priority["=="] = priority["!="] = 9;
-  priority["and"] = 12;
-  priority["xor"] = 13;
-  priority["or"] = 14;
-  priority["**"] = 4;
-  priority["="] = priority["+="] = priority["-="] = priority["*="] =
-      priority["/="] = priority["%="] = 15;
 
   while ((cur->type != closingBracket || afterOpBracket > 0) &&
          cur->type != semicolon && (cur->type != comma || afterOpBracket > 0)) {
@@ -785,12 +782,13 @@ pair<int, vector<PToken>> expression() {
                cur->type == assignmentOperator ||
                cur->type == logicalOperator) {
       afterVariable = false;
+      const int currentPriority = priorityOf(cur->value);
       if (cur->value == "=" || cur->value == "**") {
         while (!signs.empty() && signs.top()->type != openingBracket &&
                ((signs.top()->type == unaryMathOperator) ||
                 (signs.top()->type == logicalOperator &&
                  signs.top()->value == "!") ||
-                priority[signs.top()->value] < priority[cur->value])) {
+                priorityOf(signs.top()->value) < currentPriority)) {
           ans.push_back(signs.top());
           signs.pop();
         }
@@ -799,7 +797,7 @@ pair<int, vector<PToken>> expression() {
                ((signs.top()->type == unaryMathOperator) ||
                 (signs.top()->type == logicalOperator &&
                  signs.top()->value == "!") ||
-                priority[signs.top()->value] <= priority[cur->value])) {
+                priorityOf(signs.top()->value) <= currentPriority)) {
           ans.push_back(signs.top());
           signs.pop();
         }
@@ -879,7 +877,7 @@ pair<int, vector<PToken>> expression() {
     return {TypeNull, expressionInPolishNotation};
 
   stack<expressionElement *> exec;
-  map<string, stack<TokenType>>::iterator ptr;
+  auto ptr = names.end();
   int counter = 0;
   if (debug) {
     for (auto &tkn : ans) {
@@ -1166,36 +1164,43 @@ void operator_variable_declaration() {
 }
 
 // Executes a given function with specified arguments and nesting level
-PToken exec(const string &functionName, vector<PToken> args,
+PToken exec(const string &functionName, const vector<PToken> &args,
             int nestLvl) { // args contains ONLY VALUES (P...Value)
   if (debug)
     cout << "exec: " << functionName << ", args.size = " << args.size() << "\n";
+
+  const auto functionIt = rpnMap.find(functionName);
+  if (functionIt == rpnMap.end()) {
+    throw runtime_error("Function '" + functionName + "' is not declared");
+  }
+  const auto &functionData = functionIt->second;
+  const auto &functionArgs = functionData.first;
+  const auto &curRpn = functionData.second;
+
   int startLvl = nestLvl;
-  for (int i = 0; i < args.size(); ++i) {
-    rpnNames[rpnMap[functionName].first[i].second].emplace(
-        rpnMap[functionName].first[i].first);
-    rpnLastNames.emplace(rpnMap[functionName].first[i].second, nestLvl);
-    if (args[i].type == PIntValue) {
-      rpnNames[rpnMap[functionName].first[i].second].top().intValue =
-          args[i].intValue;
-    } else if (args[i].type == PDoubleValue) {
-      rpnNames[rpnMap[functionName].first[i].second].top().doubleValue =
-          args[i].doubleValue;
-    } else if (args[i].type == PStringValue) {
-      rpnNames[rpnMap[functionName].first[i].second].top().stringValue =
-          args[i].stringValue;
-    } else if (args[i].type == PBoolValue) {
-      rpnNames[rpnMap[functionName].first[i].second].top().boolValue =
-          args[i].boolValue;
+  for (size_t i = 0; i < args.size(); ++i) {
+    const auto &argName = functionArgs[i].second;
+    auto &argStack = rpnNames[argName];
+    argStack.emplace(functionArgs[i].first);
+    rpnLastNames.emplace(argName, nestLvl);
+    const auto &arg = args[i];
+    Variable &target = argStack.top();
+    if (arg.type == PIntValue) {
+      target.intValue = arg.intValue;
+    } else if (arg.type == PDoubleValue) {
+      target.doubleValue = arg.doubleValue;
+    } else if (arg.type == PStringValue) {
+      target.stringValue = arg.stringValue;
+    } else if (arg.type == PBoolValue) {
+      target.boolValue = arg.boolValue;
     }
   }
   if (debug)
     cout << "Args: ok\n";
   if (debug)
     debugRpn(functionName);
-  vector<PToken> curRpn = rpnMap[functionName].second;
   stack<PToken> s;
-  int i = 0;
+  size_t i = 0;
   while (i < curRpn.size()) {
     if (debug)
       cout << "CURRENT NESTLVL: " << nestLvl << "\n";
@@ -1227,7 +1232,7 @@ PToken exec(const string &functionName, vector<PToken> args,
       if (debug)
         cout << "POperator: " << tkn.value << "\n";
       if (tkn.value == "goto") {
-        i = tkn.args.back();
+        i = static_cast<size_t>(tkn.args.back());
         continue;
       } else if (tkn.value == "if") {
         PToken t = s.top();
@@ -1235,7 +1240,7 @@ PToken exec(const string &functionName, vector<PToken> args,
         if (t.boolValue) {
           ++i;
         } else {
-          i = tkn.args.back();
+          i = static_cast<size_t>(tkn.args.back());
         }
         continue;
       } else if (tkn.value == "return") {
@@ -1686,15 +1691,21 @@ PToken exec(const string &functionName, vector<PToken> args,
     } else if (tkn.type == PFunction) {
       if (debug)
         cout << "PFunction\n";
-      int argsCnt = int(rpnMap[tkn.value].first.size());
+      const auto nestedIt = rpnMap.find(tkn.value);
+      if (nestedIt == rpnMap.end()) {
+        throw runtime_error("Function '" + tkn.value + "' is not declared");
+      }
+      const auto &nestedFunction = nestedIt->second;
+      const size_t argsCnt = nestedFunction.first.size();
       vector<PToken> newArgs;
+      newArgs.reserve(argsCnt);
       vector<PToken> tmpVec;
-      for (int j = 0; j < argsCnt; ++j) {
-        PToken oneArg = s.top();
-        tmpVec.push_back(oneArg);
+      tmpVec.reserve(argsCnt);
+      for (size_t j = 0; j < argsCnt; ++j) {
+        tmpVec.push_back(s.top());
         s.pop();
       }
-      for (int j = argsCnt - 1; j >= 0; --j) {
+      for (size_t j = argsCnt; j-- > 0;) {
         PToken oneArg = tmpVec[j];
         if (oneArg.type == PVariable) {
           PToken newOneArg = PToken();
@@ -1732,14 +1743,14 @@ PToken exec(const string &functionName, vector<PToken> args,
       if (tkn.value == "write") {
         if (debug)
           cout << "write\n";
-        int argsCnt = tkn.args.back();
+        const size_t argsCnt = static_cast<size_t>(tkn.args.back());
         vector<PToken> tmpVec;
-        for (int j = 0; j < argsCnt; ++j) {
-          PToken t = s.top();
-          tmpVec.push_back(t);
+        tmpVec.reserve(argsCnt);
+        for (size_t j = 0; j < argsCnt; ++j) {
+          tmpVec.push_back(s.top());
           s.pop();
         }
-        for (int j = argsCnt - 1; j >= 0; --j) {
+        for (size_t j = argsCnt; j-- > 0;) {
           PToken t = tmpVec[j];
           if (t.type == PVariable) {
             Variable curArg = rpnNames[t.value].top();
@@ -1767,14 +1778,14 @@ PToken exec(const string &functionName, vector<PToken> args,
       } else if (tkn.value == "read") {
         if (debug)
           cout << "read\n";
-        int argsCnt = tkn.args.back();
+        const size_t argsCnt = static_cast<size_t>(tkn.args.back());
         vector<PToken> tmpVec;
-        for (int j = 0; j < argsCnt; ++j) {
-          PToken t = s.top();
-          tmpVec.push_back(t);
+        tmpVec.reserve(argsCnt);
+        for (size_t j = 0; j < argsCnt; ++j) {
+          tmpVec.push_back(s.top());
           s.pop();
         }
-        for (int j = argsCnt - 1; j >= 0; --j) {
+        for (size_t j = argsCnt; j-- > 0;) {
           PToken t = tmpVec[j];
           if (t.type == PVariable) {
             int curVarType = rpnNames[t.value].top().type;

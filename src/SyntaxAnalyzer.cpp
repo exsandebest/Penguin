@@ -47,6 +47,32 @@ vector<int> posOfEndCnt;   // Counters for loop end positions
 vector<int> posOfEndIf;    // End positions of if statements in RPN
 vector<int> posOfEndCntIf; // Counters for if statement end positions
 
+void resetSyntaxAnalyzerState() {
+  debug = false;
+  nestingLevel = 0;
+  currentFunctionType = -1;
+  curPos = -1;
+  CurrentFunction.clear();
+  v.clear();
+  cur = nullptr;
+  while (!stateStack.empty())
+    stateStack.pop();
+  stateSet.clear();
+  names.clear();
+  while (!lastNames.empty())
+    lastNames.pop();
+  functionHasReturn.clear();
+  rpnMap.clear();
+  rpnNames.clear();
+  while (!rpnLastNames.empty())
+    rpnLastNames.pop();
+  posOfStart.clear();
+  posOfEnd.clear();
+  posOfEndCnt.clear();
+  posOfEndIf.clear();
+  posOfEndCntIf.clear();
+}
+
 // Function Declarations
 
 // Returns an error message string, includes unexpected token or a custom error

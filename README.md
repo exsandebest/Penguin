@@ -15,6 +15,13 @@ Usage:
   - ``Penguin examples/power-of-two-loops/main.peng < examples/power-of-two-loops/in/1.in``
 ## Tests
 **You can run tests with ``scripts/tests.bat`` or ``scripts/tests.sh``**  
+  
+For a full test run (unit tests for core modules + example-based integration
+checks) use:
+
+```
+make run_tests
+```
 ## Docs
 * [Grammar (Google Docs)](https://docs.google.com/document/d/1y9UAdCVIHkVw3AbSU_anU4KZSvI54mrA7OSpKjKvKgw) / [Grammar (Repo docs)](https://github.com/exsandebest/Penguin/tree/master/docs/grammar.ebnf)
 * [Types of tokens (Google Sheets)](https://docs.google.com/spreadsheets/d/1OBjwfQxot8h_A8aIbHIXjujbpoGofYAS0elkgWege0g) / [Types of tokens (Repo docs)](https://github.com/exsandebest/Penguin/tree/master/docs/token_types.md)

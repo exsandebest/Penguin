@@ -15,6 +15,16 @@ void addToken(int type, const std::string &value) {
   tokens.push_back(new Token(type, value, line));
 }
 
+// Resets lexical analyzer state for a fresh run (used by tests)
+void resetLexicalAnalyzer() {
+  for (auto *token : tokens) {
+    delete token;
+  }
+  tokens.clear();
+  s.clear();
+  line = 1;
+}
+
 // Returns true if the character is a letter or digit, false otherwise
 bool ld(char c) { return isdigit(c) || isalpha(c); }
 
@@ -296,6 +306,7 @@ std::string deleteComments(std::string &str) {
 
 // Runs Lexical Analysis
 std::vector<Token *> runLexicalAnalysis(std::string input) {
+  resetLexicalAnalyzer();
   s = std::move(input);
   s = deleteComments(s);
   parse();

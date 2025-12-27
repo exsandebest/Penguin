@@ -53,5 +53,6 @@ void debugRpn(const std::string &fun);
 PToken exec(const std::string &functionName, std::vector<PToken> args,
             int nestLvl);
 int runLexicalAnalysis(std::vector<Token *> tokens, bool debugFlag);
+void resetSyntaxAnalyzerState();
 
 #endif // PENGUIN_SYNTAXANALYZER_H

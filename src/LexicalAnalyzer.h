@@ -18,6 +18,7 @@ int parseWord(int i);
 int parseNumber(int i);
 int parseString(int i);
 void addToken(int type, const std::string &value);
+void resetLexicalAnalyzer();
 bool ld(char c);
 std::vector<Token *> runLexicalAnalysis(std::string input);
 
